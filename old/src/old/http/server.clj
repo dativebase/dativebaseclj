@@ -21,7 +21,6 @@
           {:bigdecimals? false
            :malformed-response ring-utils/malformed-json-in-request-json-response})
          (defaults-mid/wrap-defaults defaults-mid/api-defaults)
-         ring-utils/wrap-timing
          ;; NOTE: You must install the Swagger UI static resources before there
          ;; is anything to serve under /resources/public/.
          ;; To do this, run `make install-swagger-ui`.
@@ -41,7 +40,8 @@
       (assoc this
              :http-server (jetty/run-jetty (handler-fn application)
                                            {:port port
-                                            :join? false}))))
+                                            :join? false})
+             :shutdown (promise))))
   (stop [this]
     (if http-server
       (do (.stop http-server)

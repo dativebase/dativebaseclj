@@ -134,7 +134,7 @@
   [clojure-openapi]
   (-> clojure-openapi
       clj->openapi
-      (yaml/generate-string {:flow-style :block})))
+      (yaml/generate-string :flow-style :block)))
 
 (defn clojure-openapi->disk
   "Given a Clojure map `clojure-openapi` that is a well-formed OpenAPI object,
@@ -153,7 +153,7 @@
          [format-k writer] (if (= :json (:format opts))
                              [:json clojure-openapi->json-on-disk]
                              [:yaml clojure-openapi->disk])
-         filename (or (:name opts) "old-api")
+         filename (or (:name opts) "api")
          format-h (str/upper-case (name format-k))
          openapi-path (format "resources/public/openapi/%s.%s" filename (name format-k))]
      (printf "Converting OpenAPI spec at `old.http.openapi.spec/api` to %s and writing it to disk at %s.\n"
