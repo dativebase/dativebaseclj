@@ -6,7 +6,8 @@
             [clojure.edn :as edn]
             [clojure.set :as set]
             [clojure.string :as str]
-            [old.http.openapi.spec :as spec]))
+            [old.http.openapi.spec :as spec]
+            [taoensso.timbre :as log]))
 
 (def openapi-reserved-keywords
   #{:additional-properties
@@ -145,7 +146,7 @@
 (defn -main
   "Entrypoint for lein alias `lein openapi`.
    This lets us serialize the Clojure OpenAPI spec at `http.openapi.spec/api` to
-   YAML and writ it to disk under `resources/`. The `lein` alias `openapi` calls
+   YAML and write it to disk under `resources/`. The `lein` alias `openapi` calls
    this function."
   ([] (-main "{}"))
   ([opts-str]
@@ -156,14 +157,11 @@
          filename (or (:name opts) "api")
          format-h (str/upper-case (name format-k))
          openapi-path (format "resources/public/openapi/%s.%s" filename (name format-k))]
-     (printf "Converting OpenAPI spec at `old.http.openapi.spec/api` to %s and writing it to disk at %s.\n"
-             format-h openapi-path)
+     (log/info (format "Converting OpenAPI spec at `old.http.openapi.spec/api` to %s and writing it to disk at %s."
+                       format-h openapi-path))
      (try (writer spec/api openapi-path)
-          (println "Success!")
-          (printf "Converted OpenAPI spec at `old.http.openapi.spec/api` to %s and wrote it to disk at %s.\n"
-                  format-h openapi-path)
+          (log/info (format "Converted OpenAPI spec at `old.http.openapi.spec/api` to %s and wrote it to disk at %s."
+                            format-h openapi-path))
           (catch Exception _
-            (println "Error.")
-            (printf "Failed to convert Clojure OpenAPI specification to %s.\n" format-h)
-            (flush)
+            (log/error (format "Failed to convert Clojure OpenAPI specification to %s." format-h))
             (java.lang.System/exit 1))))))

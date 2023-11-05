@@ -45,5 +45,6 @@
   [query-string]
   (when query-string
     (->> (str/split query-string #"&")
-         (map (fn [kv] (let [[k v] (str/split kv #"=" 2)] [(keyword k) v])))
+         (map (fn [kv] (let [[k v] (str/split kv #"=" 2)]
+                         [(snake-str->kebab-kw k) v])))
          (into {}))))

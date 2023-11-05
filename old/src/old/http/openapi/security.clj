@@ -1,14 +1,16 @@
 (ns old.http.openapi.security
   "The `run-security` fn implemented here implements the OpenAPI security
-   check(s) declared via the OpenAPI spec. It takes an stateful `application`
+   check(s) declared via the OpenAPI spec. It takes a stateful `http-component`
    component containing the OpenAPI spec under `:spec` and a `ctx` map
    containing the validated Ring request under `:request`. It identifies the
    security strategy declared in the spec and runs the corresponding security
    handler, as defined under `http/security/`. At present, only the `:api-key`
    security strategy is supported. See
    https://swagger.io/docs/specification/authentication/."
-  (:require [old.http.openapi.errors :as errors]
-            [old.http.utils :as utils]))
+  (:require [clojure.string :as str]
+            [old.http.openapi.errors :as errors]
+            [old.http.utils :as utils]
+            [taoensso.timbre :as log]))
 
 (defn- locate-api-key-value
   "Locate the value of API Key by finding parameter `key-name` in the `in` of the
@@ -20,44 +22,55 @@
     nil))
 
 (defn- run-api-key-security
-  "Locate the API key in the request and validate it using the `:api-key`
-   security handler from the `application`. Look for the API key in the location
-   specified by the `:in` of the scheme of the current OpenAPI security scheme.
-   The value of the API key should be under the key specified by the `:name` of
-   the security scheme schema. Return an updated `security-scheme` map with a
-   new `:result` key whose value is whatever is returned by the security
-   handler. The handler is expected to throw a response-encoding exception if
-   the request is invalid."
-  [application ctx security-scheme]
-  (let [{:keys [security-handlers]} application
+  "Locate the API key-related params in the request and validate them using the
+   `:api-key`security handler from the `http-component`. Look for the API key in
+   the locations specified by the `:in` values of the scheme of the current
+   OpenAPI security scheme. The value of the API key-related params should be
+   under the key specified by the `:name` of the security scheme schemas.
+   Return an updated `security-scheme` map with a new `:result` key whose value
+   is whatever is returned by the security handler. The handler is expected to
+   throw a response-encoding exception if the request is invalid."
+  [http-component ctx security-scheme-group]
+  (let [{:keys [security-handlers]} http-component
         api-key-handler (:api-key security-handlers)]
     (when-not api-key-handler
       (throw (errors/error-code->ex-info :error-unimplemented-security-handler)))
-    (let [{in :in api-key-param :name} security-scheme]
-      (if-let [api-key (locate-api-key-value api-key-param in (:request ctx))]
-        (assoc security-scheme :result (api-key-handler application api-key))
-        (throw (errors/error-code->ex-info :unauthenticated))))))
+    (let [api-key-data
+          (->> security-scheme-group
+               (map (fn [{in :in api-key-param :name}]
+                      (if-let [val (locate-api-key-value api-key-param in (:request ctx))]
+                        [(keyword (str/lower-case api-key-param)) val]
+                        (do (log/warn "A required API key value was not provided in the request."
+                                      {:name api-key-param
+                                       :in in})
+                            (throw (errors/error-code->ex-info :unauthenticated))))))
+               (into {}))]
+      (api-key-handler http-component ctx api-key-data))))
 
-(defn- run-security-scheme
-  "Run the provided `security-scheme`, if recognized."
-  [application ctx security-scheme]
-  (case (:type security-scheme)
-    :api-key (run-api-key-security application ctx security-scheme)
-    (throw (errors/error-code->ex-info :unauthenticated))))
+(defn- run-security-scheme-group
+  "Run the provided `security-scheme-group`, if recognized."
+  [http-component ctx security-scheme-group]
+  (case (:type (first security-scheme-group))
+    :api-key (run-api-key-security http-component ctx security-scheme-group)
+    (do (log/warn "The implementation of this API does not recognize the specified security type."
+                  {:type (:type (first security-scheme-group))})
+        (throw (errors/error-code->ex-info :unauthenticated)))))
 
 (defn- run-security-schemes
-  [application ctx securities]
+  [http-component ctx securities]
   (->> securities
-       (map (juxt key (comp (partial run-security-scheme application ctx) val)))
+       vals
+       (group-by :type)
+       (map (juxt key (comp (partial run-security-scheme-group http-component ctx) val)))
        (into {})))
 
 (defn- root-securities
   "Using the OpenAPI security specification contained within `:spec` of the
    `ctx`, set `:securities` on said `ctx` to a map from security strategy keys
    to security scheme maps.
-   Example `:security`: [{:api-key-auth []}]
-   Example `:security-schemes`: {:api-key-auth {:type :api-key :in :header :name X-API-KEY}}
-   Example `:securities`: {:api-key-auth {:type :api-key :in :header :name X-API-Key}}."
+   Example `:security`: [{:api-key []}]
+   Example `:security-schemes`: {:api-key {:type :api-key :in :header :name X-API-KEY}}
+   Example `:securities`: {:api-key {:type :api-key :in :header :name X-API-Key}}."
   [spec]
   (let [{:keys [security components]} spec
         {:keys [security-schemes]} components]
@@ -77,14 +90,17 @@
    - Only root-level securities are supported. Operation-specific securities are
      not supported.
 
-   The `application` must contain a `:security-handlers` key whose value is a
+   The `http-component` must contain a `:security-handlers` key whose value is a
    map from security types to handler functions that implement the security
    check. At present, the only security type recognized is `:api-key`. The value
-   of this key must be a function that takes an application component and an API
+   of this key must be a function that takes an HTTP component and an API
    key value and returns a result if the key is valid or else throws a response
    exception.
 
    If the request does not contain the required data to perform any required
    authentications, then a 401 exception is thrown."
-  [application ctx]
-  (assoc ctx :security (run-security-schemes application ctx (root-securities (:spec application)))))
+  [http-component ctx]
+  (assoc ctx :security (run-security-schemes
+                        http-component
+                        ctx
+                        (root-securities (:spec http-component)))))

@@ -11,6 +11,7 @@
   - Error responses (containing one or more error objects)
     - `ErrorBadRequest400`
     - `ErrorUnauthorized401`
+    - `ErrorUnauthorized403`
     - `ErrorUnrecognizedAcceptHeader406`
     - `ErrorTooManyRequests429`
     - `OLDError500`
@@ -134,6 +135,15 @@
       (assoc-in [:properties :errors :description] "Errors expressing details of the failure to authenticate.")
       (assoc-in [:properties :errors :items] {:$ref "#/components/schemas/ErrorUnauthorized"})
       (assoc :example {:errors [(:example error-unauthorized)]})))
+
+;; `ErrorUnauthorized403`
+(def error-unauthorized-403
+  (-> error-bad-request-400
+      (assoc :description "An error object for indicating that the authenticated client lacks the role required ini order to access the target resource in the target OLD.")
+      (assoc-in [:properties :errors :description] "Errors expressing details of the failure to authorize.")
+      (assoc-in [:properties :errors :items] {:$ref "#/components/schemas/ErrorUnauthorized"})
+      (assoc :example {:errors [{:message "The client is not authorized to execute the target operation in the referenced OLD."
+                                 :error-code "unauthorized"}]})))
 
 ;; `ErrorUnrecognizedAcceptHeader406`
 (def error-unrecognized-accept-header-406

@@ -1,24 +1,34 @@
 (ns old.core
-  "A Jetty/Ring HTTP server for serving the OLD REST API and a Swagger UI for
-   interacting with it. This supports `lein api`."
   (:require [com.stuartsierra.component :as component]
+            old.db.core
             [old.http.server :as server]
             [old.http.openapi.spec :as spec]
-            #_[old.http.operations.create-form :as create-form]
+            [old.http.operations.create-form :as create-form]
             [old.http.operations.index-forms :as index-forms]
-            [old.http.security.api-key :as api-key]))
+            [old.http.security.api-key :as api-key]
+            [old.system.db :as db]
+            [old.system.log :as system.log]
+            [taoensso.timbre :as log]))
+
+(defn make-main-system [http-port]
+  (component/system-map
+   :database (db/map->DB {:db-name :old})
+   :application (component/using
+                 (server/map->Application
+                  {:spec spec/api
+                   :operations {:index-forms index-forms/handle
+                                :create-form create-form/handle}
+                   :security-handlers {:api-key api-key/handle}})
+                 [:database])
+   :web-server (component/using
+                (server/map->WebServer {:handler-fn #'server/app
+                                        :port http-port})
+                [:application])))
 
 (defn -main []
   (let [port 8080
-        system (component/start
-                (component/system-map
-                 :application (server/map->Application
-                               {:spec spec/api
-                                :operations {:index-forms index-forms/handle}
-                                :security-handlers {:api-key api-key/handle}})
-                 :web-server (component/using (server/map->WebServer {:handler-fn #'server/app
-                                                                      :port port})
-                                              [:application])))]
-    (println "Serving OLD HTTP API at http://localhost:8080/.")
-    (println "Serving Swagger UI at http://localhost:8080/swagger-ui/dist/index.html.")
+        system (component/start (make-main-system port))]
+    (system.log/init)
+    (log/info (format "Serving OLD HTTP API at http://localhost:%s/." port))
+    (log/info (format "Serving Swagger UI at http://localhost:%s/swagger-ui/dist/index.html." port))
     (-> system :web-server :shutdown deref)))

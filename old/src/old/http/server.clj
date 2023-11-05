@@ -27,7 +27,7 @@
          (resource-mid/wrap-resource "public"))
      req)))
 
-(defrecord Application [spec operations security-handlers]
+(defrecord Application [spec operations security-handlers database]
   component/Lifecycle
   (start [this] (update this :spec serialize/denormalize))
   (stop [this] this))
@@ -45,6 +45,6 @@
   (stop [this]
     (if http-server
       (do (.stop http-server)
-          (assoc this :http-server nil)
-          (deliver shutdown true))
+          (deliver shutdown true)
+          (assoc this :http-server nil))
       this)))
