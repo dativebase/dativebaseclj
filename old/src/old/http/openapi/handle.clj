@@ -48,7 +48,7 @@
              spec-server (get-spec-server request-url spec)]
          (if spec-server
            (assoc ctx
-                  :request-path (->> request-url (drop (count spec-server)) (apply str))
+                  :request-path (:uri request)
                   :spec-server spec-server
                   :request-url request-url)
            (throw (errors/error-code->ex-info :unrecognized-request-url))))
@@ -242,7 +242,8 @@
    4. Construct a response using the `:operations` handlers of the `application`.
    5. Validate the response according to the operation spec."
   [{:as application :keys [spec]} request]
-  (let [[operationalized-context non-operationalized-error-response]
+  (let [[operationalized-context
+         non-operationalized-error-response]
         (try [(recognize-operation request spec) nil]
              (catch Exception e [nil (exception->response e)]))]
     (if non-operationalized-error-response

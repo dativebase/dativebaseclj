@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+DATABASE_HOST="${DATABASE_HOST:-localhost}"
+DATABASE_PORT="${DATABASE_PORT:-5432}"
+DATABASE_SCHEMAS="${DATABASE_SCHEMAS:-}"
+DATABASE_USER="${DATABASE_USER:-postgres}"
+DATABASE_NAME="${DATABASE_NAME:-${DATABASE_USER}}"
+
+export FLYWAY_USER="${DATABASE_USER}"
+export FLYWAY_PASSWORD="${DATABASE_PASSWORD:-}"
+export FLYWAY_URL="${DATABASE_URL:-jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}}"
+export FLYWAY_LOCATIONS="filesystem:${DATABASE_MIGRATIONS:-/flyway/sql}"
+export FLYWAY_TABLE="${DATABASE_SCHEMA_TABLE:-schema_version}"
+export FLYWAY_POSTGRESQL_TRANSACTIONAL_LOCK=false
+
+fw() {
+  local command="${1}"
+  if [[ -z "${DATABASE_SCHEMAS}" ]]; then
+    DATABASE_SCHEMAS_ARG=""
+  else
+    DATABASE_SCHEMAS_ARG="-schemas=${DATABASE_SCHEMAS}"
+  fi
+  /flyway/flyway \
+    -X \
+    -skipCheckForUpdate \
+    ${DATABASE_SCHEMAS_ARG} \
+    "${command}"
+}
+
+NUM_TRIES=0
+while [[ $NUM_TRIES -lt 10 ]]; do
+  command="${1:-migrate}"
+  if fw info; then
+    fw $command
+    exit $?
+  else
+    NUM_TRIES=$((NUM_TRIES + 1))
+    if [[ $NUM_TRIES -gt 5 ]]; then
+      sleep 60
+    elif [[ $NUM_TRIES -gt 1 ]]; then
+      sleep 5
+    else
+      sleep 1
+    fi
+  fi
+done
+
+echo "Could not run flyway info"
+exit 1

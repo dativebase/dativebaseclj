@@ -16,6 +16,7 @@
    :coercion-to-number-error [400 "The provided string value cannot be coerced to a number."]
    :complex-validation-error [400 "The input is invalid according to a oneOf, anyOf or allOf validator."] ;; I'm not sure if this can actually ever be thrown
    :duplicate-items [400 "The provided array contains duplicate items. All items must be unique."]
+   :inconsistent-pagination-inputs [400 "The provided pagination inputs are not consistent with the state of this OLD and the resource targeted."]
    :invalid-array [400 "The provided value is not a valid array."]
    :invalid-boolean [400 "The provided value is not a valid boolean."]
    :invalid-date [400 "The provided value is not a valid date string as per RFC 3339, section 5.6."]
@@ -41,6 +42,8 @@
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
    ;; 401
    :unauthenticated [401 "Failure to authenticate."]
+   ;; 403
+   :unauthorized [403 "The authenticated user is not authorized for the target operation."]
    ;; 404
    :unrecognized-operation [404 "The requested URL path and HTTP method combination is not recognized by this API."]
    :unrecognized-request-path [404 "The requested URL path is not recognized by this API."]
@@ -51,6 +54,7 @@
    :error-unimplemented-operation [500 "Error: server lacks an implementation for the requested operation."]
    :error-unimplemented-security-handler [500 "Error: server lacks an implementation for a required component of the request."]
    :error-unrecognized-response-status [500 "Error: server attempted to return a response status that is inconsistent with this API."]
+   :form-creation-internal-error [500 "An unexpected exception occurred when attempting to create a form."]
    :old-unexpected-error [500 "An unexpected error occurred while attempting to respond to the request."]
    :unrecognized-data-type-in-openapi-schema [500 "Unrecognized data type. Unable to validate."]})
 

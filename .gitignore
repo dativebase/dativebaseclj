@@ -19,3 +19,4 @@ dev-config.env
 **/.clj-kondo/.cache/
 .lsp
 old/resources/public/swagger-ui/
+.spectral.yaml

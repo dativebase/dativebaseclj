@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  postgres:
+    build: images/postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DBS: "old"
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - '127.0.0.1:5432:5432'
+  migrator:
+    build:
+      context: .
+      dockerfile: ./migrator.Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: 'jdbc:postgresql://postgres:5432/old'
+      DATABASE_USER: 'postgres'
+      DATABASE_PASSWORD: ''

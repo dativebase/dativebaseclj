@@ -1,10 +1,7 @@
 SHELL := /bin/bash
 
-lint-kondo:  ## Lint the OLD Clojure code using clj-kondo
-	@clj-kondo --lint src:test
-
-db:  ## Connect to the OLD DB via mysql
-	@docker-compose exec mysql -u admin -p db
+db:  ## Connect to OLD db via psql
+	@docker-compose exec --user=postgres postgres psql old
 
 .spectral.yaml:  ## Generate .spectral.yaml (the spectral OpenAPI ruleset) and write it to ./.spectral.yaml.
 	@echo 'extends: ["spectral:oas"]' > .spectral.yaml
@@ -16,6 +13,23 @@ install-swagger-ui:  ## Clone the swagger-ui source and update it to point to ou
 	@if [ -d "resources/public/swagger-ui" ]; then echo "The swagger-ui source has already been cloned."; else git clone git@github.com:swagger-api/swagger-ui.git resources/public/swagger-ui; fi
 	@sed -i'.bak' 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/\/openapi\/api.yaml/g' resources/public/swagger-ui/dist/swagger-initializer.js
 	@echo "The swagger-ui should now be configured for resources/public/openapi/api.yaml."
+
+schema.sql: export CONTAINER ?= old_postgres_1
+schema.sql: DATABASE ?= old
+schema.sql: PGUSER ?= postgres
+schema.sql: PG_DUMP_COMMAND ?= "docker exec ${CONTAINER} pg_dump"
+schema.sql: migrator/sql/*  ## Dump the db schema to schema.sql (iff there are migrations newer than existing schema)
+	@set -e; \
+		eval $(PG_DUMP_COMMAND) \
+			--schema-only \
+			--no-privileges \
+			--no-owner \
+			--username="${PGUSER}" \
+			"${DATABASE}" | \
+			grep --invert-match "\-\-" | \
+			tr -d '\r' | \
+			cat -s > \
+			schema.sql
 
 help:  ## Print this help message.
 	@grep -E '^[a-zA-Z_\.-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

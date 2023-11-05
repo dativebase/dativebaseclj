@@ -22,11 +22,16 @@
          :example "f9a19ceb-fca4-4e96-a5cb-cf1e329763a0"}
     :transcription {:type :string
                     :description "The orthographic transcription of the form."
-                    :example "Les chiens mangaient."}}
+                    :example "Les chiens mangaient."}
+    :old-slug {:type :string
+               :description "The unique identifier of the OLD. The slug should only contain letters, numbers, and the dash or the underscore."
+               :example "lan-old"}}
    :required [:id
-              :transcription]
+              :transcription
+              :old-slug]
    :example {:id "f9a19ceb-fca4-4e96-a5cb-cf1e329763a0"
-             :transcription "Les chiens mangaient."}})
+             :transcription "Les chiens mangaient."
+             :old-slug "lan-old"}})
 
 ;; `FormWrite`
 (def form-write
@@ -34,9 +39,9 @@
    :properties
    {:transcription {:type :string
                     :description "The orthographic transcription of the form."
-                    :example "Les chiens mangaient."}}
+                    :example "Les chiens mangeaient."}}
    :required [:transcription]
-   :example {:transcription "Les chiens mangaient."}})
+   :example {:transcription "Les chiens mangeaient."}})
 
 ;; `PageOfForms`
 (def page-of-forms
@@ -45,19 +50,90 @@
                        :description "The forms returned as response to a GET index type request."
                        :items {:$ref "#/components/schemas/Form"}}
                 :meta {:type :object
-                       :properties {:current-token {:type :string
-                                                    :description "An opaque token that can be used to re-request the current page of forms. To request the page matching this token, pass the token as the value of pagination_token in the request query parameters, e.g., ?pagination_token=<PAGINATION_TOKEN>."
-                                                    :example "6140w"}
-                                    :next-token {:type :string
-                                                 :description "An opaque token that can be used to request the next page of forms that match the filter parameters of the current request. If there is no next page, then this property will be absent. To request the page matching this token, pass the token as the value of pagination_token in the request query parameters, e.g., ?pagination_token=<PAGINATION_TOKEN>."
-                                                 :example "8140w"}
-                                    :previous-token {:type :string
-                                                     :description "An opaque token that can be used to request the previous page of forms that match the filter parameters of the current request. If there is no previous page, then this property will be absent. To request the page matching this token, pass the token as the value of pagination_token in the request query parameters, e.g., ?pagination_token=<PAGINATION_TOKEN>."
-                                                     :example "9140w"}}
-                       :example {:current-token "6140w"
-                                 :next-token "8140w"}}}
+                       :properties {:count {:type :integer
+                                            :description "The count of all forms in this OLD."
+                                            :example 1234}
+                                    :page {:type :integer
+                                           :description "The 0-based index of the page of forms being returned. This value only makes sense given a count of forms in the target OLD and the value of items-per-page."
+                                           :default 0
+                                           :example 0}
+                                    :items-per-page {:type :integer
+                                                     :enum [1 5 10 50]
+                                                     :description "The maximum number of forms in a page of forms."
+                                                     :default 10
+                                                     :example 10}}
+                       :required [:count :page :items-per-page]
+                       :example {:count 1234
+                                 :page 0
+                                 :items-per-page 10}}}
    :required [:data
               :meta]
    :example {:data [{:id "f9a19ceb-fca4-4e96-a5cb-cf1e329763a0"
-                     :transcription "Les chiens mangaient."}]
-             :meta {:next-token "8140w"}}})
+                     :transcription "Les chiens mangaient."
+                     :old-slug "lan-old"}]
+             :meta {:count 1234
+                    :page 0
+                    :items-per-page 1}}})
+
+;; `NewFormData`
+;; TODO: add more data to this ...
+;; - grammaticalities
+;; - elicitation_methods
+;; - tags
+;; - syntactic_categories
+;; - speakers
+;; - users
+;; - sources
+(def new-form-data
+  {:type :object
+   :properties
+   {:grammaticalities
+    {:type :array
+     :description "The available grammaticalities that can be specified for forms in this OLD."
+     :items {:type :string
+             :description "A grammaticality"
+             :example "*"}}}
+   :required [:grammaticalities]
+   :example {:grammaticalities ["*"]}})
+
+;; `EditFormData`
+(def edit-form-data new-form-data)
+
+(def example-forms-search
+  {:operator :and
+   :complement
+   [{:resource :translation
+     :attribute :transcription
+     :operator :like
+     :value "1"}
+    {:operator :not
+     :complement
+     {:resource :form
+      :attribute :morpheme-break
+      :operator :regex
+      :value "[28][5-7]"}}
+    {:operator :or
+     :complement
+     [{:resource :form
+       :attribute :datetime-modified
+       :operator :less-than
+       :value "2012-03-01T00:00:00"}
+      {:resource :form
+       :attribute :datetime-modified
+       :operator :greater-than
+       :value "2012-01-01T00:00:00"}]}]})
+
+;; TODO
+;; `FormsSearch`
+(def forms-search
+  {:type :object
+   :properties
+   {:query
+    {:type :object
+     :properties
+     {:filter {:type :object}
+      :order-by {:type :object}}
+     :required [:filter]}
+    :paginator {:type :object}}
+   :required [:query]
+   :example {}})
