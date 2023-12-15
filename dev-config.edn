@@ -1,0 +1,5 @@
+{:server-port 8080
+ :log-file-path "logs/dativebase.log"
+ :db {:name "dativebase"
+      :user "postgres"
+      :password ""}}

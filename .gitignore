@@ -18,5 +18,7 @@ scratch.clj
 dev-config.env
 **/.clj-kondo/.cache/
 .lsp
-old/resources/public/swagger-ui/
+resources/public/swagger-ui/
 .spectral.yaml
+README-PRIVATE.rst
+.cpcache/

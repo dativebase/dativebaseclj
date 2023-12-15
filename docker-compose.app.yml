@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  dativebase:
+    build:
+      context: "."
+      dockerfile: "Dockerfile"
+    depends_on:
+      - postgres
+    ports:
+      - '127.0.0.1:8080:8080'
