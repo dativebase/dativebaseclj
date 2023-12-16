@@ -59,48 +59,8 @@ jobs:
           name: "Run the tests"
           command: "clojure -M:test -m kaocha.runner"
 
-  test-gui:
-    docker:
-      - image: "theasp/clojurescript-nodejs:shadow-cljs-alpine"
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - dativebasegui-{{ checksum "shadow-cljs.edn" }}
-      - run:
-          name: "Fetch dependencies"
-          command: "npm install"
-      - save_cache:
-          key: dativebasegui-{{ checksum "shadow-cljs.edn" }}
-          paths:
-            - ~/project/node_modules
-            - ~/project/.shadow-cljs
-            - ~/.m2
-      - run:
-          name: "Run the tests"
-          command: "npx shadow-cljs compile test && node out/node-tests.js"
-
-  deploy:
-    docker:
-      - image: cimg/base:2022.01
-    steps:
-      - checkout
-      - run:
-          name: "Deploy Backend and GUI"
-          command: ssh -oStrictHostKeyChecking=no -v $USER@$IP "/home/jrwdunham/deploydativebase.sh"
-
 workflows:
   version: 2
-  test-deploy:
+  test:
     jobs:
       - test
-      - test-gui
-      - deploy:
-          requires:
-            - test
-            - test-gui
-          context:
-            - General
-          filters:
-            branches:
-              only: main
