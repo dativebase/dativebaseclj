@@ -7,6 +7,8 @@
             [dvb.server.http.operations.delete-form :as delete-form]
             [dvb.server.http.operations.index-forms :as index-forms]
             [dvb.server.http.operations.login :as login]
+            [dvb.server.http.operations.show-form :as show-form]
+            [dvb.server.http.operations.show-user :as show-user]
             [dvb.server.http.operations.update-form :as update-form]
             [dvb.server.http.security.api-key :as api-key]
             [dvb.server.system.config :as config]
@@ -20,6 +22,8 @@
   {:index-forms index-forms/handle
    :create-form create-form/handle
    :delete-form delete-form/handle
+   :show-form show-form/handle
+   :show-user show-user/handle
    :update-form update-form/handle
    :login login/handle})
 

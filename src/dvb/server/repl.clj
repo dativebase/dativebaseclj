@@ -1,10 +1,12 @@
 (ns dvb.server.repl
-  (:require [com.stuartsierra.component.repl :as component.repl]
+  (:require [clojure.pprint :as pp]
+            [com.stuartsierra.component.repl :as component.repl]
             [dvb.common.openapi.spec :as spec]
             [dvb.client.core :as client]
             [dvb.server.core :as core]
             #_[dvb.server.db.api-keys :as db.api-keys]
             [dvb.server.db.events :as db.events]
+            [dvb.server.db.forms :as db.forms]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.test-queries :as test-queries]
             [dvb.server.db.users :as db.users]
@@ -37,13 +39,17 @@
 
 (comment
 
-  (def openapi-path "resources/public/openapi/api.yaml")
+  (do ;; evaluate entire do block to reload the OpenAPI spec
 
-  ;; Write the Clojure OpenAPI to disk as YAML:
-  (openapi.serialize/clojure-openapi->disk spec/api openapi-path)
+    (def openapi-path "resources/public/openapi/api.yaml")
 
-  ;; This will return nil if valid and throw if invalid
-  (sh/lint-openapi openapi-path)
+    ;; Write the Clojure OpenAPI to disk as YAML:
+    (openapi.serialize/clojure-openapi->disk spec/api openapi-path)
+
+    ;; This will return nil if valid and throw if invalid
+    (sh/lint-openapi openapi-path)
+
+    )
 
 )
 
@@ -65,6 +71,8 @@
                                       :email email
                                       :password password}))
 
+  (def fetched-user (db.users/get-user-by-email db email))
+
   ;; Create an OLD for our user to interact with
   (def old-slug "fra")
 
@@ -72,12 +80,20 @@
                                        :name "French OLD"}))
 
   ;; Grant our user access to our OLD by creating a users_olds row:
-  (def user-old (db.users/create-user-old db {:user-id (:id user)
+  (def user-old (db.users/create-user-old db {:user-id (:id fetched-user)
                                               :old-slug old-slug
                                               :role "administrator"}))
 
   ;; Get the user with their OLDs:
-  (def user-with-roles (db.users/get-user-with-roles db (:id user)))
+  (def user-with-roles (db.users/get-user-with-roles db (:id fetched-user)))
+
+)
+
+(comment
+
+  (def some-form-id "4e3ea6ee-c20a-4c37-869d-4a585180f046")
+
+  (db.forms/get-form db some-form-id)
 
 )
 
@@ -156,7 +172,7 @@
 
   ;; View the history of transcription values for the form updated and deleted
   ;; above.
-  (clojure.pprint/pprint
+  (pp/pprint
    (->> (db.events/get-history db old-slug "forms"
                                (-> delete-form-response :body :id))
         (map (comp :transcription :row-data))))

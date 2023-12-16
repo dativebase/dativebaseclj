@@ -36,7 +36,8 @@
           :schema {:type :string :format :date}})
      {:date '2023-12-25'}"
   (:require [dvb.common.openapi.errors :as errors]
-            [dvb.common.openapi.validate :as validate]))
+            [dvb.common.openapi.validate :as validate]
+            [taoensso.timbre :as log]))
 
 (defn validate
   "Validate `value` according to `schema`. The optional `path` parameter is the
@@ -58,6 +59,10 @@
                             :path path}
                            (or data {}))))))
         (catch Exception e
+          (log/warn e "Unexpected error during validate."
+                    {:value value
+                     :schema schema
+                     :path path})
           (throw (errors/error-code->ex-info
                   :unexpected-error
                   {:value value
@@ -83,6 +88,9 @@
                            :spec spec}
                           (or data {}))))))
        (catch Exception e
+         (log/warn e "Unexpected error during validate parameters against single spec."
+                   {:params params
+                    :spec spec})
          (throw (errors/error-code->ex-info
                  :unexpected-error
                  {:params params

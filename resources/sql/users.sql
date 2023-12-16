@@ -8,7 +8,6 @@ UPDATE users
 SET first_name = :first-name,
     last_name = :last-name,
     email = :email,
-    password = :password,
     updated_at = now()
 WHERE id = :id::uuid
 RETURNING id, first_name, last_name, email, password, created_at, updated_at, destroyed_at

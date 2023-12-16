@@ -1,6 +1,5 @@
 (ns dvb.server.db.api-keys
   (:require [clojure.set :as set]
-            [dvb.server.db.utils :as utils]
             [hugsql.core :as hugsql]))
 
 (defn- api-key-row->api-key-entity [api-key-row]

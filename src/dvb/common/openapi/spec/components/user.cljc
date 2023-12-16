@@ -45,3 +45,24 @@
              :created-at "2023-08-20T01:34:11.780Z"
              :updated-at "2023-08-20T01:34:11.780Z"
              :destroyed-at nil}})
+
+;; `UserWrite`
+(def user-write
+  (-> user
+      (update :properties
+              (fn [properties]
+                (-> properties
+                    (dissoc :id :created-at :updated-at :destroyed-at)
+                    (assoc :password
+                           {:type :string
+                            :description "The password for the to-be-created user. This can never again be fetched from the API.",
+                            :example "8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF"}))))
+      (assoc :required [:first-name
+                        :last-name
+                        :email
+                        :password]
+             :example {:first-name "Anne"
+                       :last-name "Boleyn"
+                       :email "ab@gmail.com"
+                       :password "long-arbitrary-lots-of-entropy"})))
+

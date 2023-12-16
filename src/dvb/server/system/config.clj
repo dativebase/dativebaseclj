@@ -1,6 +1,6 @@
 (ns dvb.server.system.config
-  (:require [clojure.edn :as edn]
-            [clojure.spec.alpha :as s])
+  (:require [clojure.spec.alpha :as s]
+            [dvb.server.utils :as utils])
   (:import (java.io File)))
 
 (s/def ::server-port
@@ -20,7 +20,7 @@
 
 (defn read-config-file [config-path]
   (try
-    (-> config-path slurp edn/read-string)
+    (-> config-path slurp utils/read-string)
     (catch Exception e
       (throw (ex-info "Malformed config file" {:config-path config-path
                                                :ex-message (ex-message e)

@@ -42,10 +42,12 @@
              :email "TODO@gmail.com"}})
 
 (def tags
-  [{:name :FormsTag
+  [{:name :Authentication
+    :description "Operations related to authentication."}
+   {:name :FormsTag
     :description "Operations on forms."}
-   {:name :Authentication
-    :description "Operations related to authentication."}])
+   {:name :UsersTag
+    :description "Operations on users."}])
 
 (def servers
   [{:url "http://localhost:8080"
@@ -78,18 +80,19 @@
    :ErrorUnauthorized403 error/error-unauthorized-403
    :ErrorUnrecognizedAcceptHeader error/error-unrecognized-accept-header
    :ErrorUnrecognizedAcceptHeader406 error/error-unrecognized-accept-header-406
-   :NewFormData form/new-form-data
-   :Form form/form
-   :FormWrite form/form-write
-   :FormsSearch form/forms-search
-   :Login login/login
    :ErrorServer error/error-server
    :ErrorServer500 error/error-server-500
    :ErrorUnavailable error/error-unavailable
    :ErrorUnavailable503 error/error-unavailable-503
+   :Form form/form
+   :FormsSearch form/forms-search
+   :FormWrite form/form-write
+   :Login login/login
+   :NewFormData form/new-form-data
    :PageOfForms form/page-of-forms
    :User user/user
-   :UserAndAPIKey user-and-api-key})
+   :UserAndAPIKey user-and-api-key
+   :UserWrite user/user-write})
 
 (def uuid-string-regex (str "^"
                             "[a-f0-9]{8}-"
@@ -111,6 +114,12 @@
                       :required true
                       :schema {:type :string
                                :pattern "^[a-zA-Z0-9_-]+$"}}
+   :userIDParam {:name :user_id
+                 :in :path
+                 :description "The ID of the referenced user."
+                 :required true
+                 :schema {:type :string
+                          :pattern uuid-string-regex}}
    :formIDParam {:name :form_id
                  :in :path
                  :description "The ID of the referenced form."
@@ -324,13 +333,64 @@
            "400" {:description "The request to login was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
 
+(def user-path
+  {:get
+   {:operation-id :show-user
+    :summary "Return the user with the provided ID."
+    :description "Return the user with the provided ID."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The user."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request for a specific user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   :delete
+   {:operation-id :delete-user
+    :summary "Delete the user with the provided ID."
+    :description "Delete the user with the provided ID. This is a soft delete. The user data are not actually removed from the database. However, the system will behave as though the user no longer exists."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The deleted user."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to delete the specified user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   :put
+   {:operation-id :update-user
+    :summary "Update the user with the provided ID."
+    :description "Update the user with the provided ID using the JSON payload of the request."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    :request-body
+    {:description "The payload representing the desired new state of the user. This payload must conform to the schema UserWrite."
+     :required true
+     :content {:application-json {:schema {:$ref "#/components/schemas/UserWrite"}}}}
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The updated user."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to update the specified user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
 (def paths
   {"/api/v1/login" login-path
    "/api/v1/{old_slug}/forms/new" new-form-path
    "/api/v1/{old_slug}/forms/search" search-forms-path
    "/api/v1/{old_slug}/forms/{form_id}/edit" edit-form-path
    "/api/v1/{old_slug}/forms/{form_id}" form-path
-   "/api/v1/{old_slug}/forms" forms-path})
+   "/api/v1/{old_slug}/forms" forms-path
+   ;; "/api/v1/users/new" new-user-path
+   ;; "/api/v1/users/search" search-users-path
+   ;; "/api/v1/users/{user_id}/edit" edit-user-path
+   ;; "/api/v1/users" users-path
+   "/api/v1/users/{user_id}" user-path
+   })
 
 (def api
   {:components
