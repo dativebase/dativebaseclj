@@ -1,6 +1,6 @@
 -- :name create-form* :returning-execute-kebab
 INSERT INTO forms (old_slug, created_by, transcription)
-VALUES (:old-slug, :created-by-user-id, :transcription)
+VALUES (:old-slug, :created-by, :transcription)
 RETURNING id, old_slug, transcription, created_by, inserted_at, created_at, updated_at, destroyed_at
 
 -- :name update-form* :returning-execute-kebab

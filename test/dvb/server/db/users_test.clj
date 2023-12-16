@@ -23,16 +23,15 @@
                             {:first-name "Alice"
                              :last-name "Bobson"
                              :email "ab@hmail.com"
-                             :username "ab"
                              :password "ENCRYPTME!!!"})
      :database database}))
 
 (deftest users-can-be-created-read-updated-deleted
-  (let [{:keys [user database database]} (set-up)]
+  (let [{:keys [user database]} (set-up)]
     (try
       (testing "We can create a new user."
         (is (uuid? (:id user)))
-        (is (= ["ab" "Bobson"] ((juxt :username :last-name) user)))
+        (is (= ["ab@hmail.com" "Bobson"] ((juxt :email :last-name) user)))
         (is (inst? (:created-at user)))
         (is (inst? (:updated-at user)))
         (is (= (:updated-at user) (:created-at user)))
@@ -62,7 +61,7 @@
       (finally (component/stop database)))))
 
 (deftest users-can-be-given-roles-on-olds-and-said-roles-can-be-revoked
-  (let [{:keys [old user database database]} (set-up)]
+  (let [{:keys [old user database]} (set-up)]
     (try
       (testing "A user's roles are an empty map when there are no roles."
         (let [user-with-roles (sut/get-user-with-roles database (:id user))]
@@ -107,7 +106,7 @@
       (finally (component/stop database)))))
 
 (deftest we-can-create-and-destroy-machine-users-for-users
-  (let [{:keys [user database database]} (set-up)]
+  (let [{:keys [user database]} (set-up)]
     (try
       (testing "A fresh user has no machine users."
         (is (empty? (sut/get-machine-users-for-user database (:id user)))))

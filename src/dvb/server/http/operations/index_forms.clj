@@ -2,7 +2,6 @@
   (:require [clojure.java.jdbc :as jdbc]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils :as utils]
             [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.http.utils.pagination :as pagination]
             [taoensso.timbre :as log]))

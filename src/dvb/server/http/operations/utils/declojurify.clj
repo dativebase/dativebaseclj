@@ -1,4 +1,7 @@
-(ns dvb.server.http.operations.utils.declojurify)
+(ns dvb.server.http.operations.utils.declojurify
+  (:require [dvb.common.openapi.spec :as spec]))
+
+(def schemas (-> spec/api :components :schemas))
 
 (defn maybe-instant->str [maybe-instant]
   (when maybe-instant (str maybe-instant)))
@@ -6,6 +9,7 @@
 (defn common [entity]
   (-> entity
       (update :id str)
+      (update :created-by str)
       (update :created-at maybe-instant->str)
       (update :updated-at maybe-instant->str)
       (update :destroyed-at maybe-instant->str)))
@@ -13,7 +17,8 @@
 (defn user [user*]
   (-> user*
       common
-      (dissoc :password)))
+      (dissoc :password)
+      (select-keys (-> schemas :User :properties keys))))
 
 (defn api-key [api-key*]
   (-> api-key*
@@ -24,4 +29,5 @@
 
 (defn form [form*]
   (-> form*
-      common))
+      common
+      (select-keys (-> schemas :Form :properties keys))))

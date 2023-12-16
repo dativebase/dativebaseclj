@@ -2,12 +2,11 @@
   (:require [dvb.common.openapi.errors :as errors]
             [dvb.server.db.api-keys :as db.api-keys]
             [dvb.server.db.users :as db.users]
-            [dvb.server.encrypt :as encrypt]
             [taoensso.timbre :as log])
   (:import (java.util UUID)))
 
 (defn handle
-  [{:as _system :keys [database]} _ctx {:as x :keys [x-app-id x-api-key]}]
+  [{:as _system :keys [database]} _ctx {:keys [x-app-id x-api-key]}]
   (log/info "API key authentication attempt.")
   (when-not x-app-id
     (log/warn "No X-APP-ID value was supplied in the request.")

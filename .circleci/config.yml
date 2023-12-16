@@ -1,15 +1,16 @@
 version: 2.1
 
 jobs:
+
   test:
     docker:
       - image: "clojure:temurin-11-tools-deps-1.11.1.1347"
         environment:
-          DATABASE_URL: "jdbc:postgresql://localhost:5432/ohspg?user=postgres&password="
-      - image: "postgres:12-alpine"
+          DATABASE_URL: "jdbc:postgresql://localhost:5432/dativebase?user=postgres&password="
+      - image: "postgres:16-alpine"
         environment:
           POSTGRES_USER: "postgres"
-          POSTGRES_DB: "ohspg"
+          POSTGRES_DB: "dativebase"
           POSTGRES_HOST_AUTH_METHOD: "trust"
     steps:
       - checkout
@@ -30,12 +31,12 @@ jobs:
             chmod a+x /flyway/flyway
       - restore_cache:
           keys:
-            - ohspg-{{ checksum "deps.edn" }}
+            - dativebase-{{ checksum "deps.edn" }}
       - run:
           name: "Fetch dependencies"
           command: "clojure -A:deps"
       - save_cache:
-          key: ohspg-{{ checksum "deps.edn" }}
+          key: dativebase-{{ checksum "deps.edn" }}
           paths:
             - ~/.m2
       - run:
@@ -50,7 +51,7 @@ jobs:
           name: "Run migrations"
           command: sleep 3 && scripts/run-migrations
           environment:
-            DATABASE_URL: 'jdbc:postgresql://localhost:5432/ohspg'
+            DATABASE_URL: 'jdbc:postgresql://localhost:5432/dativebase'
             DATABASE_USER: 'postgres'
             DATABASE_PASSWORD: ''
             DATABASE_MIGRATIONS: 'migrator/sql'
@@ -65,12 +66,12 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - ohspggui-{{ checksum "shadow-cljs.edn" }}
+            - dativebasegui-{{ checksum "shadow-cljs.edn" }}
       - run:
           name: "Fetch dependencies"
           command: "npm install"
       - save_cache:
-          key: ohspggui-{{ checksum "shadow-cljs.edn" }}
+          key: dativebasegui-{{ checksum "shadow-cljs.edn" }}
           paths:
             - ~/project/node_modules
             - ~/project/.shadow-cljs
@@ -86,7 +87,7 @@ jobs:
       - checkout
       - run:
           name: "Deploy Backend and GUI"
-          command: ssh -oStrictHostKeyChecking=no -v $USER@$IP "/home/jrwdunham/deployohspg.sh"
+          command: ssh -oStrictHostKeyChecking=no -v $USER@$IP "/home/jrwdunham/deploydativebase.sh"
 
 workflows:
   version: 2

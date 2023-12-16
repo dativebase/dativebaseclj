@@ -1,5 +1,5 @@
 (ns dvb.server.db.events
-  (:require [clojure.edn :as edn]
+  (:require [dvb.server.utils :as utils]
             [hugsql.core :as hugsql]))
 
 (declare get-history*
@@ -11,9 +11,6 @@
 
 (defn create-event [db-conn event]
   (insert-event* db-conn (update event :row-data pr-str)))
-
-(defn read-string* [s]
-  (edn/read-string {:readers *data-readers*} s))
 
 (defn get-history
   "Return the history of the referenced entity. Return at most `limit` events,
@@ -30,5 +27,5 @@
                             :table-name table-name
                             :row-id row-id
                             :limit limit})]
-     (mapv (fn [event] (update event :row-data read-string*))
+     (mapv (fn [event] (update event :row-data utils/read-string))
            events))))

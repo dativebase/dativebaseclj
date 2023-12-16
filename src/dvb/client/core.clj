@@ -23,6 +23,7 @@
   (str base-url "/api/v1/" old "/forms/" form-id))
 
 (defn login-url [base-url] (str base-url "/api/v1/login"))
+
 (defn user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id))
 
@@ -56,6 +57,10 @@
              :body (json/encode {:email email :password password}))
       client/request
       simple-response))
+
+;; TODO: create a persistent & stateful client using core.async. Rationale: the
+;; client can indicate when its credentials are expired and prompt the user for
+;; re-authentication.
 
 (defn authenticate-client [client email password]
   (let [{:keys [status body]} (login client email password)]
@@ -121,105 +126,59 @@
 
 (comment
 
-  (def client (authenticate-client
-               (make-client)
-               "ab@gmail.com"
-               "abc"))
+  (def email "uu1@gmail.com")
+
+  (def password "uu1pw")
+
+  (def old-slug "fra")
+
+  (def client (authenticate-client (make-client) email password))
 
   (:authenticated? client)
 
-  (def client (authenticate-client
-               (make-client)
-               "abc@bmail.com"
-               "abc"))
-
-  (def client (authenticate-client
-               (make-client)
-               "jrwdunham@gmail.com"
-               "abcDE12!"))
-
   (dissoc client :spec)
 
-  (show-user client "d4c12cef-c2fd-44ea-b365-7dd15ca338a3")
+  (def contingent-user-id "5c76c8cd-ac06-4f44-a60d-571da90b2f5e")
 
-  (show-user client "x4c12cef-c2fd-44ea-b365-7dd15ca338a3") ;; invalid UUID
+  (show-user client contingent-user-id) ;; 200 OK
 
-  (show-user client (:id (:user client)))
+  (show-user client "x4c12cef-c2fd-44ea-b365-7dd15ca338a3") ;; invalid UUID: 400
 
-  (create-form client
-                  {:name "Meta"
-                   :work-type "mining"})
+  (show-user client (:id (:user client))) ;; whoami?
 
-  (create-form client
-                  {:name "Zoomba"
-                   :work-type "cows"})
+  (def created-form (create-form client
+                                 old-slug
+                                 {:transcription "Les ..."}))
 
-  (update-form client
-                  "c23a65f0-d135-4358-bf69-c6f2f03f7754"
-                  {:name "Zoomba"
-                   :work-type "cows and hawses and varmints, oh my!"})
+  (def updated-form (update-form client
+                                 old-slug
+                                 (-> created-form :body :id)
+                                 {:transcription "Les chiens ..."})) ;; NOT idempotent
 
-  (show-form client "0139d40b-e835-472b-a4b4-14c33aaa140a")
+  (show-form client old-slug (-> created-form :body :id)) ;; 200
 
-  (show-form client "7526b571-9a37-44f5-a139-06c36ab48dbf")
+  (show-form client old-slug (str (random-uuid))) ;; 404
 
-  (show-form client "a526b571-9a37-44f5-a139-06c36ab48dbf")
+  (show-form client old-slug "abc") ;; 400: not a valid UUID
 
-  (show-form client "abc")
+  (def deleted-form (delete-form client
+                                 old-slug
+                                 (-> created-form :body :id))) ;; 200; not idempotent: repeat triggers 404 cuz form is technically no longer extant
 
-  (show-form client "491f6f4f-bd22-4674-9a93-2a1c45976367")
+  (delete-form client old-slug "foo")
 
-  (delete-form client "491f6f4f-bd22-4674-9a93-2a1c45976367")
+)
 
-  (delete-form client "7526b571-9a37-44f5-a139-06c36ab48dbf")
-
-  (delete-form client "21034ace-2abf-48c6-a071-ae9a7733ee96")
-
-  ;; Production!!!
+;; Production API Interactions. Be Careful!!!
+(comment
 
   (def prod-client (authenticate-client
                     (make-client :prod)
-                    "jrwdunham@gmail.com"
-                    "abcDE12!"))
+                    "REDACTED"
+                    "REDACTED"))
 
   (keys prod-client)
 
   (dissoc prod-client :spec)
-
-  (show-user prod-client "83fe6f05-d33d-42ce-8303-822239478b5b")
-
-  (create-form prod-client
-                  {:name "Meta"
-                   :owner-id "83fe6f05-d33d-42ce-8303-822239478b5b"
-                   :work-type "mining"})
-
-  (create-form prod-client
-                  {:name "Zoomba"
-                   :owner-id "83fe6f05-d33d-42ce-8303-822239478b5b"
-                   :work-type "surfing"})
-
-  (create-form prod-client
-                  {:name "Goomba"
-                   :owner-id "83fe6f05-d33d-42ce-8303-822239478b5b"
-                   :work-type "basting"})
-
-  (show-form prod-client "3764db17-0148-43ac-9efe-148363c4aaf2")
-
-  (update-form prod-client
-                  "3764db17-0148-43ac-9efe-148363c4aaf2"
-                  {:name "Goomba"
-                   :work-type "basting and lambasting (and lamb-basting)"})
-
-  (delete-form prod-client "3764db17-0148-43ac-9efe-148363c4aaf2")
-
-  ;; FOX
-
-  (show-form prod-client "8d7ee551-7fdf-44a4-8fea-b17f9993bfac")
-
-  (show-form prod-client "abc")
-
-  (show-form prod-client "ad7ee551-7fdf-44a4-8fea-b17f9993bfac")
-
-  (delete-form prod-client "8d7ee551-7fdf-44a4-8fea-b17f9993bfac")
 
 )

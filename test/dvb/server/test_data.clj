@@ -77,7 +77,7 @@
                               (db.forms/create-form
                                database
                                (gen-form {:old-slug slug
-                                          :created-by-user-id user-id})))
+                                          :created-by user-id})))
                             (range 10))))
       (finally (component/stop db-component)))))
 

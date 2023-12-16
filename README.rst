@@ -8,6 +8,10 @@ anybody who needs to manage language-focused data. DativeBase facilitates
 storing, searching, sharing, and analyzing linguistic data.
 
 
+Continuous Integration & Deployment
+================================================================================
+
+
 TODOs
 ================================================================================
 

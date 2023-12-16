@@ -5,15 +5,15 @@
 (s/def ::id uuid?)
 (s/def ::old-slug string?)
 (s/def ::transcription ::common/non-empty-string)
-(s/def ::created-by-user-id uuid?)
+(s/def ::created-by uuid?)
 
 (s/def ::form
   (s/keys :req-un [::id
                    ::old-slug
                    ::transcription
-                   ::created-by-user-id]))
+                   ::created-by]))
 
 (s/def ::create-form
   (s/keys :req-un [::old-slug
                    ::transcription
-                   ::created-by-user-id]))
+                   ::created-by]))

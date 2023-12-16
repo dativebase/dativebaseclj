@@ -10,11 +10,11 @@
   (log/info "Creating a form.")
   (authorize/authorize ctx)
   (let [old-slug (-> ctx :path :old_slug)
-        created-by-user-id (utils/security-user-id ctx)
+        created-by (utils/security-user-id ctx)
         {:keys [request-body]} ctx
         form-to-create (assoc request-body
                               :old-slug old-slug
-                              :created-by-user-id created-by-user-id)
+                              :created-by created-by)
         created-form (try
                        (db.forms/create-form database form-to-create)
                        (catch Exception e

@@ -25,13 +25,38 @@
                     :example "Les chiens mangaient."}
     :old-slug {:type :string
                :description "The unique identifier of the OLD. The slug should only contain letters, numbers, and the dash or the underscore."
-               :example "lan-old"}}
+               :example "lan-old"}
+    :created-at {:type :string
+                 :format :date-time
+                 :description "The date and time at which the form was created."
+                 :example "2023-08-20T01:34:11.780Z"}
+    :updated-at {:type :string
+                 :format :date-time
+                 :description "The date and time at which the form was updated."
+                 :example "2023-08-20T01:34:11.780Z"}
+    :destroyed-at {:type :string
+                   :format :date-time
+                   :nullable true
+                   :description "The date and time at which the form was destroyed; NULL if the user has not been destroyed."
+                   :example nil}
+    :created-by {:type :string
+                 :format :uuid
+                 :description "The ID (UUID) of the user who created the form."
+                 :example "9328472d-c4d4-4d02-b444-1dd0de3479d3"}}
    :required [:id
               :transcription
-              :old-slug]
+              :old-slug
+              :created-by
+              :created-at
+              :updated-at
+              :destroyed-at]
    :example {:id "f9a19ceb-fca4-4e96-a5cb-cf1e329763a0"
              :transcription "Les chiens mangaient."
-             :old-slug "lan-old"}})
+             :old-slug "lan-old"
+             :created-by "9328472d-c4d4-4d02-b444-1dd0de3479d3"
+             :created-at "2023-08-20T01:34:11.780Z"
+             :updated-at "2023-08-20T01:34:11.780Z"
+             :destroyed-at nil}})
 
 ;; `FormWrite`
 (def form-write
@@ -70,7 +95,11 @@
               :meta]
    :example {:data [{:id "f9a19ceb-fca4-4e96-a5cb-cf1e329763a0"
                      :transcription "Les chiens mangaient."
-                     :old-slug "lan-old"}]
+                     :old-slug "lan-old"
+                     :created-by "9328472d-c4d4-4d02-b444-1dd0de3479d3"
+                     :created-at "2023-08-20T01:34:11.780Z"
+                     :updated-at "2023-08-20T01:34:11.780Z"
+                     :destroyed-at nil}]
              :meta {:count 1234
                     :page 0
                     :items-per-page 1}}})
