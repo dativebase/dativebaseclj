@@ -12,6 +12,7 @@
             [dvb.server.http.operations.index-forms :as index-forms]
             [dvb.server.http.operations.index-users :as index-users]
             [dvb.server.http.operations.login :as login]
+            [dvb.server.http.operations.activate-user :as activate-user]
             [dvb.server.http.operations.new-form :as new-form]
             [dvb.server.http.operations.new-user :as new-user]
             [dvb.server.http.operations.show-form :as show-form]
@@ -28,7 +29,8 @@
             [dvb.server.log :as log]))
 
 (def operations
-  {:create-form create-form/handle
+  {:activate-user activate-user/handle
+   :create-form create-form/handle
    :create-user create-user/handle
    :delete-form delete-form/handle
    :delete-user delete-user/handle

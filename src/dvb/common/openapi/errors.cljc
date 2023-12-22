@@ -45,8 +45,10 @@
    :required-parameter-absent [400 "A required parameter was not provided."]
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
    :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]
+   :user-activation-failed [400 "The supplied user registration key was incorrect. The user could not be activated."]
    ;; 401
    :unauthenticated [401 "The supplied credentials were not valid. Authentication failed."]
+   :unregistered-user [401 "The supplied credentials were valid but the user has not completed registration. The user must visit the email link that was sent to them in order to complete registration."]
    ;; 403
    :unauthorized [403 "The authenticated user is not authorized for the target operation."]
    ;; 404
