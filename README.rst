@@ -8,6 +8,55 @@ anybody who needs to manage language-focused data. DativeBase facilitates
 storing, searching, sharing, and analyzing linguistic data.
 
 
+User Flows
+================================================================================
+
+- Signup: person creates a DativeBase user
+- Plan Creation: User creates a plan for managing OLDs.
+- Grant Access: Administrator of an OLD grants access to a user to an OLD.
+- Cover OLD: Administrator of a plan covers an OLD under that plan.
+
+Signup
+--------------------------------------------------------------------------------
+
+As a prospective user of DativeBase, I can create an account (a user) in
+DativeBase. As a result of signing up, a new user is created for me in
+DativeBase.
+
+Implications:
+
+- Anybody on the public internet can create a new account.
+- Email verification must be required. Therefore, signup is a two-step process.
+
+  1. First, the user signs up by entering their PII and desired credentials.
+     DativeBase then emails the user a registration confirmation link containing
+     a key, which expires.
+  2. Then, the user visits the link, which triggers authentiction. If the
+     authentication test passes, the user is verified.
+
+
+Steps to implement:
+
+- All users must have a registration-status attribute. Its default is pending.
+  It can transition from pending to registered.
+- A pending user cannot perform any actions except verification. Once
+  verification succeeds, the user becomes registered.
+
+
+Plan Creation
+--------------------------------------------------------------------------------
+
+As a user of DativeBase, I can create a plan. A plan lets me pay for and manage
+OLDs. If I have a plan, I can create new OLDs that are covered by that plan,
+insofar as the entitlements of my plan allow for this. If I have a plan, I can
+cover existing with that plan. I can transfer coverage of an OLD from its
+existing plan to my plan.
+
+
+Grant Access
+--------------------------------------------------------------------------------
+
+
 Data Model
 ================================================================================
 

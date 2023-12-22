@@ -44,9 +44,9 @@
 (def tags
   [{:name :Authentication
     :description "Operations related to authentication."}
-   {:name :FormsTag
+   {:name :Forms
     :description "Operations on forms."}
-   {:name :UsersTag
+   {:name :Users
     :description "Operations on users."}])
 
 (def servers
@@ -127,6 +127,12 @@
                  :required true
                  :schema {:type :string
                           :pattern uuid-string-regex}}
+   :userRegistrationKeyParam {:name :user_registration_key
+                              :in :path
+                              :description "The registration key for the user that is being activated."
+                              :required true
+                              :schema {:type :string
+                                       :pattern uuid-string-regex}}
    :formIDParam {:name :form_id
                  :in :path
                  :description "The ID of the referenced form."
@@ -185,7 +191,7 @@
    {:operation-id :index-forms
     :summary "Return all forms matching the supplied query."
     :description "Return all forms matching the supplied query and pagination parameters."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}
                  {:$ref "#/components/parameters/pageQueryParam"}
@@ -200,7 +206,7 @@
    {:operation-id :create-form
     :summary "Create a new form."
     :description "Create a new form then return the created form."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}]
     :request-body
@@ -219,7 +225,7 @@
    {:operation-id :show-form
     :summary "Return the form with the provided ID."
     :description "Return the form with the provided ID."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}
                  {:$ref "#/components/parameters/formIDParam"}]
@@ -233,7 +239,7 @@
    {:operation-id :delete-form
     :summary "Delete the form with the provided ID."
     :description "Delete the form with the provided ID. This is a soft delete. The form data are not actually removed from the database. However, the system will behave as though the form no longer exists."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}
                  {:$ref "#/components/parameters/formIDParam"}]
@@ -247,7 +253,7 @@
    {:operation-id :update-form
     :summary "Update the form with the provided ID."
     :description "Update the form with the provided ID using the JSON payload of the request."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}
                  {:$ref "#/components/parameters/formIDParam"}]
@@ -267,7 +273,7 @@
    {:operation-id :new-form
     :summary "Return the data needed to create a new form."
     :description "Return the data needed to create a new form."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}]
     :responses
@@ -280,7 +286,7 @@
    {:operation-id :search-forms
     :summary "Perform a search over the forms in this OLD."
     :description "Perform a search over the forms in this OLD."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}]
     :request-body
@@ -299,7 +305,7 @@
    {:operation-id :edit-form
     :summary "Return the data needed to update an existing form."
     :description "Return the data needed to update an existing form."
-    :tags [:FormsTag]
+    :tags [:Forms]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}
                  {:$ref "#/components/parameters/formIDParam"}]
@@ -328,7 +334,7 @@
     :description "Login and create a temporary API key"
     :tags [:Authentication]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
-    :security []
+    :security [] ;; no security on purpose
     :request-body
     {:description "The payload to login. This payload must conform to the schema Login."
      :required true
@@ -340,12 +346,29 @@
            "400" {:description "The request to login was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
 
+(def activate-user-path
+  {:get
+   {:operation-id :activate-user
+    :summary "Activate a user"
+    :description "Activate a user"
+    :tags [:Authentication]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}
+                 {:$ref "#/components/parameters/userRegistrationKeyParam"}]
+    :security [] ;; no security on purpose
+    :responses
+    (assoc common-path-responses
+           "200" {:description "Successful user activation request. The user has been fully created. The user's registration status has been changed from 'pending' to 'registered'."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to activate the user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
 (def user-path
   {:get
    {:operation-id :show-user
     :summary "Return the user with the provided ID."
     :description "Return the user with the provided ID."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/userIDParam"}]
     :responses
@@ -358,7 +381,7 @@
    {:operation-id :delete-user
     :summary "Delete the user with the provided ID."
     :description "Delete the user with the provided ID. This is a soft delete. The user data are not actually removed from the database. However, the system will behave as though the user no longer exists."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/userIDParam"}]
     :responses
@@ -371,7 +394,7 @@
    {:operation-id :update-user
     :summary "Update the user with the provided ID."
     :description "Update the user with the provided ID using the JSON payload of the request."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/userIDParam"}]
     :request-body
@@ -390,7 +413,7 @@
    {:operation-id :index-old-users
     :summary "Return all users for the given OLD matching the supplied query."
     :description "Return all users with access to the given OLD and matching the supplied query and pagination parameters."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/pageQueryParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}
@@ -405,7 +428,7 @@
    {:operation-id :create-user
     :summary "Create a new user."
     :description "Create a new user then return the created user."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
     :request-body
     {:description "The payload to create a user. This payload must conform to the schema UserWrite."
@@ -423,7 +446,7 @@
    {:operation-id :new-user
     :summary "Return the data needed to create a new user."
     :description "Return the data needed to create a new user."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
     :responses
     (assoc common-path-responses
@@ -435,7 +458,7 @@
    {:operation-id :edit-user
     :summary "Return the data needed to update an existing user."
     :description "Return the data needed to update an existing user."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/userIDParam"}]
     :responses
@@ -450,7 +473,7 @@
    {:operation-id :index-users
     :summary "Return all users matching the supplied query."
     :description "Return all users matching the supplied query and pagination parameters."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/pageQueryParam"}
                  {:$ref "#/components/parameters/itemsPerPageQueryParam"}]
@@ -464,7 +487,7 @@
    {:operation-id :create-user
     :summary "Create a new user."
     :description "Create a new user then return the created user."
-    :tags [:UsersTag]
+    :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
     :request-body
     {:description "The payload to create a user. This payload must conform to the schema UserWrite."
@@ -481,7 +504,7 @@
   ["/api/v1/login" login-path
 
    "/api/v1/{old_slug}/forms/new" new-form-path
-   "/api/v1/{old_slug}/forms/search" search-forms-path ;; TODO: operational? I think not ...
+   ;; "/api/v1/{old_slug}/forms/search" search-forms-path ;; TODO: operational? I think not ...
    "/api/v1/{old_slug}/forms/{form_id}/edit" edit-form-path
    "/api/v1/{old_slug}/forms/{form_id}" form-path
    "/api/v1/{old_slug}/forms" forms-path
@@ -492,9 +515,12 @@
    "/api/v1/{old_slug}/users" old-users-path
 
    "/api/v1/users/new" new-user-path
+   "/api/v1/users/{user_id}/activate/{user_registration_key}" activate-user-path
    "/api/v1/users/{user_id}/edit" edit-user-path
+   "/api/v1/users/{user_id}" user-path
    "/api/v1/users" users-path
-   "/api/v1/users/{user_id}" user-path])
+
+   ])
 
 (def paths
   (->> paths*

@@ -53,10 +53,13 @@
     (-> error
         (assoc :description "An error object for indicating that the client has failed to authenticate and is therefore prohibited from making this request.")
         (assoc-in [:properties :message :example] example-message)
-        (assoc-in [:properties :error-code] {:type :string
-                                             :enum ["unauthorized" "unauthenticated"]
-                                             :description "A short error code for uniquely identifying and categorizing the failure."
-                                             :example "unauthorized"})
+        (assoc-in [:properties :error-code]
+                  {:type :string
+                   :enum ["unauthorized"
+                          "unauthenticated"
+                          "unregistered-user"]
+                   :description "A short error code for uniquely identifying and categorizing the failure."
+                   :example "unauthorized"})
         (assoc :example {:message example-message
                          :error-code "unauthorized"}))))
 

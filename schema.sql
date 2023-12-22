@@ -88,7 +88,9 @@ CREATE TABLE public.users (
     is_superuser boolean DEFAULT false NOT NULL,
     created_by uuid,
     updated_by uuid,
-    inserted_at timestamp with time zone DEFAULT now() NOT NULL
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL,
+    registration_status text DEFAULT 'pending'::text NOT NULL,
+    registration_key uuid DEFAULT public.uuid_generate_v4() NOT NULL
 );
 
 CREATE TABLE public.users_olds (

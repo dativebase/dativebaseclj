@@ -42,6 +42,9 @@
 (defn user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id))
 
+(defn activate-user-url [base-url user-id registration-key]
+  (str base-url "/api/v1/users/" user-id "/activate/" registration-key))
+
 (defn edit-user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id "/edit"))
 
@@ -153,6 +156,15 @@
              :method :put
              :body (json/encode user-update))
       (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-api->clj))
+
+(defn activate-user
+  "GET /users/<ID>/activate/<KEY>"
+  [client user-id registration-key]
+  (-> default-request
+      (assoc :url (activate-user-url (:base-url client) user-id registration-key))
       client/request
       simple-response
       edges/fetch-user-api->clj))

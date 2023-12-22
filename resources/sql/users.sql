@@ -26,6 +26,12 @@ SET first_name = :first-name,
 WHERE id = :id::uuid
 RETURNING *
 
+-- :name activate-user* :returning-execute :one-kebab
+UPDATE users
+  SET registration_status = 'registered'
+  WHERE id = :id::uuid
+RETURNING *
+
 -- :name get-user* :query :one-kebab
 -- :doc Get a user by its id.
 SELECT *

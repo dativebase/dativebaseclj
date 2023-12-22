@@ -32,10 +32,14 @@
         {su-pwd :password :as superuser*}
         (merge (gen/generate (s/gen ::users-specs/user))
                user-defaults {:is-superuser? true})
-        superuser (db.users/create-user database superuser*)
+        superuser (db.users/activate-user
+                   database
+                   (db.users/create-user database superuser*))
         {u-pwd :password :as user*}
         (merge (gen/generate (s/gen ::users-specs/user)) user-defaults)
-        user (db.users/create-user database user*)
+        user (db.users/activate-user
+              database
+              (db.users/create-user database user*))
         {old-slug :slug :as old*}
         (merge (gen/generate (s/gen ::olds-specs/old))
                {:created-by nil :updated-by nil})
@@ -127,12 +131,12 @@
                            (assoc :first-name "Timothy")
                            (dissoc :updated-at))
                        (dissoc updated-user :updated-at)))
-                (testing "The non-superuser-authenticated client cannot fetch the newly created user"
+                (testing "The non-superuser-authenticated client cannot fetch the newly-created user"
                   (let [{:as fetched-user-response :keys [status] error :body}
                         (client/show-user user-client (:id created-user))]
                     (is (= 403 status))
                     (is (= "unauthorized" (-> error :errors first :error-code)))))
-                (testing "The non-superuser-authenticated client cannot update the newly created user"
+                (testing "The non-superuser-authenticated client cannot update the newly-created user"
                   (let [{:as updated-user-response :keys [status] error :body}
                         (client/update-user
                          user-client
@@ -140,7 +144,31 @@
                          {:first-name "Danuary"})]
                     (is (= 403 status))
                     (is (= "unauthorized" (-> error :errors first :error-code)))))
-                (testing "The superuser-authenticated client can delete the newly created user"
+                (testing "It is not possible to authenticate with the newly-created user because it has not yet been activated"
+                  (let [{:as failed-login-response :keys [status] error :body}
+                        (client/login
+                         (client/make-client :local-test)
+                         (:email created-user)
+                         new-user-password)]
+                    (is (= 401 status))
+                    (is (= "unregistered-user" (-> error :errors first :error-code)))))
+                (testing "We can activate the user. Note: the registration key would be emailed to the user after initial signup, in the normal course of events."
+                  (let [user-from-db (db.users/get-user database (:id created-user))
+                        {:as activation-response :keys [status] activated-user :body}
+                        (client/activate-user
+                         (client/make-client :local-test)
+                         (:id created-user)
+                         (:registration-key user-from-db))]
+                    (is (= 200 status))
+                    (is (= (dissoc updated-user :updated-at)
+                           (dissoc activated-user :updated-at)))))
+                (testing "It is possible to authenticate with the newly-activated user"
+                  (let [new-client (client/authenticate-client
+                                    (client/make-client :local-test)
+                                    (:email created-user)
+                                    new-user-password)]
+                    (is (:authenticated? superuser-client))))
+                (testing "The superuser-authenticated client can delete the newly-created user"
                   (let [{:as deleted-user-response :keys [status] deleted-user :body}
                         (client/delete-user superuser-client (:id updated-user))
                         samer (fn [u] (dissoc u :updated-at :destroyed-at))]

@@ -28,6 +28,11 @@
       (log/warn "Login attempt with an invalid password."
                 {:email email})
       (throw (errors/error-code->ex-info :unauthenticated)))
+    (when-not (= :registered (:registration-status user))
+      (log/warn "Login attempt with an unregistered user. User must move from pending to registered in order to authenticate."
+                {:email email
+                 :registration-status (:registration-status user)})
+      (throw (errors/error-code->ex-info :unregistered-user)))
     (let [api-key (db.api-keys/create-api-key
                    database (generate-api-key-for-user user now))]
       (log/info "Login succeeded." {:email email :user-id (:id user)})
