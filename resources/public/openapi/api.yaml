@@ -111,6 +111,10 @@ components:
         user: {$ref: '#/components/schemas/User'}
         apiKey: {$ref: '#/components/schemas/APIKey'}
       required: [user, apiKey]
+    NewUserData:
+      type: object
+      properties: {}
+      example: {}
     ErrorNotFound:
       type: object
       description: An error object for indicating that the client has failed to authenticate and is therefore prohibited from making this request.
@@ -131,11 +135,12 @@ components:
         first_name: {type: string, description: The first name of the user., example: Anne}
         last_name: {type: string, description: The last name of the user., example: Boleyn}
         email: {type: string, format: email, description: The email address of the user., example: ab@gmail.com}
+        is_superuser: {type: boolean, description: Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users., example: false, default: false}
         created_at: {type: string, format: date-time, description: The timestamp of when the user was created., example: '2023-08-20T01:34:11.780Z'}
         updated_at: {type: string, format: date-time, description: The timestamp of when the user was last updated., example: '2023-08-20T01:34:11.780Z'}
         destroyed_at: {type: string, format: date-time, nullable: true, description: The timestamp of when the user was destroyed; NULL if the user has not been destroyed., example: null}
-      required: [id, first_name, last_name, email, created_at, updated_at, destroyed_at]
-      example: {id: acddbb6a-31f6-41ac-90af-557d64082bcf, first_name: Anne, last_name: Boleyn, email: ab@gmail.com, created_at: '2023-08-20T01:34:11.780Z', updated_at: '2023-08-20T01:34:11.780Z', destroyed_at: null}
+      required: [id, first_name, last_name, email, created_at, updated_at, destroyed_at, is_superuser]
+      example: {id: acddbb6a-31f6-41ac-90af-557d64082bcf, first_name: Anne, last_name: Boleyn, email: ab@gmail.com, is_superuser: false, created_at: '2023-08-20T01:34:11.780Z', updated_at: '2023-08-20T01:34:11.780Z', destroyed_at: null}
     PageOfForms:
       type: object
       properties:
@@ -182,9 +187,10 @@ components:
         first_name: {type: string, description: The first name of the user., example: Anne}
         last_name: {type: string, description: The last name of the user., example: Boleyn}
         email: {type: string, format: email, description: The email address of the user., example: ab@gmail.com}
+        is_superuser: {type: boolean, description: Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users., example: false, default: false}
         password: {type: string, description: The password for the to-be-created user. This can never again be fetched from the API., example: '8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF'}
-      required: [first_name, last_name, email, password]
-      example: {first_name: Anne, last_name: Boleyn, email: ab@gmail.com, password: long-arbitrary-lots-of-entropy}
+      required: [first_name, last_name, email, password, is_superuser]
+      example: {first_name: Anne, last_name: Boleyn, email: ab@gmail.com, password: long-arbitrary-lots-of-entropy, is_superuser: false}
     Form:
       type: object
       properties:
@@ -197,6 +203,15 @@ components:
         created_by: {type: string, format: uuid, description: The ID (UUID) of the user who created the form., example: 9328472d-c4d4-4d02-b444-1dd0de3479d3}
       required: [id, transcription, old_slug, created_by, created_at, updated_at, destroyed_at]
       example: {id: f9a19ceb-fca4-4e96-a5cb-cf1e329763a0, transcription: Les chiens mangaient., old_slug: lan-old, created_by: 9328472d-c4d4-4d02-b444-1dd0de3479d3, created_at: '2023-08-20T01:34:11.780Z', updated_at: '2023-08-20T01:34:11.780Z', destroyed_at: null}
+    UserUpdate:
+      type: object
+      properties:
+        first_name: {type: string, description: The first name of the user., example: Anne}
+        last_name: {type: string, description: The last name of the user., example: Boleyn}
+        email: {type: string, format: email, description: The email address of the user., example: ab@gmail.com}
+        is_superuser: {type: boolean, description: Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users., example: false, default: false}
+        password: {type: string, description: The password for the to-be-created user. This can never again be fetched from the API., example: '8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF'}
+      example: {first_name: Anne, last_name: Boleyn, email: ab@gmail.com, password: long-arbitrary-lots-of-entropy, is_superuser: false}
     ErrorNotFound404:
       type: object
       description: An error object for indicating that the endpoint or operation was not found.
@@ -261,6 +276,10 @@ components:
         message: A valid string is required.
         error_code: invalid-string
         data: {some: optional data structure}
+    EditUserData:
+      type: object
+      properties: {}
+      example: {}
     NewFormData:
       type: object
       properties:
@@ -349,6 +368,31 @@ components:
       example:
         errors:
         - {message: The server is unavailable., error_code: error-unavailable}
+    PageOfUsers:
+      type: object
+      properties:
+        data:
+          type: array
+          description: The users returned as response to a GET index type request.
+          items: {$ref: '#/components/schemas/User'}
+        meta:
+          type: object
+          properties:
+            count: {type: integer, description: The count of all users in the database., example: 1234}
+            page: {type: integer, description: The 0-based index of the page of users being returned. This value only makes sense given a count of users and the value of items-per-page., default: 0, example: 0}
+            items_per_page:
+              type: integer
+              enum: [1, 5, 10, 50]
+              description: The maximum number of users in a page of users.
+              default: 10
+              example: 10
+          required: [count, page, items_per_page]
+          example: {count: 1234, page: 0, items_per_page: 10}
+      required: [data, meta]
+      example:
+        data:
+        - {id: acddbb6a-31f6-41ac-90af-557d64082bcf, first_name: Anne, last_name: Boleyn, email: ab@gmail.com, is_superuser: false, created_at: '2023-08-20T01:34:11.780Z', updated_at: '2023-08-20T01:34:11.780Z', destroyed_at: null}
+        meta: {count: 1234, page: 0, items_per_page: 1}
   securitySchemes:
     x_api_key: {type: apiKey, in: header, name: X-API-KEY}
     x_app_id: {type: apiKey, in: header, name: X-APP-ID}
@@ -359,142 +403,15 @@ info:
   contact: {name: DativeBase API Support, url: TODO, email: TODO@gmail.com}
 openapi: 3.0.0
 paths:
-  /api/v1/login:
-    post:
-      operationId: login
-      summary: Login and create a temporary API key
-      description: Login and create a temporary API key
-      tags: [Authentication]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      security: []
-      requestBody:
-        description: The payload to login. This payload must conform to the schema Login.
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/Login'}
-      responses:
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '400':
-          description: The request to login was invalid.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
-        '200':
-          description: Successful login request. The authenticated user and a newly-generated API key are both returned in the response. Subsequent requests to other endpoints must supply a valid API ID and key in the request in order to authenticate.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/UserAndAPIKey'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
-  /api/v1/{old_slug}/forms/new:
+  /api/v1/users/{user_id}/edit:
     get:
-      operationId: new_form
-      summary: Return the data needed to create a new form.
-      description: Return the data needed to create a new form.
-      tags: [FormsTag]
+      operationId: edit_user
+      summary: Return the data needed to update an existing user.
+      description: Return the data needed to update an existing user.
+      tags: [UsersTag]
       parameters:
       - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/oldSlugPathParam'}
-      responses:
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '200':
-          description: The data needed to create a new form.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/NewFormData'}
-  /api/v1/{old_slug}/forms/search:
-    post:
-      operationId: search_forms
-      summary: Perform a search over the forms in this OLD.
-      description: Perform a search over the forms in this OLD.
-      tags: [FormsTag]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/oldSlugPathParam'}
-      requestBody:
-        description: The query for searching over a set of forms. This payload must conform to the schema FormsSearch.
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/FormsSearch'}
+      - {$ref: '#/components/parameters/userIDParam'}
       responses:
         '429':
           description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
@@ -522,263 +439,15 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
         '400':
-          description: The search request was invalid.
+          description: The request for the data needed to update the specified user was invalid.
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
         '200':
-          description: The set of forms matching the search query in the request.
+          description: The data needed to update the specified user.
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/PageOfForms'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
-  /api/v1/{old_slug}/forms/{form_id}/edit:
-    get:
-      operationId: edit_form
-      summary: Return the data needed to update an existing form.
-      description: Return the data needed to update an existing form.
-      tags: [FormsTag]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/oldSlugPathParam'}
-      - {$ref: '#/components/parameters/formIDParam'}
-      responses:
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '400':
-          description: The request for the data needed to update the specified form was invalid.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
-        '200':
-          description: The data needed to update the specified form.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EditFormData'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
-  /api/v1/{old_slug}/forms/{form_id}:
-    get:
-      operationId: show_form
-      summary: Return the form with the provided ID.
-      description: Return the form with the provided ID.
-      tags: [FormsTag]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/oldSlugPathParam'}
-      - {$ref: '#/components/parameters/formIDParam'}
-      responses:
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '400':
-          description: The request for a specific form was invalid.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
-        '200':
-          description: The form.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/Form'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
-    delete:
-      operationId: delete_form
-      summary: Delete the form with the provided ID.
-      description: Delete the form with the provided ID. This is a soft delete. The form data are not actually removed from the database. However, the system will behave as though the form no longer exists.
-      tags: [FormsTag]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/oldSlugPathParam'}
-      - {$ref: '#/components/parameters/formIDParam'}
-      responses:
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '400':
-          description: The request to delete the specified form was invalid.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
-        '200':
-          description: The deleted form.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/Form'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
-    put:
-      operationId: update_form
-      summary: Update the form with the provided ID.
-      description: Update the form with the provided ID using the JSON payload of the request.
-      tags: [FormsTag]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/oldSlugPathParam'}
-      - {$ref: '#/components/parameters/formIDParam'}
-      requestBody:
-        description: The payload representing the desired new state of the form. This payload must conform to the schema FormWrite.
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/FormWrite'}
-      responses:
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '400':
-          description: The request to update the specified form was invalid.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
-        '200':
-          description: The updated form.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/Form'}
+              schema: {$ref: '#/components/schemas/EditUserData'}
         '403':
           description: The client is not authorized to perform this operation.
           content:
@@ -1049,11 +718,11 @@ paths:
       - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
       - {$ref: '#/components/parameters/userIDParam'}
       requestBody:
-        description: The payload representing the desired new state of the user. This payload must conform to the schema UserWrite.
+        description: The payload representing the desired new state of the user. This payload must conform to the schema UserUpdate.
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/UserWrite'}
+            schema: {$ref: '#/components/schemas/UserUpdate'}
       responses:
         '429':
           description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
@@ -1090,6 +759,620 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/User'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/{old_slug}/forms/{form_id}/edit:
+    get:
+      operationId: edit_form
+      summary: Return the data needed to update an existing form.
+      description: Return the data needed to update an existing form.
+      tags: [FormsTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/oldSlugPathParam'}
+      - {$ref: '#/components/parameters/formIDParam'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request for the data needed to update the specified form was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: The data needed to update the specified form.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EditFormData'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/{old_slug}/forms/search:
+    post:
+      operationId: search_forms
+      summary: Perform a search over the forms in this OLD.
+      description: Perform a search over the forms in this OLD.
+      tags: [FormsTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/oldSlugPathParam'}
+      requestBody:
+        description: The query for searching over a set of forms. This payload must conform to the schema FormsSearch.
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FormsSearch'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The search request was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: The set of forms matching the search query in the request.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PageOfForms'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/users:
+    get:
+      operationId: index_users
+      summary: Return all users matching the supplied query.
+      description: Return all users matching the supplied query and pagination parameters.
+      tags: [UsersTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/pageQueryParam'}
+      - {$ref: '#/components/parameters/itemsPerPageQueryParam'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request for users was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: A page of users.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PageOfUsers'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+    post:
+      operationId: create_user
+      summary: Create a new user.
+      description: Create a new user then return the created user.
+      tags: [UsersTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      requestBody:
+        description: The payload to create a user. This payload must conform to the schema UserWrite.
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserWrite'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '201':
+          description: The created user, including server-side-generated values such as the ID.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request to create a new user was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/{old_slug}/forms/{form_id}:
+    get:
+      operationId: show_form
+      summary: Return the form with the provided ID.
+      description: Return the form with the provided ID.
+      tags: [FormsTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/oldSlugPathParam'}
+      - {$ref: '#/components/parameters/formIDParam'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request for a specific form was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: The form.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Form'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+    delete:
+      operationId: delete_form
+      summary: Delete the form with the provided ID.
+      description: Delete the form with the provided ID. This is a soft delete. The form data are not actually removed from the database. However, the system will behave as though the form no longer exists.
+      tags: [FormsTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/oldSlugPathParam'}
+      - {$ref: '#/components/parameters/formIDParam'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request to delete the specified form was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: The deleted form.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Form'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+    put:
+      operationId: update_form
+      summary: Update the form with the provided ID.
+      description: Update the form with the provided ID using the JSON payload of the request.
+      tags: [FormsTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/oldSlugPathParam'}
+      - {$ref: '#/components/parameters/formIDParam'}
+      requestBody:
+        description: The payload representing the desired new state of the form. This payload must conform to the schema FormWrite.
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FormWrite'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request to update the specified form was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: The updated form.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Form'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/{old_slug}/forms/new:
+    get:
+      operationId: new_form
+      summary: Return the data needed to create a new form.
+      description: Return the data needed to create a new form.
+      tags: [FormsTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/oldSlugPathParam'}
+      responses:
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '200':
+          description: The data needed to create a new form.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NewFormData'}
+  /api/v1/users/new:
+    get:
+      operationId: new_user
+      summary: Return the data needed to create a new user.
+      description: Return the data needed to create a new user.
+      tags: [UsersTag]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      responses:
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '200':
+          description: The data needed to create a new user.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NewUserData'}
+  /api/v1/login:
+    post:
+      operationId: login
+      summary: Login and create a temporary API key
+      description: Login and create a temporary API key
+      tags: [Authentication]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      security: []
+      requestBody:
+        description: The payload to login. This payload must conform to the schema Login.
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Login'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request to login was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: Successful login request. The authenticated user and a newly-generated API key are both returned in the response. Subsequent requests to other endpoints must supply a valid API ID and key in the request in order to authenticate.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserAndAPIKey'}
         '403':
           description: The client is not authorized to perform this operation.
           content:

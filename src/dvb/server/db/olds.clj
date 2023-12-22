@@ -1,8 +1,7 @@
 (ns dvb.server.db.olds
   (:require [clojure.java.jdbc :as jdbc]
             [hugsql.core :as hugsql]
-            [dvb.server.db.events :as events]
-            [dvb.server.db.utils :as utils]))
+            [dvb.server.db.events :as events]))
 
 (declare get-old*
          delete-old*
@@ -15,11 +14,10 @@
 
 (defn- mutate [mutation db-conn old]
   (jdbc/with-db-transaction [tconn db-conn]
-    (let [[db-old] ((case mutation
-                       :create create-old*
-                       :update update-old*
-                       :delete delete-old*) tconn old)
-          old (utils/db-row->entity db-old)]
+    (let [old ((case mutation
+                 :create create-old*
+                 :update update-old*
+                 :delete delete-old*) tconn old)]
       (events/create-event tconn
                            {:old-slug (:slug old)
                             :table-name "olds"

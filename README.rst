@@ -8,6 +8,32 @@ anybody who needs to manage language-focused data. DativeBase facilitates
 storing, searching, sharing, and analyzing linguistic data.
 
 
+Data Model
+================================================================================
+
+There are four basic entities:
+
+- Users
+- OLDs
+- Plans
+- Forms
+
+Users have inherent roles. All users are either regular users or superusers.
+Superusers have unlimited access to all public APIs.
+
+A user may have access to an OLD or not. In order for a user to have access to
+an OLD, there must be an active ``users_olds`` row linking said user to said OLD.
+The ``role`` value of this row determines the user's level of access to the OLD.
+An administrator can perform all actions on an OLD. A contributor can perform
+nearly all actions on an OLD. A viewer can only perform read actions on an OLD;
+no writes are permitted.
+
+A plan pays for an OLD. Every OLD must be covered by a plan. If an OLD exceeds
+the entitlements of its plan, then the OLD becomes non-operational. In order to
+re-enable the OLD, the plan must be upgraded or the OLD must be moved under
+another, more entitled plan.
+
+
 Continuous Integration & Deployment
 ================================================================================
 

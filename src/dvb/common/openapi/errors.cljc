@@ -16,6 +16,7 @@
    :coercion-to-integer-error [400 "The provided string value cannot be coerced to a integer."]
    :coercion-to-number-error [400 "The provided string value cannot be coerced to a number."]
    :complex-validation-error [400 "The input is invalid according to a oneOf, anyOf or allOf validator."] ;; I'm not sure if this can actually ever be thrown
+   :deletion-request-for-current-user [400 "The deletion request is prohibited because the authenticated user cannot delete itself."]
    :duplicate-items [400 "The provided array contains duplicate items. All items must be unique."]
    :inconsistent-pagination-inputs [400 "The provided pagination inputs are not consistent with the state of this API and the resource targeted."]
    :invalid-array [400 "The provided value is not a valid array."]
@@ -43,6 +44,7 @@
    :one-of-validator-matches-multiple [400 "The input matches more than one oneOf validators."]
    :required-parameter-absent [400 "A required parameter was not provided."]
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
+   :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]
    ;; 401
    :unauthenticated [401 "The supplied credentials were not valid. Authentication failed."]
    ;; 403

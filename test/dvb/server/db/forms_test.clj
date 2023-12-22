@@ -24,7 +24,8 @@
                                :last-name "Bobson"
                                :email "ab@hmail.com"
                                :username "ab"
-                               :password "ENCRYPTME!!!"})
+                               :password "ENCRYPTME!!!"
+                               :is-superuser? false})
      :database database}))
 
 (deftest forms-can-be-created-read-updated-deleted
@@ -33,8 +34,9 @@
       (testing "We can create a form."
         (let [form (sut/create-form database
                                     {:old-slug (:slug old)
+                                     :transcription "Да"
                                      :created-by (:id user)
-                                     :transcription "Да"})]
+                                     :updated-by (:id user)})]
           (is (= (:id user) (:created-by form)))
           (is (= (:slug old) (:old-slug form)))
           (is (uuid? (:id form)))
@@ -70,7 +72,9 @@
 (deftest a-set-of-ordered-forms-can-be-selected
   (let [{:keys [old user database]} (set-up)]
     (try
-      (let [base-form {:old-slug (:slug old) :created-by (:id user)}]
+      (let [base-form {:old-slug (:slug old)
+                       :created-by (:id user)
+                       :updated-by (:id user)}]
         (sut/create-form database (assoc base-form :transcription "a"))
         (sut/create-form database (assoc base-form :transcription "b"))
         (sut/create-form database (assoc base-form :transcription "c"))

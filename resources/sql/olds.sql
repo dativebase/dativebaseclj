@@ -1,26 +1,28 @@
--- :name create-old* :returning-execute-kebab
-INSERT INTO olds (slug, name)
-VALUES (:slug, :name)
-RETURNING slug, name, created_at, updated_at, destroyed_at
+-- :name create-old* :returning-execute :one-kebab
+INSERT INTO olds (slug, name, created_by, updated_by)
+VALUES (:slug, :name, :created-by, :updated-by)
+RETURNING *
 
--- :name update-old* :returning-execute-kebab
+-- :name update-old* :returning-execute :one-kebab
 UPDATE olds
 SET slug = :slug,
     name = :name,
-    updated_at = now()
+    updated_at = now(),
+    updated_by = :updated-by
 WHERE slug = :slug
-RETURNING slug, name, created_at, updated_at, destroyed_at
+RETURNING *
 
 -- :name get-old* :query :one-kebab
 -- :doc Get a old by its slug.
-SELECT slug, name, created_at, updated_at, destroyed_at
+SELECT *
 FROM olds
 WHERE slug = :slug
   AND destroyed_at IS NULL
 
--- :name delete-old* :returning-execute
+-- :name delete-old* :returning-execute :one-kebab
 UPDATE olds
 SET destroyed_at = now(),
-    updated_at = now()
+    updated_at = now(),
+    updated_by = :updated-by
 WHERE slug = :slug
-RETURNING slug, name, created_at, updated_at, destroyed_at
+RETURNING *

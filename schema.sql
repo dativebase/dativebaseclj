@@ -48,16 +48,8 @@ CREATE TABLE public.forms (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     destroyed_at timestamp with time zone,
-    created_by uuid NOT NULL
-);
-
-CREATE TABLE public.machine_users (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    user_id uuid NOT NULL,
-    api_key text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    destroyed_at timestamp with time zone
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 CREATE TABLE public.olds (
@@ -65,7 +57,10 @@ CREATE TABLE public.olds (
     name text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    destroyed_at timestamp with time zone
+    destroyed_at timestamp with time zone,
+    created_by uuid,
+    updated_by uuid,
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE TABLE public.schema_version (
@@ -89,7 +84,11 @@ CREATE TABLE public.users (
     password text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    destroyed_at timestamp with time zone
+    destroyed_at timestamp with time zone,
+    is_superuser boolean DEFAULT false NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE TABLE public.users_olds (
@@ -99,7 +98,10 @@ CREATE TABLE public.users_olds (
     role text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    destroyed_at timestamp with time zone
+    destroyed_at timestamp with time zone,
+    created_by uuid,
+    updated_by uuid,
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 ALTER TABLE ONLY public.api_keys
@@ -111,9 +113,6 @@ ALTER TABLE ONLY public.events
 ALTER TABLE ONLY public.forms
     ADD CONSTRAINT forms_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY public.machine_users
-    ADD CONSTRAINT machine_users_pkey PRIMARY KEY (id);
-
 ALTER TABLE ONLY public.olds
     ADD CONSTRAINT olds_pkey PRIMARY KEY (slug);
 
@@ -121,7 +120,7 @@ ALTER TABLE ONLY public.schema_version
     ADD CONSTRAINT schema_version_pk PRIMARY KEY (installed_rank);
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_email_key UNIQUE (email);
+    ADD CONSTRAINT users_email_key UNIQUE NULLS NOT DISTINCT (email, destroyed_at);
 
 ALTER TABLE ONLY public.users_olds
     ADD CONSTRAINT users_olds_pkey PRIMARY KEY (id);
@@ -140,8 +139,6 @@ CREATE INDEX forms_old_slug_idx ON public.forms USING btree (old_slug);
 
 CREATE INDEX forms_transcription_trgm_idx ON public.forms USING gin (transcription public.gin_trgm_ops);
 
-CREATE INDEX machine_users_user_id_idx ON public.machine_users USING btree (user_id);
-
 CREATE INDEX schema_version_s_idx ON public.schema_version USING btree (success);
 
 CREATE INDEX users_email_idx ON public.users USING btree (email);
@@ -155,12 +152,30 @@ ALTER TABLE ONLY public.forms
 ALTER TABLE ONLY public.forms
     ADD CONSTRAINT fk_forms_old_slug FOREIGN KEY (old_slug) REFERENCES public.olds(slug);
 
-ALTER TABLE ONLY public.machine_users
-    ADD CONSTRAINT fk_machine_users_user_id FOREIGN KEY (user_id) REFERENCES public.users(id);
+ALTER TABLE ONLY public.forms
+    ADD CONSTRAINT fk_forms_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.olds
+    ADD CONSTRAINT fk_olds_created_by_user_id FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.olds
+    ADD CONSTRAINT fk_olds_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT fk_users_created_by_user_id FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users_olds
+    ADD CONSTRAINT fk_users_olds_created_by_user_id FOREIGN KEY (created_by) REFERENCES public.users(id);
 
 ALTER TABLE ONLY public.users_olds
     ADD CONSTRAINT fk_users_olds_old_slug_to_old_slug FOREIGN KEY (old_slug) REFERENCES public.olds(slug);
 
 ALTER TABLE ONLY public.users_olds
+    ADD CONSTRAINT fk_users_olds_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users_olds
     ADD CONSTRAINT fk_users_olds_user_id_to_user_id FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT fk_users_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
 

@@ -1,5 +1,6 @@
 (ns dvb.server.http.operations.utils.declojurify
-  (:require [dvb.common.openapi.spec :as spec]))
+  (:require [clojure.set :as set]
+            [dvb.common.openapi.spec :as spec]))
 
 (def schemas (-> spec/api :components :schemas))
 
@@ -18,6 +19,7 @@
   (-> user*
       common
       (dissoc :password)
+      (set/rename-keys {:is-superuser? :is-superuser})
       (select-keys (-> schemas :User :properties keys))))
 
 (defn api-key [api-key*]

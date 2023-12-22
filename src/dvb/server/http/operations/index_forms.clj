@@ -4,7 +4,7 @@
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.http.utils.pagination :as pagination]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (defn handle [{:as _application :keys [database]} ctx]
   (log/info "Indexing forms.")

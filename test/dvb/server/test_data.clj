@@ -48,20 +48,16 @@
                :last-name "Bobson"
                :email "ab@hmail.com"
                :username "ab"
-               :password (encrypt/hashpw "password")})
+               :password (encrypt/hashpw "password")
+               :is-superuser? false})
         user-old (db.users/create-user-old
                   database
                   {:user-id (:id user)
                    :old-slug (:slug old)
-                   :role :administrator})
-        machine-user (db.users/create-machine-user
-                      database
-                      {:user-id (:id user)
-                       :api-key (encrypt/hashpw "dativeold")})]
+                   :role :administrator})]
     {:old old
      :user user
-     :user-old user-old
-     :machine-user machine-user}))
+     :user-old user-old}))
 
 (defn create-test-data
   "Create an OLD, a user and 10 randomly generated forms under that OLD, created

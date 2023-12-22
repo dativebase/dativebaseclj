@@ -37,7 +37,7 @@
      {:date '2023-12-25'}"
   (:require [dvb.common.openapi.errors :as errors]
             [dvb.common.openapi.validate :as validate]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (defn validate
   "Validate `value` according to `schema`. The optional `path` parameter is the
