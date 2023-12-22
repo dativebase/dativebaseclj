@@ -4,7 +4,7 @@
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
             [dvb.server.http.operations.utils.declojurify :as declojurify]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (defn handle [{:keys [database]} ctx]
   (log/info "Creating a form.")
@@ -14,7 +14,8 @@
         {:keys [request-body]} ctx
         form-to-create (assoc request-body
                               :old-slug old-slug
-                              :created-by created-by)
+                              :created-by created-by
+                              :updated-by created-by)
         created-form (try
                        (db.forms/create-form database form-to-create)
                        (catch Exception e

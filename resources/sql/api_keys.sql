@@ -1,4 +1,4 @@
--- :name create-api-key* :returning-execute-kebab
+-- :name create-api-key* :returning-execute :one-kebab
 -- :doc Create a new API key.
 INSERT INTO api_keys (user_id, key, expires_at)
 VALUES (:user-id, :key, :expires-at::timestamp)
@@ -11,7 +11,7 @@ FROM api_keys
 WHERE id = :id::uuid
 AND expires_at > now()
 
--- :name delete-api-key* :returning-execute-kebab
+-- :name delete-api-key* :returning-execute :one-kebab
 UPDATE api_keys
 SET expires_at = now()
 WHERE id = :id::uuid

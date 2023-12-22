@@ -4,38 +4,57 @@
             [dvb.common.openapi.spec :as spec]
             [dvb.server.http.server :as server]
             [dvb.server.http.operations.create-form :as create-form]
+            [dvb.server.http.operations.create-user :as create-user]
             [dvb.server.http.operations.delete-form :as delete-form]
+            [dvb.server.http.operations.delete-user :as delete-user]
+            [dvb.server.http.operations.edit-form :as edit-form]
+            [dvb.server.http.operations.edit-user :as edit-user]
             [dvb.server.http.operations.index-forms :as index-forms]
+            [dvb.server.http.operations.index-users :as index-users]
             [dvb.server.http.operations.login :as login]
+            [dvb.server.http.operations.new-form :as new-form]
+            [dvb.server.http.operations.new-user :as new-user]
             [dvb.server.http.operations.show-form :as show-form]
             [dvb.server.http.operations.show-user :as show-user]
             [dvb.server.http.operations.update-form :as update-form]
+            [dvb.server.http.operations.update-user :as update-user]
             [dvb.server.http.security.api-key :as api-key]
             [dvb.server.system.config :as config]
+            [dvb.server.system.clock :as clock]
             [dvb.server.system.db :as db]
             [dvb.server.system.log :as system.log]
             dvb.server.time
             [dvb.server.utils :as utils]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (def operations
-  {:index-forms index-forms/handle
-   :create-form create-form/handle
+  {:create-form create-form/handle
+   :create-user create-user/handle
    :delete-form delete-form/handle
+   :delete-user delete-user/handle
+   :edit-form edit-form/handle
+   :edit-user edit-user/handle
+   :index-forms index-forms/handle
+   :index-users index-users/handle
+   :login login/handle
+   :new-form new-form/handle
+   :new-user new-user/handle
    :show-form show-form/handle
    :show-user show-user/handle
    :update-form update-form/handle
-   :login login/handle})
+   :update-user update-user/handle})
 
 (defn make-main-system [config]
   (component/system-map
    :database (db/make-db (:db config))
+   :clock (clock/make-clock)
    :application (component/using
                  (server/make-application
                   {:spec spec/api
                    :operations operations
                    :security-handlers {:api-key api-key/handle}})
-                 [:database])
+                 [:clock
+                  :database])
    :web-server (component/using
                 (server/make-web-server {:port (:server-port config)})
                 [:application])))

@@ -53,6 +53,9 @@
   [{:url "http://localhost:8080"
     :description "Local development server"
     :id :local}
+   {:url "http://localhost:8087"
+    :description "Local test server"
+    :id :local-test}
    {:url "https://api.onlinelinguisticdatabase.org"
     :description "Proposed production server for the DativeBase HTTP API."
     :id :prod}])
@@ -69,6 +72,7 @@
 (def schemas
   {:APIKey api-key/api-key
    :EditFormData form/edit-form-data
+   :EditUserData user/edit-user-data
    :Error error/error
    :ErrorBadRequest400 error/error-bad-request-400
    :ErrorNotFound error/error-not-found
@@ -89,9 +93,12 @@
    :FormWrite form/form-write
    :Login login/login
    :NewFormData form/new-form-data
+   :NewUserData user/new-user-data
    :PageOfForms form/page-of-forms
+   :PageOfUsers user/page-of-users
    :User user/user
    :UserAndAPIKey user-and-api-key
+   :UserUpdate user/user-update
    :UserWrite user/user-write})
 
 (def uuid-string-regex (str "^"
@@ -368,9 +375,9 @@
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/userIDParam"}]
     :request-body
-    {:description "The payload representing the desired new state of the user. This payload must conform to the schema UserWrite."
+    {:description "The payload representing the desired new state of the user. This payload must conform to the schema UserUpdate."
      :required true
-     :content {:application-json {:schema {:$ref "#/components/schemas/UserWrite"}}}}
+     :content {:application-json {:schema {:$ref "#/components/schemas/UserUpdate"}}}}
     :responses
     (assoc common-path-responses
            "200" {:description "The updated user."
@@ -378,19 +385,122 @@
            "400" {:description "The request to update the specified user was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
 
-(def paths
-  {"/api/v1/login" login-path
+(def old-users-path
+  {:get
+   {:operation-id :index-old-users
+    :summary "Return all users for the given OLD matching the supplied query."
+    :description "Return all users with access to the given OLD and matching the supplied query and pagination parameters."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/pageQueryParam"}
+                 {:$ref "#/components/parameters/oldSlugPathParam"}
+                 {:$ref "#/components/parameters/itemsPerPageQueryParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "A page of users."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/PageOfUsers"}}}}
+           "400" {:description "The request for users was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   #_#_:post
+   {:operation-id :create-user
+    :summary "Create a new user."
+    :description "Create a new user then return the created user."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
+    :request-body
+    {:description "The payload to create a user. This payload must conform to the schema UserWrite."
+     :required true
+     :content {:application-json {:schema {:$ref "#/components/schemas/UserWrite"}}}}
+    :responses
+    (assoc common-path-responses
+           "201" {:description "The created user, including server-side-generated values such as the ID."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to create a new user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def new-user-path
+  {:get
+   {:operation-id :new-user
+    :summary "Return the data needed to create a new user."
+    :description "Return the data needed to create a new user."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The data needed to create a new user."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/NewUserData"}}}})}})
+
+(def edit-user-path
+  {:get
+   {:operation-id :edit-user
+    :summary "Return the data needed to update an existing user."
+    :description "Return the data needed to update an existing user."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The data needed to update the specified user."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/EditUserData"}}}}
+           "400" {:description "The request for the data needed to update the specified user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def users-path
+  {:get
+   {:operation-id :index-users
+    :summary "Return all users matching the supplied query."
+    :description "Return all users matching the supplied query and pagination parameters."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/pageQueryParam"}
+                 {:$ref "#/components/parameters/itemsPerPageQueryParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "A page of users."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/PageOfUsers"}}}}
+           "400" {:description "The request for users was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   :post
+   {:operation-id :create-user
+    :summary "Create a new user."
+    :description "Create a new user then return the created user."
+    :tags [:UsersTag]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
+    :request-body
+    {:description "The payload to create a user. This payload must conform to the schema UserWrite."
+     :required true
+     :content {:application-json {:schema {:$ref "#/components/schemas/UserWrite"}}}}
+    :responses
+    (assoc common-path-responses
+           "201" {:description "The created user, including server-side-generated values such as the ID."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to create a new user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def paths*
+  ["/api/v1/login" login-path
+
    "/api/v1/{old_slug}/forms/new" new-form-path
-   "/api/v1/{old_slug}/forms/search" search-forms-path
+   "/api/v1/{old_slug}/forms/search" search-forms-path ;; TODO: operational? I think not ...
    "/api/v1/{old_slug}/forms/{form_id}/edit" edit-form-path
    "/api/v1/{old_slug}/forms/{form_id}" form-path
    "/api/v1/{old_slug}/forms" forms-path
-   ;; "/api/v1/users/new" new-user-path
-   ;; "/api/v1/users/search" search-users-path
-   ;; "/api/v1/users/{user_id}/edit" edit-user-path
-   ;; "/api/v1/users" users-path
-   "/api/v1/users/{user_id}" user-path
-   })
+
+   ;; "/api/v1/{old_slug}/users/new" new-old-user-path
+   ;; "/api/v1/{old_slug}/users/{user_id}/edit" edit-old-user-path
+   ;; "/api/v1/{old_slug}/users/{user_id}" old-user-path
+   "/api/v1/{old_slug}/users" old-users-path
+
+   "/api/v1/users/new" new-user-path
+   "/api/v1/users/{user_id}/edit" edit-user-path
+   "/api/v1/users" users-path
+   "/api/v1/users/{user_id}" user-path])
+
+(def paths
+  (->> paths*
+       (partition 2)
+       (map vec)
+       (into {})))
 
 (def api
   {:components

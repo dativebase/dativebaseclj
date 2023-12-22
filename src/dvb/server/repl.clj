@@ -56,36 +56,57 @@
 ;; Database Actions
 (comment
 
-  ;; DANGEROUS!!! Delete everything in the DB
-  (test-queries/delete-all-the-things (:database component.repl/system))
+  (do
 
-  (def db (:database component.repl/system))
+    ;; DANGEROUS!!! Delete everything in the DB
+    (test-queries/delete-all-the-things (:database component.repl/system))
 
-  (def email "uu1@gmail.com")
+    (def db (:database component.repl/system))
 
-  (def password "uu1pw")
+    (def email "uu1@gmail.com")
 
-  ;; Create a new user, so we can login:
-  (def user (db.users/create-user db {:first-name "User"
-                                      :last-name "Utilizando"
-                                      :email email
-                                      :password password}))
+    (def password "uu1pw")
 
-  (def fetched-user (db.users/get-user-by-email db email))
+    ;; Create a new user, so we can login:
+    (def user (db.users/create-user db {:first-name "User"
+                                        :last-name "Utilizando"
+                                        :email email
+                                        :password password
+                                        :is-superuser? true
+                                        :created-by nil
+                                        :updated-by nil}))
 
-  ;; Create an OLD for our user to interact with
-  (def old-slug "fra")
+    (def users (db.users/get-users db))
 
-  (def fra-old (db.olds/create-old db {:slug old-slug
-                                       :name "French OLD"}))
+    (def user-2 (db.users/create-user db {:first-name "Tim"
+                                          :last-name "Benzyne"
+                                          :email "tb@gmail.com"
+                                          :password "123123"
+                                          :is-superuser? false
+                                          :created-by nil
+                                          :updated-by nil}))
 
-  ;; Grant our user access to our OLD by creating a users_olds row:
-  (def user-old (db.users/create-user-old db {:user-id (:id fetched-user)
-                                              :old-slug old-slug
-                                              :role "administrator"}))
+    (def fetched-user (db.users/get-user-by-email db email))
 
-  ;; Get the user with their OLDs:
-  (def user-with-roles (db.users/get-user-with-roles db (:id fetched-user)))
+    ;; Create an OLD for our user to interact with
+    (def old-slug "fra")
+
+    (def fra-old (db.olds/create-old db {:slug old-slug
+                                         :name "French OLD"
+                                         :created-by nil
+                                         :updated-by nil}))
+
+    ;; Grant our user access to our OLD by creating a users_olds row:
+    (def user-old (db.users/create-user-old db {:user-id (:id fetched-user)
+                                                :old-slug old-slug
+                                                :role "administrator"
+                                                :created-by nil
+                                                :updated-by nil}))
+
+    ;; Get the user with their OLDs:
+    (def user-with-roles (db.users/get-user-with-roles db (:id fetched-user)))
+
+    )
 
 )
 

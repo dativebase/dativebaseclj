@@ -10,7 +10,7 @@
   (:require [clojure.string :as str]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.http.utils :as utils]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (defn- locate-api-key-value
   "Locate the value of API Key by finding parameter `key-name` in the `in` of the

@@ -6,11 +6,12 @@
    `http.openapi.spec/api`."
   (:require [clojure.string :as str]
             [dvb.common.openapi.errors :as errors]
+            [dvb.common.openapi.spec :as spec]
             [dvb.server.http.openapi.security :as security]
             [dvb.server.http.openapi.validate :as validate]
             [dvb.server.http.utils :as utils]
             [reitit.core :as reitit]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 ;; Helper functions
 
@@ -38,11 +39,14 @@
 (defn- construct-router
   "Construct a reitit router based on the coll of `paths` in the OpenAPI spec.
    Assoc it under `:router`."
-  [{:keys [spec] :as ctx}]
+  [ctx]
   (assoc ctx
          :router
-         (reitit/router (->> spec :paths keys (map vector))
-                        {:conflicts nil})))
+         (reitit/router
+          ;; Note: using source Clojure spec/paths* here because it's an
+          ;; intentionally ordered vec.
+          (->> spec/paths* (partition 2) (mapv (comp vector first)))
+          {:conflicts nil})))
 
 (defn- recognize-request-url
   "Validate that the request URL is recognized by the OpenAPI spec. If it
@@ -257,13 +261,14 @@
                [nil (exception->response e)]))]
     (if non-operationalized-error-response
       non-operationalized-error-response
-      (let [operationalized-response (try (->> operationalized-context
-                                               (security/run-security application)
-                                               validate-request
-                                               (run-operation application))
-                                          (catch Exception e
-                                            (log/error e "Failed to operationalize response")
-                                            (exception->response e)))
+      (let [operationalized-response
+            (try (->> operationalized-context
+                      (security/run-security application)
+                      validate-request
+                      (run-operation application))
+                 (catch Exception e
+                   (log/error e "Failed to operationalize response")
+                   (exception->response e)))
             {:keys [response-validator]} operationalized-context]
         (try (response-validator operationalized-response)
              (catch Exception e

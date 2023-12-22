@@ -1,11 +1,4 @@
-(ns dvb.server.db.utils
-  (:require [clojure.set :as set]))
-
-(defn db-row->entity [db-row]
-  (set/rename-keys db-row {:created_at :created-at
-                           :inserted_at :inserted-at
-                           :updated_at :updated-at
-                           :destroyed_at :destroyed-at}))
+(ns dvb.server.db.utils)
 
 (defn mutation
   [entity table-name]

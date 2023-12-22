@@ -18,12 +18,13 @@
                     :password ""}))]
     (test-queries/delete-all-the-things database)
     {:old (olds/create-old database {:slug "lan-old"
-                                    :name "Language"})
+                                     :name "Language"})
      :user (sut/create-user database
                             {:first-name "Alice"
                              :last-name "Bobson"
                              :email "ab@hmail.com"
-                             :password "ENCRYPTME!!!"})
+                             :password "ENCRYPTME!!!"
+                             :is-superuser? false})
      :database database}))
 
 (deftest users-can-be-created-read-updated-deleted
@@ -42,22 +43,22 @@
         (testing "We can update the user."
           (let [updated-user (sut/update-user database (assoc user :last-name "Robson"))]
             (is (= (-> user (assoc :last-name "Robson") (dissoc :updated-at))
-                     (dissoc updated-user :updated-at)))
+                   (dissoc updated-user :updated-at)))
             (testing "We can (soft) delete the user."
               (let [deleted-user (sut/delete-user database user)]
                 (is (= (dissoc updated-user :updated-at :destroyed-at)
-                         (dissoc deleted-user :updated-at :destroyed-at)))
+                       (dissoc deleted-user :updated-at :destroyed-at)))
                 (is (:destroyed-at deleted-user))
                 (is (nil? (sut/get-user database (:id user))))))))
         (testing "We can view the history of the user."
           (let [history (sut/get-history database (:id user))]
             (is (= [{:last-name "Bobson" :active? true}
-                      {:last-name "Robson" :active? true}
-                      {:last-name "Robson" :active? false}]
-                     (->> history
-                          (map (fn [event] {:last-name (-> event :row-data :last-name)
-                                            :active? (-> event :row-data :destroyed-at nil?)}))
-                          reverse))))))
+                    {:last-name "Robson" :active? true}
+                    {:last-name "Robson" :active? false}]
+                   (->> history
+                        (map (fn [event] {:last-name (-> event :row-data :last-name)
+                                          :active? (-> event :row-data :destroyed-at nil?)}))
+                        reverse))))))
       (finally (component/stop database)))))
 
 (deftest users-can-be-given-roles-on-olds-and-said-roles-can-be-revoked
@@ -73,56 +74,34 @@
                                              :old-slug (:slug old)
                                              :role :administrator})]
           (is (= :administrator
-                   (-> (sut/get-user-with-roles database (:id user))
-                       :roles
-                       (get (:slug old)))))
+                 (-> (sut/get-user-with-roles database (:id user))
+                     :roles
+                     (get (:slug old)))))
           (testing "We can change the user into a contributor on the given OLD."
             (let [updated-user-old (sut/update-user-old
                                     database
                                     (assoc user-old :role :contributor))]
               (is (= (-> user-old
-                           (assoc :role :contributor)
-                           (dissoc :updated-at))
-                       (dissoc updated-user-old :updated-at)))
+                         (assoc :role :contributor)
+                         (dissoc :updated-at))
+                     (dissoc updated-user-old :updated-at)))
               (is (= :contributor
-                       (-> (sut/get-user-with-roles database (:id user))
-                           :roles
-                           (get (:slug old)))))))
+                     (-> (sut/get-user-with-roles database (:id user))
+                         :roles
+                         (get (:slug old)))))))
           (testing "We can revoke the user's access to the OLD."
             (sut/delete-user-old database user-old)
             (is (not (-> (sut/get-user-with-roles database (:id user))
-                           :roles
-                           (get (:slug old))))))
+                         :roles
+                         (get (:slug old))))))
           (is (= {} (:roles (sut/get-user-with-roles database (:id user)))))
           (testing "We can see the history of a user's privileges on a given OLD."
             (let [history (sut/get-user-old-history database (:id user-old))]
               (is (= [{:role :administrator :active? true}
-                        {:role :contributor   :active? true}
-                        {:role :contributor   :active? false}]
-                       (->> history
-                            (map (fn [event] {:role (-> event :row-data :role)
-                                              :active? (-> event :row-data :destroyed-at nil?)}))
-                            reverse)))))))
-      (finally (component/stop database)))))
-
-(deftest we-can-create-and-destroy-machine-users-for-users
-  (let [{:keys [user database]} (set-up)]
-    (try
-      (testing "A fresh user has no machine users."
-        (is (empty? (sut/get-machine-users-for-user database (:id user)))))
-      (testing "We can give a user a machine user, or two."
-        (sut/create-machine-user database {:user-id (:id user) :api-key "key1"})
-        (is (= #{"key1"}
-                 (->> (sut/get-machine-users-for-user database (:id user))
-                      (map :api-key) set)))
-        (let [second-machine-user
-              (sut/create-machine-user database {:user-id (:id user) :api-key "key2"})]
-          (is (= #{"key1" "key2"}
-                   (->> (sut/get-machine-users-for-user database (:id user))
-                        (map :api-key) set)))
-          (testing "We can destroy a machine user."
-            (sut/delete-machine-user database second-machine-user)
-            (is (= #{"key1"}
-                     (->> (sut/get-machine-users-for-user database (:id user))
-                          (map :api-key) set))))))
+                      {:role :contributor   :active? true}
+                      {:role :contributor   :active? false}]
+                     (->> history
+                          (map (fn [event] {:role (-> event :row-data :role)
+                                            :active? (-> event :row-data :destroyed-at nil?)}))
+                          reverse)))))))
       (finally (component/stop database)))))

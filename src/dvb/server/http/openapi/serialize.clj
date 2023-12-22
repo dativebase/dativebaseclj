@@ -7,7 +7,7 @@
             [dvb.common.openapi.serialize :as serialize]
             [dvb.common.openapi.spec :as spec]
             [dvb.server.utils :as utils]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (defn clojure-openapi->json-string
   "Given a Clojure map `clojure-openapi` that is a well-formed OpenAPI object,

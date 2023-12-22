@@ -2,7 +2,7 @@
   (:require [dvb.common.openapi.errors :as errors]
             [dvb.server.db.api-keys :as db.api-keys]
             [dvb.server.db.users :as db.users]
-            [taoensso.timbre :as log])
+            [dvb.server.log :as log])
   (:import (java.util UUID)))
 
 (defn handle
@@ -33,8 +33,12 @@
       (log/warn "Invalid key supplied for the referenced API key."
                 {:x-app-id x-app-id})
       (throw (errors/error-code->ex-info :unauthenticated)))
-    (let [user (db.users/get-user-with-roles database (:user-id api-key))
-          ret {:authenticated? true
-               :user user}]
-      (log/info "Successful API key authentication." {:user-id (:id user)})
-      ret)))
+    (let [user-id (:user-id api-key)
+          user (db.users/get-user-with-roles database user-id)]
+      (when-not user
+        (log/warn "User owning API key has been deleted."
+                  {:x-app-id x-app-id :user-id user-id})
+        (throw (errors/error-code->ex-info :unauthenticated)))
+      (let [ret {:authenticated? true :user user}]
+        (log/info "Successful API key authentication." {:user-id user-id})
+        ret))))

@@ -3,6 +3,11 @@
             [camel-snake-kebab.extras :as csk-extras]
             [cheshire.core :as json]
             [clj-http.client :as client]
+            [clojure.set :as set]
+            [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
+            [dvb.client.specs.users :as users-specs]
+            [dvb.common.edges :as edges]
             [dvb.common.openapi.serialize :as serialize]
             [dvb.common.openapi.spec :as spec]
             #_[dvb.common.openapi.serialize :as serialize]
@@ -12,6 +17,10 @@
   (-> (for [server spec/servers :when (= :local (:id server))]
         server) first :url))
 
+(def local-test-base-url
+  (-> (for [server spec/servers :when (= :local-test (:id server))]
+        server) first :url))
+
 (def prod-base-url
   (-> (for [server spec/servers :when (= :prod (:id server))]
         server) first :url))
@@ -19,21 +28,40 @@
 (defn forms-url [base-url old]
   (str base-url "/api/v1/" old "/forms"))
 
+(defn new-form-url [base-url old]
+  (str base-url "/api/v1/" old "/forms/new"))
+
 (defn form-url [base-url old form-id]
   (str base-url "/api/v1/" old "/forms/" form-id))
+
+(defn edit-form-url [base-url old form-id]
+  (str base-url "/api/v1/" old "/forms/" form-id "/edit"))
 
 (defn login-url [base-url] (str base-url "/api/v1/login"))
 
 (defn user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id))
 
+(defn edit-user-url [base-url user-id]
+  (str base-url "/api/v1/users/" user-id "/edit"))
+
+(defn users-url [base-url]
+  (str base-url "/api/v1/users"))
+
+(defn new-user-url [base-url]
+  (str base-url "/api/v1/users/new"))
+
 (defn make-client
   ([] (make-client :local))
   ([type]
-   (assert (some #{type} [:prod :local]) "Type must be :prod or :local")
+   (assert (some #{type} [:prod :local :local-test])
+           "Type must be :prod, :local, or :local-test")
    (let [spec (serialize/denormalize spec/api)]
      {:spec spec
-      :base-url (if (= :prod type) prod-base-url local-base-url)})))
+      :base-url (case type
+                  :prod prod-base-url
+                  :local local-base-url
+                  :local-test local-test-base-url)})))
 
 (def default-request
   {:method :get
@@ -70,7 +98,7 @@
           (assoc :authenticated? true))
       (assoc client :authenticated? false))))
 
-(defn authenticate [request {:as _client :keys [api-key]}]
+(defn add-authentication-headers [request {:as _client :keys [api-key]}]
   (update request :headers merge {"X-APP-ID" (:id api-key)
                                   "X-API-KEY" (:key api-key)}))
 
@@ -79,9 +107,78 @@
   [client user-id]
   (-> default-request
       (assoc :url (user-url (:base-url client) user-id))
-      (authenticate client)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-api->clj))
+
+(defn edit-user
+  "GET /users/<ID>/edit"
+  [client user-id]
+  (-> default-request
+      (assoc :url (edit-user-url (:base-url client) user-id))
+      (add-authentication-headers client)
       client/request
       simple-response))
+
+(defn create-user
+  "POST /users"
+  [client user-write]
+  (-> default-request
+      (assoc :url (users-url (:base-url client))
+             :method :post
+             :body (json/encode
+                    (edges/user-clj->api
+                     (merge (gen/generate (s/gen ::users-specs/user-write))
+                            user-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/create-user-api->clj))
+
+(defn new-user
+  "GET /users/new"
+  [client]
+  (-> default-request
+      (assoc :url (new-user-url (:base-url client)))
+      (add-authentication-headers client)
+      client/request
+      simple-response))
+
+(defn update-user
+  "PUT /users/<ID>"
+  [client user-id user-update]
+  (-> default-request
+      (assoc :url (user-url (:base-url client) user-id)
+             :method :put
+             :body (json/encode user-update))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-api->clj))
+
+(defn delete-user
+  "DELETE /users/<ID>"
+  [client user-id]
+  (-> default-request
+      (assoc :url (user-url (:base-url client) user-id)
+             :method :delete)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-api->clj))
+
+(defn index-users
+  "GET /users"
+  ([client] (index-users client {}))
+  ([client {:keys [page items-per-page]
+            :or {page 0 items-per-page 10}}]
+   (-> default-request
+       (assoc :url (users-url (:base-url client))
+              :query-params {:page page :items-per-page items-per-page})
+       (add-authentication-headers client)
+       client/request
+       simple-response)))
 
 (defn create-form
   "POST /forms"
@@ -90,7 +187,25 @@
       (assoc :url (forms-url (:base-url client) old)
              :method :post
              :body (json/encode form-write))
-      (authenticate client)
+      (add-authentication-headers client)
+      client/request
+      simple-response))
+
+(defn new-form
+  "GET /forms/new"
+  [client old]
+  (-> default-request
+      (assoc :url (new-form-url (:base-url client) old))
+      (add-authentication-headers client)
+      client/request
+      simple-response))
+
+(defn edit-form
+  "GET /forms/<ID>/edit"
+  [client old form-id]
+  (-> default-request
+      (assoc :url (edit-form-url (:base-url client) old form-id))
+      (add-authentication-headers client)
       client/request
       simple-response))
 
@@ -99,7 +214,7 @@
   [client old form-id]
   (-> default-request
       (assoc :url (form-url (:base-url client) old form-id))
-      (authenticate client)
+      (add-authentication-headers client)
       client/request
       simple-response))
 
@@ -109,7 +224,7 @@
   (-> default-request
       (assoc :url (form-url (:base-url client) old form-id)
              :method :delete)
-      (authenticate client)
+      (add-authentication-headers client)
       client/request
       simple-response))
 
@@ -120,31 +235,69 @@
       (assoc :url (form-url (:base-url client) old form-id)
              :method :put
              :body (json/encode form-write))
-      (authenticate client)
+      (add-authentication-headers client)
       client/request
       simple-response))
 
 (comment
 
-  (def email "uu1@gmail.com")
+  (do ;; superuser client
+    (def email "uu1@gmail.com")
+    (def password "uu1pw")
+    (def old-slug "fra")
+    (def client (authenticate-client (make-client) email password)))
 
-  (def password "uu1pw")
-
-  (def old-slug "fra")
-
-  (def client (authenticate-client (make-client) email password))
+  (do ;; regular user client
+    (def email "tb@gmail.com")
+    (def password "123123")
+    (def old-slug "fra")
+    (def client (authenticate-client (make-client) email password)))
 
   (:authenticated? client)
 
+  (new-form client old-slug)
+
+  (edit-form client old-slug (str (random-uuid)))
+
+  (new-user client)
+
+  (edit-user client "1a283b6c-553d-49be-bab9-0654a5557eec")
+
+  (def user-email (str (random-uuid) "@gmail.com"))
+
+  (def created-user
+    (:body (create-user client
+                        {:first-name (str (random-uuid))
+                         :last-name (str (random-uuid))
+                         :email user-email
+                         :password "2222"
+                         :is-superuser? false})))
+
+  (show-user client (:id created-user)) ;; 200 OK
+
+  (delete-user client (:id created-user)) ;; 200 OK
+
   (dissoc client :spec)
-
-  (def contingent-user-id "5c76c8cd-ac06-4f44-a60d-571da90b2f5e")
-
-  (show-user client contingent-user-id) ;; 200 OK
 
   (show-user client "x4c12cef-c2fd-44ea-b365-7dd15ca338a3") ;; invalid UUID: 400
 
   (show-user client (:id (:user client))) ;; whoami?
+
+  (update-user client (:id (:user client)) {:first-name "Judy"})
+
+  (def created-user (create-user client
+                                 {:first-name "ZZ"
+                                  :last-name "Top"
+                                  :email "zzt@gmail.com"
+                                  :password "2222"
+                                  :is-superuser true}))
+
+  (def created-non-superuser (create-user client
+                                          {:first-name "Not"
+                                           :last-name "Super"
+                                           :email "notsup@gmail.com"
+                                           :password "2222"
+                                           :is-superuser false}))
 
   (def created-form (create-form client
                                  old-slug
@@ -154,6 +307,13 @@
                                  old-slug
                                  (-> created-form :body :id)
                                  {:transcription "Les chiens ..."})) ;; NOT idempotent
+
+  (index-users client)
+
+  [(index-users client {:page 0 :items-per-page 1})
+   (index-users client {:page 1 :items-per-page 1})
+   (index-users client {:page 2 :items-per-page 1})
+   (index-users client {:page 3 :items-per-page 1})]
 
   (show-form client old-slug (-> created-form :body :id)) ;; 200
 

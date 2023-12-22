@@ -4,7 +4,7 @@
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
             [dvb.server.http.operations.utils.declojurify :as declojurify]
-            [taoensso.timbre :as log]))
+            [dvb.server.log :as log]))
 
 (defn handle [{:keys [database]}
               {:as ctx {old-slug :old_slug form-id :form_id} :path}]

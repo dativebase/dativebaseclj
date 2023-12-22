@@ -21,7 +21,3 @@ DELETE FROM users
 -- :name delete-all-users-olds* :!
 -- :doc Delete all users_olds rows. WARNING: DO NOT USE IN PRODUCTION!!!
 DELETE FROM users_olds
-
--- :name delete-all-machine-users* :!
--- :doc Delete all machine_users rows. WARNING: DO NOT USE IN PRODUCTION!!!
-DELETE FROM machine_users
