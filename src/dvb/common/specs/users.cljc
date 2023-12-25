@@ -32,8 +32,16 @@
                    ::created-by
                    ::updated-by]))
 
+(s/def ::users (s/coll-of ::user))
+
+(defn user? [x] (s/valid? ::user x))
+
+(defn users? [x] (s/valid? ::users x))
+
 (comment
 
-  (gen/generate (s/gen ::user))
+  (user? (gen/generate (s/gen ::user)))
+
+  (users? (gen/generate (s/gen ::users)))
 
 )

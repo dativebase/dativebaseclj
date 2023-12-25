@@ -2,14 +2,13 @@
   (:require [dvb.common.openapi.errors :as errors]
             [dvb.common.utils :as utils]
             [dvb.server.db.users :as db.users]
-            [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log]))
 
 (defn handle
   [{:as _application :keys [database]}
-   {:as ctx {user-id :user_id
-             registration-key :user_registration_key} :path}]
+   {:as _ctx {user-id :user_id
+              registration-key :user_registration_key} :path}]
   (let [registration-key (utils/->uuid registration-key)]
     (log/info "Activating a user." {:user-id user-id
                                     :registration-key registration-key})

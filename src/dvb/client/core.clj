@@ -3,7 +3,6 @@
             [camel-snake-kebab.extras :as csk-extras]
             [cheshire.core :as json]
             [clj-http.client :as client]
-            [clojure.set :as set]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [dvb.client.specs.users :as users-specs]

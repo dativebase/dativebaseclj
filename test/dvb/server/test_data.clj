@@ -1,34 +1,33 @@
 (ns dvb.server.test-data
   (:require [com.stuartsierra.component :as component]
+            [dvb.common.specs.forms :as forms-specs]
+            [dvb.common.specs.olds :as olds-specs]
+            [dvb.common.specs.users :as users-specs]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.test-queries :as test-queries]
             [dvb.server.db.users :as db.users]
             [dvb.server.encrypt :as encrypt]
-            [dvb.server.specs.forms :as form-specs]
-            [dvb.server.specs.olds :as old-specs]
-            [dvb.server.specs.users :as user-specs]
             [dvb.server.system.db :as system-db]
             [clojure.spec.gen.alpha :as gen]
             [clojure.spec.alpha :as s]))
 
 (defn gen-old
   ([] (gen-old {}))
-  ([overrides] (merge (gen/generate (s/gen ::old-specs/old))
+  ([overrides] (merge (gen/generate (s/gen ::olds-specs/old))
                       overrides)))
 
 (defn gen-user
   ([] (gen-user {}))
-  ([overrides] (update
-                (merge (gen/generate (s/gen ::user-specs/user))
-                       overrides)
-                :password
-                encrypt/hashpw)))
+  ([overrides]
+   (merge (gen/generate (s/gen ::users-specs/user))
+          overrides)))
 
 (defn gen-form
   ([] (gen-form {}))
-  ([overrides] (merge (gen/generate (s/gen ::form-specs/form))
-                      overrides)))
+  ([overrides]
+   (merge (gen/generate (s/gen ::forms-specs/form))
+          overrides)))
 
 (defn db-component []
   (component/start
@@ -76,6 +75,18 @@
                                           :created-by user-id})))
                             (range 10))))
       (finally (component/stop db-component)))))
+
+(defn set-up-old-user []
+  (let [database (db-component)
+        {:as user user-id :id}
+        (db.users/create-user database (gen-user
+                                        {:created-by nil
+                                         :updated-by nil}))]
+    {:user user
+     :old (db.olds/create-old database (gen-old
+                                        {:created-by user-id
+                                         :updated-by user-id}))
+     :database database}))
 
 (comment
 

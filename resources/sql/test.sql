@@ -7,8 +7,12 @@ DELETE FROM events
 DELETE FROM forms
 
 -- :name delete-all-olds* :!
--- :doc Delete all olds. WARNING: DO NOT USE IN PRODUCTION!!!
+-- :doc Delete all OLDs. WARNING: DO NOT USE IN PRODUCTION!!!
 DELETE FROM olds
+
+-- :name delete-all-plans* :!
+-- :doc Delete all plans. WARNING: DO NOT USE IN PRODUCTION!!!
+DELETE FROM plans
 
 -- :name delete-all-api-keys* :!
 -- :doc Delete all API keys. WARNING: DO NOT USE IN PRODUCTION!!!
