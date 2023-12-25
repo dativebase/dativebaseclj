@@ -67,3 +67,19 @@
   (if (= 200 status)
     (update response :body user-api->clj)
     response))
+
+;; Plans
+
+(def plan-pg->clj-coercions
+  {:tier keyword})
+
+(def plan-clj->pg-coercions
+  {:tier name})
+
+(defn plan-pg->clj [plan]
+  (-> plan
+      (perform-coercions plan-pg->clj-coercions)))
+
+(defn plan-clj->pg [plan]
+  (-> plan
+      (perform-coercions plan-clj->pg-coercions)))

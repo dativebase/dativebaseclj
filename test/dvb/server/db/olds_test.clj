@@ -1,25 +1,28 @@
 (ns dvb.server.db.olds-test
   (:require [clojure.test :refer [deftest is testing]]
             [com.stuartsierra.component :as component]
-            dvb.server.db.core
+            [dvb.common.specs.olds :as olds-specs]
             [dvb.server.db.olds :as sut]
-            [dvb.server.db.test-queries :as test-queries]
-            [dvb.server.system.db :as system-db]))
+            [dvb.server.db.users :as users]
+            [dvb.server.test-data :as test-data]))
+
+(defn- set-up []
+  (let [database (test-data/db-component)]
+    {:user (users/create-user database (test-data/gen-user
+                                        {:created-by nil
+                                         :updated-by nil}))
+     :database database}))
 
 (deftest old-db-fns-work
-  (let [database (component/start
-                  (system-db/make-db
-                   {:name "dativebase"
-                    :user "postgres"
-                    :password ""}))]
+  (let [{:keys [database user]} (set-up)
+        {user-id :id} user]
     (try
-      (test-queries/delete-all-the-things database)
       (testing "create-old works"
-        (let [old (sut/create-old database {:slug "bla"
-                                            :name "Blackfoot"})]
-          (is (= ["bla" "Blackfoot"] ((juxt :slug :name) old)))
-          (is (inst? (:created-at old)))
-          (is (inst? (:updated-at old)))
+        (let [old (sut/create-old database
+                                  (test-data/gen-old
+                                   {:created-by user-id
+                                    :updated-by user-id}))]
+          (is (olds-specs/old? old))
           (is (= (:updated-at old) (:created-at old)))
           (is (nil? (:destroyed-at old)))
           (testing "get-old works"
@@ -42,8 +45,8 @@
                           (select-keys (:row-data event)
                                        [:name :updated-at :destroyed-at]))
                         history)]
-              (is (= ["Siksika" "Siksika" "Blackfoot"]
-                     (map :name focused-history)))
+              (is (= ["Siksika" "Siksika"]
+                     (take 2 (map :name focused-history))))
               (is (= [false true true]
                      (map (comp nil? :destroyed-at) focused-history)))))))
       (finally (component/stop database)))))

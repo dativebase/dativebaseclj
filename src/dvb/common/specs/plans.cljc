@@ -1,10 +1,12 @@
-(ns dvb.common.specs.olds
+(ns dvb.common.specs.plans
+  "Specs for describing plans. A plan is a map. All plans in DativeBase business
+  logic should conform to ``::plan``."
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [dvb.common.specs.common :as common]))
 
-(s/def ::slug ::common/non-empty-string)
-(s/def ::name ::common/non-empty-string)
+(s/def ::id uuid?)
+(s/def ::tier #{:free :subscriber :supporter})
 (s/def ::created-at ::common/instant)
 (s/def ::inserted-at ::common/instant)
 (s/def ::updated-at ::common/instant)
@@ -12,9 +14,9 @@
 (s/def ::created-by (s/nilable uuid?))
 (s/def ::updated-by (s/nilable uuid?))
 
-(s/def ::old
-  (s/keys :req-un [::slug
-                   ::name
+(s/def ::plan
+  (s/keys :req-un [::id
+                   ::tier
                    ::created-at
                    ::inserted-at
                    ::updated-at
@@ -22,17 +24,17 @@
                    ::created-by
                    ::updated-by]))
 
-(s/def ::olds (s/coll-of ::old))
+(s/def ::plans (s/coll-of ::plan))
 
-(defn old? [x] (s/valid? ::old x))
+(defn plan? [x] (s/valid? ::plan x))
 
-(defn olds? [x] (s/valid? ::olds x))
+(defn plans? [x] (s/valid? ::plans x))
 
 (comment
 
-  (old? (gen/generate (s/gen ::old)))
+  (plan? (gen/generate (s/gen ::plan)))
 
-  (olds? [(gen/generate (s/gen ::old))
-          (gen/generate (s/gen ::old))])
+  (plans? [(gen/generate (s/gen ::plan))
+           (gen/generate (s/gen ::plan))])
 
 )

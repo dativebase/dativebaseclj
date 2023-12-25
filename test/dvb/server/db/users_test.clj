@@ -1,38 +1,16 @@
 (ns dvb.server.db.users-test
   (:require [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
-            dvb.server.db.core
-            [dvb.server.db.olds :as olds]
-            [dvb.server.db.test-queries :as test-queries]
+            [dvb.common.specs.users :as users-specs]
             [dvb.server.db.users :as sut]
-            [dvb.server.system.db :as system-db]))
+            [dvb.server.test-data :as test-data]))
 
-(defn- set-up
-  "Given a clean slate, create OLD lan-old and user Alice! Then return
-   database, user, and old."
-  []
-  (let [database (component/start
-                  (system-db/make-db
-                   {:name "dativebase"
-                    :user "postgres"
-                    :password ""}))]
-    (test-queries/delete-all-the-things database)
-    {:old (olds/create-old database {:slug "lan-old"
-                                     :name "Language"})
-     :user (sut/create-user database
-                            {:first-name "Alice"
-                             :last-name "Bobson"
-                             :email "ab@hmail.com"
-                             :password "ENCRYPTME!!!"
-                             :is-superuser? false})
-     :database database}))
-
-(deftest users-can-be-created-read-updated-deleted
-  (let [{:keys [user database]} (set-up)]
+(deftest crud-on-users-works
+  (let [{:keys [user database]} (test-data/set-up-old-user)]
     (try
       (testing "We can create a new user."
+        (is (users-specs/user? user))
         (is (uuid? (:id user)))
-        (is (= ["ab@hmail.com" "Bobson"] ((juxt :email :last-name) user)))
         (is (inst? (:created-at user)))
         (is (inst? (:updated-at user)))
         (is (= (:updated-at user) (:created-at user)))
@@ -51,18 +29,21 @@
                 (is (:destroyed-at deleted-user))
                 (is (nil? (sut/get-user database (:id user))))))))
         (testing "We can view the history of the user."
-          (let [history (sut/get-history database (:id user))]
-            (is (= [{:last-name "Bobson" :active? true}
-                    {:last-name "Robson" :active? true}
-                    {:last-name "Robson" :active? false}]
-                   (->> history
-                        (map (fn [event] {:last-name (-> event :row-data :last-name)
-                                          :active? (-> event :row-data :destroyed-at nil?)}))
-                        reverse))))))
+          (let [history (sut/get-history database (:id user))
+                history-summary
+                (->> history
+                     (map (fn [event] {:last-name (-> event :row-data :last-name)
+                                       :active? (-> event :row-data :destroyed-at nil?)}))
+                     reverse)
+                last-name-history (->> history-summary (map :last-name) rest)
+                active-history (->> history-summary (map :active?))]
+            (is (= ["Robson" "Robson"] last-name-history))
+            (is (= [true true false] active-history)))))
       (finally (component/stop database)))))
 
-(deftest users-can-be-given-roles-on-olds-and-said-roles-can-be-revoked
-  (let [{:keys [old user database]} (set-up)]
+(deftest user-roles-work
+  (let [{:keys [old user database]} (test-data/set-up-old-user)
+        {user-id :id} user]
     (try
       (testing "A user's roles are an empty map when there are no roles."
         (let [user-with-roles (sut/get-user-with-roles database (:id user))]
@@ -72,7 +53,9 @@
         (let [user-old (sut/create-user-old database
                                             {:user-id (:id user)
                                              :old-slug (:slug old)
-                                             :role :administrator})]
+                                             :role :administrator
+                                             :created-by user-id
+                                             :updated-by user-id})]
           (is (= :administrator
                  (-> (sut/get-user-with-roles database (:id user))
                      :roles

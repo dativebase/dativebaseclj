@@ -1,35 +1,11 @@
 (ns dvb.server.db.forms-test
   (:require [clojure.test :refer [deftest is testing]]
             [com.stuartsierra.component :as component]
-            dvb.server.db.core
-            [dvb.server.db.olds :as olds]
-            [dvb.server.db.test-queries :as test-queries]
             [dvb.server.db.forms :as sut]
-            [dvb.server.db.users :as users]
-            [dvb.server.system.db :as system-db]))
+            [dvb.server.test-data :as test-data]))
 
-(defn- set-up
-  "Given a clean slate, create OLD lan-old and user Alice! Then return
-   database, user, and old."
-  []
-  (let [database (component/start (system-db/make-db
-                                   {:name "dativebase"
-                                    :user "postgres"
-                                    :password ""}))]
-    (test-queries/delete-all-the-things database)
-    {:old (olds/create-old database {:slug "lan-old"
-                                     :name "Language"})
-     :user (users/create-user database
-                              {:first-name "Alice"
-                               :last-name "Bobson"
-                               :email "ab@hmail.com"
-                               :username "ab"
-                               :password "ENCRYPTME!!!"
-                               :is-superuser? false})
-     :database database}))
-
-(deftest forms-can-be-created-read-updated-deleted
-  (let [{:keys [old user database]} (set-up)]
+(deftest crud-on-forms-works
+  (let [{:keys [old user database]} (test-data/set-up-old-user)]
     (try
       (testing "We can create a form."
         (let [form (sut/create-form database
@@ -70,7 +46,7 @@
       (finally (component/stop database)))))
 
 (deftest a-set-of-ordered-forms-can-be-selected
-  (let [{:keys [old user database]} (set-up)]
+  (let [{:keys [old user database]} (test-data/set-up-old-user)]
     (try
       (let [base-form {:old-slug (:slug old)
                        :created-by (:id user)

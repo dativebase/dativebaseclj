@@ -1,6 +1,5 @@
 (ns dvb.server.db.users
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.set :as set]
             [dvb.common.edges :as edges]
             [dvb.server.db.events :as events]
             [dvb.server.db.utils :as utils]

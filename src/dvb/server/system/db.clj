@@ -1,5 +1,6 @@
 (ns dvb.server.system.db
   (:require [com.stuartsierra.component :as component]
+            dvb.server.db.core ;; so that the HugSQL customization gets loaded
             [hikari-cp.core :as hikari-cp])
   (:import [java.io Closeable]
            [com.zaxxer.hikari HikariDataSource]))

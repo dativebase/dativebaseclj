@@ -63,6 +63,17 @@ CREATE TABLE public.olds (
     inserted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE public.plans (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tier character varying(200) DEFAULT 'free'::character varying NOT NULL,
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    destroyed_at timestamp with time zone,
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL
+);
+
 CREATE TABLE public.schema_version (
     installed_rank integer NOT NULL,
     version character varying(50),
@@ -106,6 +117,19 @@ CREATE TABLE public.users_olds (
     inserted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE public.users_plans (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    plan_id uuid NOT NULL,
+    role text NOT NULL,
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    destroyed_at timestamp with time zone,
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL
+);
+
 ALTER TABLE ONLY public.api_keys
     ADD CONSTRAINT api_keys_pkey PRIMARY KEY (id);
 
@@ -117,6 +141,9 @@ ALTER TABLE ONLY public.forms
 
 ALTER TABLE ONLY public.olds
     ADD CONSTRAINT olds_pkey PRIMARY KEY (slug);
+
+ALTER TABLE ONLY public.plans
+    ADD CONSTRAINT plans_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.schema_version
     ADD CONSTRAINT schema_version_pk PRIMARY KEY (installed_rank);
@@ -132,6 +159,9 @@ ALTER TABLE ONLY public.users_olds
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.users_plans
+    ADD CONSTRAINT users_plans_pkey PRIMARY KEY (id);
 
 CREATE INDEX events_history_idx ON public.events USING btree (old_slug, table_name, row_id);
 
@@ -163,6 +193,12 @@ ALTER TABLE ONLY public.olds
 ALTER TABLE ONLY public.olds
     ADD CONSTRAINT fk_olds_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
 
+ALTER TABLE ONLY public.plans
+    ADD CONSTRAINT fk_plans_created_by FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.plans
+    ADD CONSTRAINT fk_plans_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT fk_users_created_by_user_id FOREIGN KEY (created_by) REFERENCES public.users(id);
 
@@ -177,6 +213,18 @@ ALTER TABLE ONLY public.users_olds
 
 ALTER TABLE ONLY public.users_olds
     ADD CONSTRAINT fk_users_olds_user_id_to_user_id FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users_plans
+    ADD CONSTRAINT fk_users_plans_created_by FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users_plans
+    ADD CONSTRAINT fk_users_plans_plan FOREIGN KEY (plan_id) REFERENCES public.plans(id);
+
+ALTER TABLE ONLY public.users_plans
+    ADD CONSTRAINT fk_users_plans_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.users_plans
+    ADD CONSTRAINT fk_users_plans_user FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT fk_users_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
