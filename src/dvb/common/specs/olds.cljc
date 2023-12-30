@@ -5,10 +5,10 @@
 
 (s/def ::slug ::common/non-empty-string)
 (s/def ::name ::common/non-empty-string)
-(s/def ::created-at ::common/instant)
-(s/def ::inserted-at ::common/instant)
-(s/def ::updated-at ::common/instant)
-(s/def ::destroyed-at (s/nilable ::common/instant))
+(s/def ::created-at ::common/created-at)
+(s/def ::inserted-at ::common/inserted-at)
+(s/def ::updated-at ::common/updated-at)
+(s/def ::destroyed-at ::common/destroyed-at)
 (s/def ::created-by (s/nilable uuid?))
 (s/def ::updated-by (s/nilable uuid?))
 

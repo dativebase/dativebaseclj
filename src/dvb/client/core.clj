@@ -130,7 +130,7 @@
       (assoc :url (users-url (:base-url client))
              :method :post
              :body (json/encode
-                    (edges/user-clj->api
+                    (edges/user-write-clj->api
                      (merge (gen/generate (s/gen ::users-specs/user-write))
                             user-write))))
       (add-authentication-headers client)

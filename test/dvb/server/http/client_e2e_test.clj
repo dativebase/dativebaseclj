@@ -76,7 +76,7 @@
           (let [{:keys [status body]} (client/index-users superuser-client)]
             (is (= 200 status))
             (is (seq (:data body)))))
-        ;; Seems undesired bad behaviour
+        ;; TODO: This seems like undesired behaviour
         (testing "The user-authenticated client is not authorized to index the users"
           (let [{:keys [status body]} (client/index-users user-client)]
             (is (= 403 status))

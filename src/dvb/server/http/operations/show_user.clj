@@ -1,7 +1,7 @@
 (ns dvb.server.http.operations.show-user
-  (:require [dvb.server.db.users :as db.users]
+  (:require [dvb.common.edges :as edges]
+            [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log]))
 
 (defn handle
@@ -12,7 +12,7 @@
   (if-let [user (db.users/get-user database user-id)]
     {:status 200
      :headers {}
-     :body (declojurify/user user)}
+     :body (edges/user-clj->api user)}
     {:status 404
      :headers {}
      :body

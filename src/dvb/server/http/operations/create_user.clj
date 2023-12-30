@@ -1,11 +1,10 @@
 (ns dvb.server.http.operations.create-user
   (:require [clojure.string :as str]
+            [dvb.common.edges :as edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
-            [dvb.server.http.operations.utils.clojurify :as clojurify]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log])
   (:import (org.postgresql.util PSQLException)))
 
@@ -30,13 +29,14 @@
   (let [created-by (utils/security-user-id ctx)]
     (log/info "Creating a user.")
     (authorize/authorize ctx)
-    (let [response {:status 201
+    (let [creator (partial create-user database)
+          response {:status 201
                     :headers {}
-                    :body (->> (assoc user-write
-                                      :created-by created-by
-                                      :updated-by created-by)
-                               clojurify/user
-                               (create-user database)
-                               declojurify/user)}]
+                    :body (-> user-write
+                              edges/user-api->clj
+                              (assoc :created-by created-by
+                                     :updated-by created-by)
+                              creator
+                              edges/user-clj->api)}]
       (log/info "Created a user.")
       response)))

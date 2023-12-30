@@ -4,6 +4,7 @@
             [dvb.common.openapi.spec :as spec]
             [dvb.server.http.server :as server]
             [dvb.server.http.operations.create-form :as create-form]
+            [dvb.server.http.operations.create-plan :as create-plan]
             [dvb.server.http.operations.create-user :as create-user]
             [dvb.server.http.operations.delete-form :as delete-form]
             [dvb.server.http.operations.delete-user :as delete-user]

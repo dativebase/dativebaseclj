@@ -1,7 +1,7 @@
 (ns dvb.server.http.operations.show-form
-  (:require [dvb.server.db.forms :as db.forms]
+  (:require [dvb.common.edges :as edges]
+            [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log]))
 
 (defn handle
@@ -12,14 +12,7 @@
   (if-let [form (db.forms/get-form database form-id)]
     {:status 200
      :headers {}
-     :body (-> form
-               (select-keys [:id
-                             :transcription
-                             :old-slug
-                             :created-at
-                             :updated-at
-                             :created-by])
-               declojurify/form)}
+     :body (edges/form-clj->api form)}
     {:status 404
      :headers {}
      :body

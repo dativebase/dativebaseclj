@@ -1,9 +1,9 @@
 (ns dvb.server.http.operations.login
-  (:require [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.edges :as edges]
+            [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.db.api-keys :as db.api-keys]
             [dvb.server.encrypt :as encrypt]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.system.clock :as clock]
             [java-time.api :as jt]
             [dvb.server.log :as log]))
@@ -38,5 +38,5 @@
       (log/info "Login succeeded." {:email email :user-id (:id user)})
       {:status 200
        :headers {}
-       :body {:user (declojurify/user user)
-              :api-key (declojurify/api-key api-key)}})))
+       :body {:user (edges/user-clj->api user)
+              :api-key (edges/api-key-clj->api api-key)}})))

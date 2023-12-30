@@ -31,6 +31,7 @@
             [dvb.common.openapi.spec.components.error :as error]
             [dvb.common.openapi.spec.components.form :as form]
             [dvb.common.openapi.spec.components.login :as login]
+            [dvb.common.openapi.spec.components.plan :as plan]
             [dvb.common.openapi.spec.components.user :as user]))
 
 (def info
@@ -96,6 +97,8 @@
    :NewUserData user/new-user-data
    :PageOfForms form/page-of-forms
    :PageOfUsers user/page-of-users
+   :Plan plan/plan
+   :PlanWrite plan/plan-write
    :User user/user
    :UserAndAPIKey user-and-api-key
    :UserUpdate user/user-update
@@ -121,6 +124,12 @@
                       :required true
                       :schema {:type :string
                                :pattern "^[a-zA-Z0-9_-]+$"}}
+   :planIDParam {:name :plan_id
+                 :in :path
+                 :description "The ID of the referenced plan."
+                 :required true
+                 :schema {:type :string
+                          :pattern uuid-string-regex}}
    :userIDParam {:name :user_id
                  :in :path
                  :description "The ID of the referenced user."
@@ -500,6 +509,69 @@
            "400" {:description "The request to create a new user was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
 
+(def plan-path
+  {:get
+   {:operation-id :show-plan
+    :summary "Return the plan with the provided ID."
+    :description "Return the plan with the provided ID."
+    :tags [:Plans]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/planIDParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The plan."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/Plan"}}}}
+           "400" {:description "The request for a specific plan was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   :delete
+   {:operation-id :delete-plan
+    :summary "Delete the plan with the provided ID."
+    :description "Delete the plan with the provided ID. This is a soft delete. The plan data are not actually removed from the database. However, the system will behave as though the plan no longer exists."
+    :tags [:Plans]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/planIDParam"}]
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The deleted plan."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/Plan"}}}}
+           "400" {:description "The request to delete the specified plan was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   :put
+   {:operation-id :update-plan
+    :summary "Update the plan with the provided ID."
+    :description "Update the plan with the provided ID using the JSON payload of the request."
+    :tags [:Plans]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/planIDParam"}]
+    :request-body
+    {:description "The payload representing the desired new state of the plan. This payload must conform to the schema PlanWrite."
+     :required true
+     :content {:application-json {:schema {:$ref "#/components/schemas/PlanWrite"}}}}
+    :responses
+    (assoc common-path-responses
+           "200" {:description "The updated plan."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/Plan"}}}}
+           "400" {:description "The request to update the specified plan was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def plans-path
+  {:post
+   {:operation-id :create-plan
+    :summary "Create a new plan."
+    :description "Create a new plan then return the created plan."
+    :tags [:Plans]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
+    :request-body
+    {:description "The payload to create a plan. This payload must conform to the schema PlanWrite."
+     :required true
+     :content {:application-json {:schema {:$ref "#/components/schemas/PlanWrite"}}}}
+    :responses
+    (assoc common-path-responses
+           "201" {:description "The created plan, including server-side-generated values such as the ID."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/Plan"}}}}
+           "400" {:description "The request to create a new plan was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
 (def paths*
   ["/api/v1/login" login-path
 
@@ -519,6 +591,9 @@
    "/api/v1/users/{user_id}/edit" edit-user-path
    "/api/v1/users/{user_id}" user-path
    "/api/v1/users" users-path
+
+   ;; "/api/v1/plans/{plan_id}" plan-path
+   "/api/v1/plans" plans-path
 
    ])
 
