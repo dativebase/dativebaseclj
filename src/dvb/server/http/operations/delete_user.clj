@@ -1,8 +1,8 @@
 (ns dvb.server.http.operations.delete-user
-  (:require [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.edges :as edges]
+            [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log])
   (:import (java.util UUID)))
 
@@ -27,7 +27,7 @@
       (try
         {:status 200
          :headers {}
-         :body (declojurify/user (db.users/delete-user database existing-user))}
+         :body (edges/user-clj->api (db.users/delete-user database existing-user))}
         (catch Exception e
           (throw (errors/error-code->ex-info
                   :entity-deletion-internal-error

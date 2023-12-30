@@ -15,7 +15,8 @@
    :update-form [:administrator :contributor]})
 
 (def old-independent-operations
-  #{:create-user
+  #{:create-plan
+    :create-user
     :delete-user
     :edit-user
     :index-users

@@ -1,9 +1,9 @@
 (ns dvb.server.http.operations.delete-form
-  (:require [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.edges :as edges]
+            [dvb.common.openapi.errors :as errors]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log]))
 
 (defn handle [{:keys [database]}
@@ -20,7 +20,7 @@
     (try
       {:status 200
        :headers {}
-       :body (declojurify/form (db.forms/delete-form database existing-form))}
+       :body (edges/form-clj->api (db.forms/delete-form database existing-form))}
       (catch Exception e
         (throw (errors/error-code->ex-info
                 :entity-deletion-internal-error

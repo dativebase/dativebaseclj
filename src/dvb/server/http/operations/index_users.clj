@@ -1,8 +1,8 @@
 (ns dvb.server.http.operations.index-users
   (:require [clojure.java.jdbc :as jdbc]
+            [dvb.common.edges :as edges]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.http.utils.pagination :as pagination]
             [dvb.server.log :as log]))
 
@@ -18,7 +18,7 @@
                    (pagination/offset! page items-per-page user-count))]
         {:status 200
          :headers {}
-         :body {:data (mapv declojurify/user users)
+         :body {:data (mapv edges/user-clj->api users)
                 :meta {:count user-count
                        :page page
                        :items-per-page items-per-page}}}))))

@@ -1,15 +1,15 @@
 (ns dvb.server.http.operations.activate-user
-  (:require [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.edges :as edges]
+            [dvb.common.openapi.errors :as errors]
             [dvb.common.utils :as utils]
             [dvb.server.db.users :as db.users]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log]))
 
 (defn handle
   [{:as _application :keys [database]}
    {:as _ctx {user-id :user_id
               registration-key :user_registration_key} :path}]
-  (let [registration-key (utils/->uuid registration-key)]
+  (let [registration-key (utils/str->uuid registration-key)]
     (log/info "Activating a user." {:user-id user-id
                                     :registration-key registration-key})
     (let [user (db.users/get-user database user-id)]
@@ -30,4 +30,4 @@
       (let [activated-user (db.users/activate-user database user)]
         {:status 200
          :headers {}
-         :body (declojurify/user activated-user)}))))
+         :body (edges/user-clj->api activated-user)}))))

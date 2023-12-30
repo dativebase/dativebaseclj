@@ -28,3 +28,10 @@
   (s/with-gen
     uuid-string?
     #(gen/fmap str (s/gen uuid?))))
+
+(s/def ::created-at ::instant)
+(s/def ::inserted-at ::instant)
+(s/def ::updated-at ::instant)
+(s/def ::destroyed-at (s/nilable ::instant))
+(s/def ::created-by (s/nilable uuid?))
+(s/def ::updated-by (s/nilable uuid?))

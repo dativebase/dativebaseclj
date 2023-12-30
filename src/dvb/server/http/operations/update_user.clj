@@ -1,17 +1,18 @@
 (ns dvb.server.http.operations.update-user
-  (:require [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.edges :as edges]
+            [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils.clojurify :as clojurify]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
-            [dvb.server.log :as log]))
+            [dvb.server.log :as log]
+            [dvb.server.http.operations.utils :as utils]))
 
 (defn handle [{:keys [database]}
               {:as ctx user-update :request-body {user-id :user_id} :path}]
   (log/info "Updating a user.")
   (authorize/authorize ctx)
-  (let [user-update (clojurify/user user-update)
-        existing-user (db.users/get-user database user-id)]
+  (let [user-update (edges/user-api->clj user-update)
+        existing-user (db.users/get-user database user-id)
+        updated-by (utils/security-user-id ctx)]
     (when-not existing-user
       (throw (errors/error-code->ex-info
               :entity-not-found
@@ -28,9 +29,11 @@
     (try
       {:status 200
        :headers {}
-       :body (declojurify/user
+       :body (edges/user-clj->api
               (db.users/update-user database
-                                    (merge existing-user user-update)))}
+                                    (merge existing-user
+                                           user-update
+                                           {:updated-by updated-by})))}
       (catch Exception e
         (throw (errors/error-code->ex-info
                 :entity-update-internal-error

@@ -1,6 +1,6 @@
 -- :name create-user-plan* :returning-execute :one-kebab
 INSERT INTO users_plans (user_id, plan_id, role, created_by, updated_by)
-  VALUES (:user-id, :plan-id, role, :created-by, :updated-by)
+  VALUES (:user-id, :plan-id, :role, :created-by, :updated-by)
   RETURNING *
 
 -- :name update-user-plan* :returning-execute :one-kebab

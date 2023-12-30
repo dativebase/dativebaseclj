@@ -3,16 +3,15 @@
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
-            [dvb.server.http.operations.utils.declojurify :as declojurify]
             [dvb.server.log :as log]))
 
 (defn handle [{:keys [database]}
-              {:as ctx
-               :keys [request-body]
+              {:as ctx form-update :request-body
                {old-slug :old_slug form-id :form_id} :path}]
   (log/info "Updating a form.")
   (authorize/authorize ctx)
-  (let [existing-form (db.forms/get-form database form-id)
+  (let [form-update (edges/form-api->clj form-update)
+        existing-form (db.forms/get-form database form-id)
         updated-by (utils/security-user-id ctx)]
     (utils/validate-entity-operation
      {:existing-entity existing-form
@@ -20,7 +19,7 @@
       :entity-id form-id
       :old-slug old-slug
       :operation :update-form})
-    (when (= request-body (select-keys existing-form (keys request-body)))
+    (when (= form-update (select-keys existing-form (keys form-update)))
       (throw (errors/error-code->ex-info
               :no-changes-in-update
               {:request-payload request-body
@@ -30,10 +29,10 @@
     (try
       {:status 200
        :headers {}
-       :body (declojurify/form
+       :body (edges/form-clj->api
               (db.forms/update-form database
                                     (merge existing-form
-                                           request-body
+                                           form-update
                                            {:updated-by updated-by})))}
       (catch Exception e
         (throw (errors/error-code->ex-info
