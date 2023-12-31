@@ -1,5 +1,6 @@
 (ns dvb.server.http.operations.update-form
-  (:require [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.edges :as edges]
+            [dvb.common.openapi.errors :as errors]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
@@ -22,7 +23,7 @@
     (when (= form-update (select-keys existing-form (keys form-update)))
       (throw (errors/error-code->ex-info
               :no-changes-in-update
-              {:request-payload request-body
+              {:request-payload form-update
                :entity-type :form
                :entity-id form-id
                :operation :update-form})))
@@ -38,5 +39,5 @@
         (throw (errors/error-code->ex-info
                 :entity-update-internal-error
                 {:entity-type :form
-                 :entity-to-update request-body}
+                 :entity-to-update form-update}
                 e))))))

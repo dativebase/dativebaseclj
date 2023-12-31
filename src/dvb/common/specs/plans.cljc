@@ -8,17 +8,15 @@
 (s/def ::id uuid?)
 (s/def ::tier #{:free :subscriber :supporter})
 (s/def ::created-at ::common/created-at)
-(s/def ::inserted-at ::common/inserted-at)
 (s/def ::updated-at ::common/updated-at)
 (s/def ::destroyed-at ::common/destroyed-at)
-(s/def ::created-by (s/nilable uuid?))
-(s/def ::updated-by (s/nilable uuid?))
+(s/def ::created-by uuid?)
+(s/def ::updated-by uuid?)
 
 (s/def ::plan
   (s/keys :req-un [::id
                    ::tier
                    ::created-at
-                   ::inserted-at
                    ::updated-at
                    ::destroyed-at
                    ::created-by
@@ -26,9 +24,14 @@
 
 (s/def ::plans (s/coll-of ::plan))
 
+(s/def ::plan-write
+  (s/keys :req-un [::tier]))
+
 (defn plan? [x] (s/valid? ::plan x))
 
 (defn plans? [x] (s/valid? ::plans x))
+
+(defn plan-write? [x] (s/valid? ::plan-write x))
 
 (comment
 
@@ -36,5 +39,7 @@
 
   (plans? [(gen/generate (s/gen ::plan))
            (gen/generate (s/gen ::plan))])
+
+  (plan-write? (gen/generate (s/gen ::plan-write)))
 
 )

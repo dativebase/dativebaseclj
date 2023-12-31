@@ -1,15 +1,15 @@
-(ns dvb.server.db.users-plans-test
+(ns dvb.server.db.user-plans-test
   (:require [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
-            [dvb.common.specs.users-plans :as users-plans-specs]
+            [dvb.common.specs.user-plans :as user-plans-specs]
             [dvb.server.db.plans :as plans]
-            [dvb.server.db.users-plans :as sut]
+            [dvb.server.db.user-plans :as sut]
             [dvb.server.test-data :as test-data]))
 
-(deftest crud-on-users-plans-works
+(deftest crud-on-user-plans-works
   (let [{:keys [user database]} (test-data/set-up-old-user)
         {user-id :id} user
-        {:as created-plan plan-id :id}
+        {:as _created-plan plan-id :id}
         (plans/create-plan database
                            {:tier :free
                             :created-by user-id
@@ -23,7 +23,7 @@
                           :role :manager
                           :created-by user-id
                           :updated-by user-id})]
-          (is (users-plans-specs/user-plan? user-plan))
+          (is (user-plans-specs/user-plan? user-plan))
           (is (= (:updated-at user-plan) (:created-at user-plan)))
           (is (nil? (:destroyed-at user-plan)))
           (testing "We can query our newly created user plan."

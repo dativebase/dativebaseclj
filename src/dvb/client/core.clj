@@ -5,12 +5,12 @@
             [clj-http.client :as client]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [dvb.client.specs.users :as users-specs]
+            [dvb.common.specs.plans :as plan-specs]
+            [dvb.common.specs.users :as user-specs]
+            [dvb.common.specs.user-plans :as user-plan-specs]
             [dvb.common.edges :as edges]
             [dvb.common.openapi.serialize :as serialize]
-            [dvb.common.openapi.spec :as spec]
-            #_[dvb.common.openapi.serialize :as serialize]
-            #_[dvb.common.openapi.spec :as spec]))
+            [dvb.common.openapi.spec :as spec]))
 
 (def local-base-url
   (-> (for [server spec/servers :when (= :local (:id server))]
@@ -47,11 +47,17 @@
 (defn edit-user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id "/edit"))
 
-(defn users-url [base-url]
-  (str base-url "/api/v1/users"))
+(defn users-url [base-url] (str base-url "/api/v1/users"))
+
+(defn user-plans-url [base-url] (str base-url "/api/v1/user-plans"))
 
 (defn new-user-url [base-url]
   (str base-url "/api/v1/users/new"))
+
+(defn plans-url [base-url] (str base-url "/api/v1/plans"))
+
+(defn plan-url [base-url plan-id]
+  (str base-url "/api/v1/plans/" plan-id))
 
 (defn make-client
   ([] (make-client :local))
@@ -131,7 +137,7 @@
              :method :post
              :body (json/encode
                     (edges/user-write-clj->api
-                     (merge (gen/generate (s/gen ::users-specs/user-write))
+                     (merge (gen/generate (s/gen ::user-specs/user-write))
                             user-write))))
       (add-authentication-headers client)
       client/request
@@ -190,6 +196,57 @@
        (add-authentication-headers client)
        client/request
        simple-response)))
+
+(defn create-plan
+  "POST /plans"
+  [client plan-write]
+  (-> default-request
+      (assoc :url (plans-url (:base-url client))
+             :method :post
+             :body (json/encode
+                    (edges/plan-clj->api
+                     (merge (gen/generate (s/gen ::plan-specs/plan-write))
+                            plan-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/create-plan-api->clj))
+
+(defn create-user-plan
+  "POST /user-plans"
+  [client user-plan-write]
+  (-> default-request
+      (assoc :url (user-plans-url (:base-url client))
+             :method :post
+             :body (json/encode
+                    (edges/user-plan-clj->api
+                     (merge (gen/generate (s/gen ::user-plan-specs/user-plan-write))
+                            user-plan-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/create-user-plan-api->clj))
+
+(defn delete-plan
+  "DELETE /plans/<ID>"
+  [client plan-id]
+  (-> default-request
+      (assoc :url (plan-url (:base-url client) plan-id)
+             :method :delete)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-plan-api->clj))
+
+(defn show-plan
+  "GET /plans/<ID>"
+  [client plan-id]
+  (-> default-request
+      (assoc :url (plan-url (:base-url client) plan-id))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-plan-api->clj))
 
 (defn create-form
   "POST /forms"

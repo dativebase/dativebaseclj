@@ -6,8 +6,8 @@
 
 (defn handle
   [{:as _application :keys [database]}
-   {:as ctx {old-slug :old_slug user-id :user_id} :path}]
-  (log/info "Showing a user." {:user-id user-id :old-slug old-slug})
+   {:as ctx {user-id :user_id} :path}]
+  (log/info "Showing a user." {:user-id user-id})
   (authorize/authorize ctx)
   (if-let [user (db.users/get-user database user-id)]
     {:status 200

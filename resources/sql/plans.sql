@@ -15,7 +15,7 @@ UPDATE plans
 -- :doc Get a plan by its ID.
 SELECT *
   FROM plans
-  WHERE id = :id
+  WHERE id = :id::uuid
     AND destroyed_at IS NULL
 
 -- :name get-plans* :query :many-kebab
