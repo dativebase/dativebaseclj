@@ -29,13 +29,14 @@
   (log/info "Creating a plan.")
   (authorize/authorize ctx)
   (let [created-by (utils/security-user-id ctx)
+        creator (partial create-plan database)
         response {:status 201
                   :headers {}
-                  :body (->> (assoc plan-write
-                                    :created-by created-by
-                                    :updated-by created-by)
-                             edges/plan-api->clj
-                             (create-plan database)
-                             edges/plan-clj->api)}]
+                  :body (-> plan-write
+                            edges/plan-api->clj
+                            (assoc :created-by created-by
+                                   :updated-by created-by)
+                            creator
+                            edges/plan-clj->api)}]
     (log/info "Created a plan.")
     response))

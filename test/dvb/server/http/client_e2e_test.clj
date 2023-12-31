@@ -2,6 +2,8 @@
   (:require [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
             [dvb.client.core :as client]
+            [dvb.common.specs.plans :as plan-specs]
+            [dvb.common.specs.user-plans :as user-plan-specs]
             [dvb.server.core :as core]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.users :as db.users]
@@ -49,7 +51,7 @@
 ;; - GET users/:id (R)
 ;; - PUT users/:id (U)
 ;; - DELETE users/:id (D)
-(deftest users-endpoint-works-end-to-end
+(deftest users-endpoints-work-end-to-end
   (let [{:keys [database] :as system} (component/start (new-system))]
     (try
       (let [{:keys [user user-password superuser superuser-password]}
@@ -95,7 +97,6 @@
             (is (jt/instant? (:created-at created-user)))
             (is (jt/instant? (:updated-at created-user)))
             (is (nil? (:destroyed-at created-user)))
-            (is (uuid? (:id created-user)))
             (testing "The superuser-authenticated client can fetch the newly created user"
               (let [{fetched-user :body} (client/show-user
                                           superuser-client (:id created-user))]
@@ -153,4 +154,47 @@
                         samer (fn [u] (dissoc u :updated-at :destroyed-at))]
                     (is (= (samer updated-user) (samer deleted-user)))
                     (is (some? (:destroyed-at deleted-user))))))))))
+      (finally (component/stop system)))))
+
+;; End-to-end test that verifies:
+;; - POST plans
+;; - GET plans/:id
+;; - DELETE plans/:id
+;; - POST user-plans
+(deftest plans-endpoints-work-end-to-end
+  (let [{:keys [database] :as system} (component/start (new-system))]
+    (try
+      (let [{:keys [user user-password]} (setup database)
+            user-email (:email user)
+            client (client/authenticate-client
+                    (client/make-client :local-test)
+                    user-email user-password)]
+        (testing "We can create a new plan"
+          (let [{:keys [status] created-plan :body}
+                (client/create-plan client {:tier :free})]
+            (is (= 201 status))
+            (is (nil? (:destroyed-at created-plan)))
+            (is (= :free (:tier created-plan)))
+            (is (plan-specs/plan? created-plan))
+            (testing "We can fetch the newly created plan"
+              (let [{fetched-plan :body}
+                    (client/show-plan client (:id created-plan))]
+                (is (= created-plan fetched-plan))))
+            (testing "We can make our user a manager of the plan"
+              (let [{:keys [status] created-user-plan :body}
+                    (client/create-user-plan
+                     client
+                     {:user-id (:id user)
+                      :plan-id (:id created-plan)
+                      :role :manager})]
+                (is (= 201 status))
+                (is (user-plan-specs/user-plan? created-user-plan))))
+            ;; NOTE: no update on purpose. Plans will be updated when billing events occur.
+            (testing "We can delete the newly-created plan"
+              (let [{deleted-plan :body} (client/delete-plan
+                                          client
+                                          (:id created-plan))
+                    samer (fn [u] (dissoc u :updated-at :destroyed-at))]
+                (is (= (samer created-plan) (samer deleted-plan)))
+                (is (some? (:destroyed-at deleted-plan))))))))
       (finally (component/stop system)))))

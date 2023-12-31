@@ -130,18 +130,32 @@
 (defn plan-clj->pg [plan]
   (perform-coercions plan plan-clj->pg-coercions))
 
-;; Users-Plans
+(defn create-plan-api->clj [{:as response :keys [status]}]
+  (if (= 201 status)
+    (update response :body plan-api->clj)
+    response))
+
+(defn fetch-plan-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update response :body plan-api->clj)
+    response))
+
+;; User-Plans
 
 (def user-plan-pg->clj-coercions {:role keyword})
 (def user-plan-clj->pg-coercions {:role name})
 
 (def user-plan-api->clj-coercions
   (merge api->clj-coercions
-         user-plan-pg->clj-coercions))
+         user-plan-pg->clj-coercions
+         {:user-id utils/str->uuid
+          :plan-id utils/str->uuid}))
 
 (def user-plan-clj->api-coercions
   (merge clj->api-coercions
-         user-plan-clj->pg-coercions))
+         user-plan-clj->pg-coercions
+         {:user-id utils/uuid->str
+          :plan-id utils/uuid->str}))
 
 (defn user-plan-api->clj [user-plan]
   (perform-coercions user-plan user-plan-api->clj-coercions))
@@ -154,6 +168,11 @@
 
 (defn user-plan-clj->pg [user-plan]
   (perform-coercions user-plan user-plan-clj->pg-coercions))
+
+(defn create-user-plan-api->clj [{:as response :keys [status]}]
+  (if (= 201 status)
+    (update response :body user-plan-api->clj)
+    response))
 
 ;; API Keys
 

@@ -17,10 +17,13 @@
 (def old-independent-operations
   #{:create-plan
     :create-user
+    :create-user-plan
+    :delete-plan
     :delete-user
     :edit-user
     :index-users
     :new-user
+    :show-plan
     :show-user
     :update-user})
 

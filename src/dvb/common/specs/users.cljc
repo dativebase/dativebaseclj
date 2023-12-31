@@ -34,14 +34,25 @@
 
 (s/def ::users (s/coll-of ::user))
 
+(s/def ::user-write
+  (s/keys :req-un [::first-name
+                   ::last-name
+                   ::email
+                   ::password
+                   ::is-superuser?]))
+
 (defn user? [x] (s/valid? ::user x))
 
 (defn users? [x] (s/valid? ::users x))
+
+(defn user-write? [x] (s/valid? ::user-write x))
 
 (comment
 
   (user? (gen/generate (s/gen ::user)))
 
   (users? (gen/generate (s/gen ::users)))
+
+  (user-write? (gen/generate (s/gen ::user-write)))
 
 )

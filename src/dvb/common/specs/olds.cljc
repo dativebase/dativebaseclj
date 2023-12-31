@@ -9,8 +9,8 @@
 (s/def ::inserted-at ::common/inserted-at)
 (s/def ::updated-at ::common/updated-at)
 (s/def ::destroyed-at ::common/destroyed-at)
-(s/def ::created-by (s/nilable uuid?))
-(s/def ::updated-by (s/nilable uuid?))
+(s/def ::created-by uuid?)
+(s/def ::updated-by uuid?)
 
 (s/def ::old
   (s/keys :req-un [::slug
