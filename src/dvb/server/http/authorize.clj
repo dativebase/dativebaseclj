@@ -33,7 +33,6 @@
   #{:create-user
     :delete-user
     :edit-user
-    :index-users
     :new-user
     :update-user})
 

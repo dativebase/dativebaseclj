@@ -1,5 +1,12 @@
 (ns dvb.server.http.operations.utils
-  (:require [dvb.common.openapi.errors :as errors]))
+  (:require [dvb.common.openapi.errors :as errors]
+            [dvb.common.openapi.spec :as spec]))
+
+(def user-required-keys
+  (-> spec/api :components :schemas :User :required))
+
+(defn minimize-user [user]
+  (select-keys user user-required-keys))
 
 (defn api-key-user-id [ctx]
   (-> ctx :security :api-key :user :id))

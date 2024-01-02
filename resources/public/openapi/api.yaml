@@ -168,7 +168,7 @@ components:
           items: {$ref: '#/components/schemas/PlanOfUser'}
           example: []
         updated_by: {type: string, format: uuid, example: 9328472d-c4d4-4d02-b444-1dd0de3479d3, description: The ID (UUID) of the user who last updated the user., nullable: true}
-      required: [id, first_name, last_name, email, created_at, updated_at, destroyed_at, is_superuser, created_by, updated_by]
+      required: [id, first_name, last_name, created_at, updated_at, destroyed_at, created_by, updated_by]
       example:
         destroyed_at: null
         id: b54a1597-ae70-4bbe-9ff0-feff2fb3f26c
