@@ -32,16 +32,16 @@
   (s/keys :req-un [::id
                    ::first-name
                    ::last-name
-                   ::email
-                   ::is-superuser?
                    ::created-at
                    ::updated-at
                    ::destroyed-at
                    ::created-by
                    ::updated-by]
-          :opt-un [::plans
-                   ::inserted-at
-                   ::password]))
+          :opt-un [::email
+                   ::password
+                   ::is-superuser?
+                   ::plans
+                   ::inserted-at]))
 
 (s/def ::users (s/coll-of ::user))
 

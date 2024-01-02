@@ -18,15 +18,15 @@
 
 (defn setup [database]
   (let [{su-pwd :password :as superuser*}
-        (test-data/gen-user {:is-superuser? true
-                             :created-by nil
-                             :updated-by nil})
+        (test-data/gen-user-write {:is-superuser? true
+                                   :created-by nil
+                                   :updated-by nil})
         {su-id :id :as superuser} (db.users/activate-user
                                    database
                                    (db.users/create-user database superuser*))
         provenance {:created-by su-id :updated-by su-id}
         {u-pwd :password :as user*}
-        (test-data/gen-user (assoc provenance :is-superuser? false))
+        (test-data/gen-user-write (assoc provenance :is-superuser? false))
         user (db.users/activate-user
               database
               (db.users/create-user database user*))
@@ -78,16 +78,19 @@
         (testing "We can index the users with the superuser-authenticated client"
           (let [{:keys [status body]} (client/index-users superuser-client)]
             (is (= 200 status))
-            (is (seq (:data body)))))
-        ;; TODO: This seems like undesired behaviour
-        (testing "The user-authenticated client is not authorized to index the users"
+            (is (user-specs/users? (:data body)))
+            (is (seq (:data body)))
+            (let [user-keys (->> body :data (mapcat keys) set)]
+              (is (some #{:email} user-keys))
+              (is (some #{:is-superuser?} user-keys)))))
+        (testing "The user-authenticated client can index the users but receives redacted data"
           (let [{:keys [status body]} (client/index-users user-client)]
-            (is (= 403 status))
-            (is (= "unauthorized" (-> body :errors first :error-code)))
-            {:errors
-             [{:message
-               "The authenticated user is not authorized for the target operation.",
-               :error-code "unauthorized"}]}))
+            (is (= 200 status))
+            (is (user-specs/users? (:data body)))
+            (is (seq (:data body)))
+            (let [user-keys (->> body :data (mapcat keys) set)]
+              (is (not (some #{:email} user-keys)))
+              (is (not (some #{:is-superuser?} user-keys))))))
         (testing "The superuser-authenticated client can create a new user"
           (let [new-user-password "1234"
                 {:keys [status] created-user :body}
@@ -111,11 +114,13 @@
                            (assoc :first-name "Timothy")
                            (dissoc :updated-at))
                        (dissoc updated-user :updated-at)))
-                (testing "The non-superuser-authenticated client cannot fetch the newly-created user"
-                  (let [{:keys [status] error :body}
+                (testing "The non-superuser-authenticated client can fetch the newly-created user but receives a redacted version"
+                  (let [{:keys [status] user :body}
                         (client/show-user user-client (:id created-user))]
-                    (is (= 403 status))
-                    (is (= "unauthorized" (-> error :errors first :error-code)))))
+                    (is (= 200 status))
+                    (is (user-specs/user? user))
+                    (is (not (contains? user :email)))
+                    (is (not (contains? user :is-superuser?)))))
                 (testing "The non-superuser-authenticated client cannot update the newly-created user"
                   (let [{:keys [status] error :body}
                         (client/update-user
@@ -148,6 +153,11 @@
                                     (:email created-user)
                                     new-user-password)]
                     (is (:authenticated? new-client))))
+                (testing "The user-authenticated client is not authorized to delete the newly-created user"
+                  (let [{:keys [status] error :body} (client/delete-user
+                                                      user-client (:id updated-user))]
+                    (is (= 403 status))
+                    (is (= "unauthorized" (-> error :errors first :error-code)))))
                 (testing "The superuser-authenticated client can delete the newly-created user"
                   (let [{deleted-user :body} (client/delete-user
                                               superuser-client

@@ -49,6 +49,8 @@
     :description "Operations related to authentication."}
    {:name :Forms
     :description "Operations on forms."}
+   {:name :OLDUsers
+    :description "Operations on users with access to a specified OLD."}
    {:name :Plans
     :description "Operations on plans."}
    {:name :Users

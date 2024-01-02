@@ -6,7 +6,7 @@
    {:operation-id :index-old-users
     :summary "Return all users for the given OLD matching the supplied query."
     :description "Return all users with access to the given OLD and matching the supplied query and pagination parameters."
-    :tags [:Users]
+    :tags [:OLDUsers]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/pageQueryParam"}
                  {:$ref "#/components/parameters/oldSlugPathParam"}

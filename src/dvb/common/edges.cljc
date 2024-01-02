@@ -151,6 +151,11 @@
     (update response :body user-api->clj)
     response))
 
+(defn index-users-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update-in response [:body :data] (partial mapv user-api->clj))
+    response))
+
 ;; Plans
 
 (def plan-pg->clj-coercions {:tier keyword})

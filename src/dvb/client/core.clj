@@ -211,7 +211,8 @@
               :query-params {:page page :items-per-page items-per-page})
        (add-authentication-headers client)
        client/request
-       simple-response)))
+       simple-response
+       edges/index-users-api->clj)))
 
 (defn create-plan
   "POST /plans"

@@ -16,25 +16,18 @@
                                  :include-plans? include-plans?})
     (authorize/authorize ctx)
     (let [{:keys [is-superuser?] authenticated-user-id :id}
-          (u/security-user ctx)]
-      (when-not (or is-superuser?
-                    (= authenticated-user-id user-id))
-        (log/warn "Request to show user is unauthorized."
-                  {:user-id user-id
-                   :authenticated-user-id authenticated-user-id
-                   :is-superuser? is-superuser?
-                   :operation-id :show-user})
-        (throw (errors/error-code->ex-info :unauthorized))))
-    (let [user (if include-plans?
+          (u/security-user ctx)
+          user (if include-plans?
                  (db.users/get-user-with-plans database user-id)
                  (db.users/get-user database user-id))]
-      (if user
-        {:status 200
-         :headers {}
-         :body (edges/user-clj->api user)}
-        {:status 404
-         :headers {}
-         :body
-         {:errors
-          [{:message "The referenced user could not be found. Please ensure that the supplied identifier is correct."
-            :error-code "entity-not-found"}]}}))))
+      (when-not user
+        (let [data {:entity-type :user
+                    :entity-id user-id
+                    :operation :show-user}]
+          (log/warn "User not found" data)
+          (throw (errors/error-code->ex-info :entity-not-found data))))
+      {:status 200
+       :headers {}
+       :body (cond-> (edges/user-clj->api user)
+               (not (or is-superuser? (= authenticated-user-id user-id)))
+               u/minimize-user)})))

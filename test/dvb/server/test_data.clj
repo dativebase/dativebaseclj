@@ -28,6 +28,12 @@
     (gen/generate (s/gen ::users-specs/user))
     overrides)))
 
+(defn gen-user-write
+  ([] (gen-user-write {}))
+  ([overrides]
+   (merge (gen/generate (s/gen ::users-specs/user-write))
+          overrides)))
+
 (defn gen-form
   ([] (gen-form {}))
   ([overrides]
