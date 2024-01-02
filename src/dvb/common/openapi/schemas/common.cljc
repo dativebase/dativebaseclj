@@ -1,4 +1,4 @@
-(ns dvb.common.openapi.spec.components.common
+(ns dvb.common.openapi.schemas.common
   (:require [dvb.common.utils :as u]))
 
 (def date-time-property

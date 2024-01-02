@@ -1,6 +1,6 @@
-(ns dvb.common.openapi.spec.components.plan
-  (:require [dvb.common.openapi.spec.components.common :as c]
-            [dvb.common.openapi.spec.components.user-plan :as user-plan]))
+(ns dvb.common.openapi.schemas.plan
+  (:require [dvb.common.openapi.schemas.common :as c]
+            [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
 (def tier
   {:type :string

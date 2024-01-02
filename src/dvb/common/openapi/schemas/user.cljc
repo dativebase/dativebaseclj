@@ -1,5 +1,5 @@
-(ns dvb.common.openapi.spec.components.user
-  (:require [dvb.common.openapi.spec.components.common :as c]))
+(ns dvb.common.openapi.schemas.user
+  (:require [dvb.common.openapi.schemas.common :as c]))
 
 ;; `User`
 (def user
@@ -43,11 +43,9 @@
      :required [:id
                 :first-name
                 :last-name
-                :email
                 :created-at
                 :updated-at
                 :destroyed-at
-                :is-superuser
                 :created-by
                 :updated-by]
      :example {:id (:example id)
