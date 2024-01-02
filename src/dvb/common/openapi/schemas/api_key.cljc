@@ -1,4 +1,4 @@
-(ns dvb.common.openapi.spec.components.api-key)
+(ns dvb.common.openapi.schemas.api-key)
 
 ;; `APIKey`
 (def api-key

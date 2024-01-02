@@ -1,11 +1,11 @@
 (ns dvb.common.openapi.schemas
-  (:require [dvb.common.openapi.spec.components.api-key :as api-key]
-            [dvb.common.openapi.spec.components.error :as error]
-            [dvb.common.openapi.spec.components.form :as form]
-            [dvb.common.openapi.spec.components.login :as login]
-            [dvb.common.openapi.spec.components.plan :as plan]
-            [dvb.common.openapi.spec.components.user :as user]
-            [dvb.common.openapi.spec.components.user-plan :as user-plan]))
+  (:require [dvb.common.openapi.schemas.api-key :as api-key]
+            [dvb.common.openapi.schemas.error :as error]
+            [dvb.common.openapi.schemas.form :as form]
+            [dvb.common.openapi.schemas.login :as login]
+            [dvb.common.openapi.schemas.plan :as plan]
+            [dvb.common.openapi.schemas.user :as user]
+            [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
 ;; UserAndAPIKey
 (def user-and-api-key

@@ -1,5 +1,5 @@
-(ns dvb.common.openapi.spec.components.user-plan
-  (:require [dvb.common.openapi.spec.components.common :as c]))
+(ns dvb.common.openapi.schemas.user-plan
+  (:require [dvb.common.openapi.schemas.common :as c]))
 
 (def role
   {:type :string

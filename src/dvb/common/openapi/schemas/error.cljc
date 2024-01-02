@@ -1,4 +1,4 @@
-(ns dvb.common.openapi.spec.components.error
+(ns dvb.common.openapi.schemas.error
   "Error Response Specs:
 
   - Error objects:

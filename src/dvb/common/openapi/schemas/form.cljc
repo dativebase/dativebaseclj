@@ -1,4 +1,4 @@
-(ns dvb.common.openapi.spec.components.form
+(ns dvb.common.openapi.schemas.form
   "OpenAPI specs for form-related components.
 
    - `Form`
@@ -11,7 +11,7 @@
    strategy encoded by this response schema, see
 
    - https://developer.twitter.com/en/docs/twitter-api/pagination"
-  (:require [dvb.common.openapi.spec.components.common :as c]))
+  (:require [dvb.common.openapi.schemas.common :as c]))
 
 ;; `Form`
 (def form

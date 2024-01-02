@@ -1,4 +1,4 @@
-(ns dvb.common.openapi.spec.components.old)
+(ns dvb.common.openapi.schemas.old)
 
 ;; `OLD`
 (def old

@@ -1,4 +1,4 @@
-(ns dvb.common.openapi.spec.components.login)
+(ns dvb.common.openapi.schemas.login)
 
 ;; `Login`
 (def login
