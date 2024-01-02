@@ -1,20 +1,23 @@
 (ns dvb.common.openapi.spec.components.user-plan
   (:require [dvb.common.openapi.spec.components.common :as c]))
 
+(def role
+  {:type :string
+   :enum ["manager"
+          "member"]
+   :description "The role of the referenced user on the referenced plan."
+   :example "manager"})
+
 ;; `UserPlan`
 (def user-plan
-  (let [id (c/id-property "user plan")
+  (let [id c/user-plan-id-property
         user-id (assoc c/entity-id-property
-                       :description
-                       "The ID of the user with the specified role on the referenced plan.")
+                       :description "The ID of the user with the specified role on the referenced plan."
+                       :example "8c5b541b-54e9-432b-9408-d274bb6015f3")
         plan-id (assoc c/entity-id-property
-                       :description
-                       "The ID of the plan for which the referenced user has the specified role.")
-        role {:type :string
-              :enum ["manager"
-                     "member"]
-              :description "The role of the referenced user on the referenced plan."
-              :example "manager"}
+                       :description "The ID of the plan for which the referenced user has the specified role."
+                       :example "a521a8e9-b7f7-4f84-8a4a-79b4a0377c57")
+        role role
         created-at (c/created-at-property "user plan")
         updated-at (c/updated-at-property "user plan")
         destroyed-at (c/destroyed-at-property "user plan")

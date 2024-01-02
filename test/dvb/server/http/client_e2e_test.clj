@@ -3,6 +3,7 @@
             [com.stuartsierra.component :as component]
             [dvb.client.core :as client]
             [dvb.common.specs.plans :as plan-specs]
+            [dvb.common.specs.users :as user-specs]
             [dvb.common.specs.user-plans :as user-plan-specs]
             [dvb.server.core :as core]
             [dvb.server.db.olds :as db.olds]
@@ -189,6 +190,17 @@
                       :role :manager})]
                 (is (= 201 status))
                 (is (user-plan-specs/user-plan? created-user-plan))))
+            (testing "We can fetch our user with its plans."
+              (let [{:keys [status] user-with-plans :body}
+                    (client/show-user client
+                                      (:id user)
+                                      {:include-plans? true})]
+                (is (= 200 status))
+                (is (user-specs/user? user-with-plans))
+                (is (= [{:id (:id created-plan)
+                         :role :manager
+                         :tier :free}]
+                       (:plans user-with-plans)))))
             ;; NOTE: no update on purpose. Plans will be updated when billing events occur.
             (testing "We can delete the newly-created plan"
               (let [{deleted-plan :body} (client/delete-plan

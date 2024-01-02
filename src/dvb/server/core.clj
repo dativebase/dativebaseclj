@@ -3,6 +3,7 @@
             dvb.server.db.core
             [dvb.common.openapi.spec :as spec]
             [dvb.server.http.server :as server]
+            [dvb.server.http.operations.activate-user :as activate-user]
             [dvb.server.http.operations.create-form :as create-form]
             [dvb.server.http.operations.create-plan :as create-plan]
             [dvb.server.http.operations.create-user :as create-user]
@@ -15,7 +16,6 @@
             [dvb.server.http.operations.index-forms :as index-forms]
             [dvb.server.http.operations.index-users :as index-users]
             [dvb.server.http.operations.login :as login]
-            [dvb.server.http.operations.activate-user :as activate-user]
             [dvb.server.http.operations.new-form :as new-form]
             [dvb.server.http.operations.new-user :as new-user]
             [dvb.server.http.operations.show-form :as show-form]
@@ -23,6 +23,7 @@
             [dvb.server.http.operations.show-user :as show-user]
             [dvb.server.http.operations.update-form :as update-form]
             [dvb.server.http.operations.update-user :as update-user]
+            [dvb.server.http.operations.user-plans :as user-plans]
             [dvb.server.http.security.api-key :as api-key]
             [dvb.server.system.config :as config]
             [dvb.server.system.clock :as clock]
@@ -52,7 +53,8 @@
    :show-plan show-plan/handle
    :show-user show-user/handle
    :update-form update-form/handle
-   :update-user update-user/handle})
+   :update-user update-user/handle
+   :user-plans user-plans/handle})
 
 (defn make-main-system [config]
   (component/system-map

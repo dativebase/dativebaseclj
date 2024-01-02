@@ -1,12 +1,15 @@
 (ns dvb.common.openapi.spec.components.plan
-  (:require [dvb.common.openapi.spec.components.common :as c]))
+  (:require [dvb.common.openapi.spec.components.common :as c]
+            [dvb.common.openapi.spec.components.user-plan :as user-plan]))
+
+(def tier
+  {:type :string
+   :description "The tier of the plan. One of free, subscriber or supporter."
+   :example "free"})
 
 ;; `Plan`
 (def plan
-  (let [id (c/id-property "plan")
-        tier {:type :string
-              :description "The tier of the plan. One of free, subscriber or supporter."
-              :example "free"}
+  (let [id c/plan-id-property
         created-at (c/created-at-property "plan")
         updated-at (c/updated-at-property "plan")
         destroyed-at (c/destroyed-at-property "plan")
@@ -35,6 +38,20 @@
                :created-by (:example created-by)
                :updated-by (:example updated-by)}}))
 
+;; PlanOfUser
+(def plan-of-user
+  (let [id c/plan-id-property]
+    {:type :object
+     :properties {:id id
+                  :role user-plan/role
+                  :tier tier}
+     :required [:id
+                :role
+                :tier]
+     :example {:id (:example id)
+               :role (:example user-plan/role)
+               :tier (:example tier)}}))
+
 ;; `PlanWrite`
 (def plan-write
   (-> plan
@@ -43,3 +60,9 @@
       (assoc :required [:tier])
       (update :example
               (fn [example] (select-keys example [:tier])))))
+
+;; `Plans`
+(def plans
+  {:type :array
+   :description "An array of plans."
+   :items {:$ref "#/components/schemas/Plan"}})

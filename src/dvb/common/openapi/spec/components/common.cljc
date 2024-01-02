@@ -24,10 +24,24 @@
              resource)
    :example "f9a19ceb-fca4-4e96-a5cb-cf1e329763a0"})
 
+(def form-id-property
+  (assoc (id-property "form") :example "19cc5464-a25d-4cd7-8ef5-799c8eb2cae5"))
+
+(def user-id-property
+  (assoc (id-property "user") :example "b54a1597-ae70-4bbe-9ff0-feff2fb3f26c"))
+
+(def plan-id-property
+  (assoc (id-property "plan") :example "8c78b42d-b7d9-4360-999b-fff698bb89e6"))
+
+(def user-plan-id-property
+  (assoc (id-property "user plan") :example "b9f9caf0-11ff-4e1d-8b3f-87f2d07bbd8d"))
+
 (defn old-slug-property [resource]
   {:type :string
    :description (u/format "The unique identifier of the OLD to which this %s belongs." resource)
    :example "lan-old"})
+
+(def form-old-slug-property (old-slug-property "form"))
 
 (defn created-at-property [resource]
   (assoc date-time-property
@@ -50,10 +64,18 @@
          :description
          (u/format "The ID (UUID) of the user who created the %s." resource)))
 
+(defn nullable-created-by-property [resource]
+  (assoc (created-by-property resource)
+         :nullable true))
+
 (defn updated-by-property [resource]
   (assoc entity-id-property
          :description
          (u/format "The ID (UUID) of the user who last updated the %s." resource)))
+
+(defn nullable-updated-by-property [resource]
+  (assoc (updated-by-property resource)
+         :nullable true))
 
 (defn page-of-entities-data-property [resource-pl item-schema]
   {:type :array

@@ -34,3 +34,14 @@ UPDATE plans
       updated_by = :updated-by
   WHERE id = :id
   RETURNING *
+
+-- :name get-plans-for-user* :query :many-kebab
+-- :doc Get all plans for the referenced user.
+SELECT p.*
+  FROM plans p
+  INNER JOIN users_plans up
+  ON p.id = up.plan_id
+    AND up.destroyed_at IS NULL
+  WHERE p.destroyed_at IS NULL
+    AND up.user_id = :user-id::uuid
+  ORDER BY p.inserted_at, p.id

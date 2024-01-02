@@ -19,9 +19,14 @@
 
 (defn gen-user
   ([] (gen-user {}))
-  ([overrides]
-   (merge (gen/generate (s/gen ::users-specs/user))
-          overrides)))
+  ([overrides] (gen-user overrides {}))
+  ([overrides {:keys [ensure-password?]
+               :or {ensure-password? true}}]
+   (merge
+    (when ensure-password?
+      {:password (gen/generate (s/gen ::users-specs/password))})
+    (gen/generate (s/gen ::users-specs/user))
+    overrides)))
 
 (defn gen-form
   ([] (gen-form {}))

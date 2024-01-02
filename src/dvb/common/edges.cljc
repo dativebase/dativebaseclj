@@ -51,6 +51,46 @@
    :updated-at utils/instant->str
    :destroyed-at utils/maybe-instant->str})
 
+;; Plan of User
+
+(def plan-of-user-pg->clj-coercions
+  {:role keyword
+   :tier keyword})
+
+(def plan-of-user-clj->pg-coercions
+  {:role name
+   :tier name})
+
+(def plan-of-user-api->clj-coercions
+  (merge api->clj-coercions
+         plan-of-user-pg->clj-coercions))
+
+(def plan-of-user-clj->api-coercions
+  (merge clj->api-coercions
+         plan-of-user-clj->pg-coercions))
+
+(defn plan-of-user-pg->clj [plan-of-user]
+  (-> plan-of-user
+      (perform-coercions plan-of-user-pg->clj-coercions)))
+
+(defn plan-of-user-clj->api [plan-of-user]
+  (-> plan-of-user
+      (perform-coercions plan-of-user-clj->api-coercions)
+      (select-keys (-> schemas :PlanOfUser :properties keys))))
+
+(defn plan-of-user-api->clj [plan-of-user]
+  (-> plan-of-user
+      (perform-coercions plan-of-user-api->clj-coercions)))
+
+(defn plans-of-user-pg->clj [plans-of-user]
+  (mapv plan-of-user-pg->clj plans-of-user))
+
+(defn plans-of-user-clj->api [plans-of-user]
+  (mapv plan-of-user-clj->api plans-of-user))
+
+(defn plans-of-user-api->clj [plans-of-user]
+  (mapv plan-of-user-api->clj plans-of-user))
+
 ;; Users
 
 (def user-clj->api-rename-keys {:is-superuser? :is-superuser})
@@ -58,15 +98,23 @@
 (def user-clj->pg-rename-keys user-clj->api-rename-keys)
 (def user-pg->clj-rename-keys user-api->clj-rename-keys)
 
-(def user-pg->clj-coercions {:registration-status keyword})
-(def user-clj->pg-coercions {:registration-status name})
+(def user-pg->clj-coercions
+  {:registration-status keyword
+   :plans plans-of-user-pg->clj})
+
+(def user-clj->pg-coercions
+  {:registration-status name})
 
 (def user-api->clj-coercions
-  (merge (assoc api->clj-coercions :registration-key utils/str->uuid)
-         user-pg->clj-coercions))
+  (merge (assoc api->clj-coercions
+                :registration-key utils/str->uuid)
+         user-pg->clj-coercions
+         {:plans plans-of-user-api->clj}))
 
 (def user-clj->api-coercions
-  (merge (assoc clj->api-coercions :registration-key utils/uuid->str)
+  (merge (assoc clj->api-coercions
+                :registration-key utils/uuid->str
+                :plans plans-of-user-clj->api)
          user-clj->pg-coercions))
 
 (defn user-clj->api [user]
@@ -138,6 +186,11 @@
 (defn fetch-plan-api->clj [{:as response :keys [status]}]
   (if (= 200 status)
     (update response :body plan-api->clj)
+    response))
+
+(defn fetch-user-plans-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update response :body (fn [plans] (map plan-api->clj plans)))
     response))
 
 ;; User-Plans
