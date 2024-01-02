@@ -4,8 +4,11 @@
 (defn api-key-user-id [ctx]
   (-> ctx :security :api-key :user :id))
 
+(defn security-user [ctx]
+  (-> ctx :security :user))
+
 (defn security-user-id [ctx]
-  (-> ctx :security :user :id))
+  (:id (security-user ctx)))
 
 (defn validate-entity-operation
   "Perform common checks for operations on a target entity. Throw an exception

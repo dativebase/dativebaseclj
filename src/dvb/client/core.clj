@@ -41,6 +41,9 @@
 (defn user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id))
 
+(defn plans-for-user-url [base-url user-id]
+  (str base-url "/api/v1/users/" user-id "/plans"))
+
 (defn activate-user-url [base-url user-id registration-key]
   (str base-url "/api/v1/users/" user-id "/activate/" registration-key))
 
@@ -112,13 +115,26 @@
 
 (defn show-user
   "GET /users/<ID>"
+  ([client user-id] (show-user client user-id {}))
+  ([client user-id {:keys [include-plans?]
+                    :or {include-plans? false}}]
+   (-> default-request
+       (assoc :url (user-url (:base-url client) user-id)
+              :query-params {:include-plans include-plans?})
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       edges/fetch-user-api->clj)))
+
+(defn user-plans
+  "GET /users/<ID>/plans"
   [client user-id]
   (-> default-request
-      (assoc :url (user-url (:base-url client) user-id))
+      (assoc :url (plans-for-user-url (:base-url client) user-id))
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-api->clj))
+      edges/fetch-user-plans-api->clj))
 
 (defn edit-user
   "GET /users/<ID>/edit"

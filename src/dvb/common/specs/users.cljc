@@ -3,6 +3,8 @@
   logic should conform to ``::user``."
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [dvb.common.specs.plans :as plan-specs]
+            [dvb.common.specs.user-plans :as user-plan-specs]
             [dvb.common.specs.common :as common]))
 
 (s/def ::id uuid?)
@@ -18,19 +20,28 @@
 (s/def ::created-by (s/nilable uuid?))
 (s/def ::updated-by (s/nilable uuid?))
 
+;; for user-with-plans
+(s/def ::plan
+  (s/keys :req-un [::id
+                   ::plan-specs/tier
+                   ::user-plan-specs/role]))
+
+(s/def ::plans (s/coll-of ::plan))
+
 (s/def ::user
   (s/keys :req-un [::id
                    ::first-name
                    ::last-name
                    ::email
-                   ::password
                    ::is-superuser?
                    ::created-at
-                   ::inserted-at
                    ::updated-at
                    ::destroyed-at
                    ::created-by
-                   ::updated-by]))
+                   ::updated-by]
+          :opt-un [::plans
+                   ::inserted-at
+                   ::password]))
 
 (s/def ::users (s/coll-of ::user))
 

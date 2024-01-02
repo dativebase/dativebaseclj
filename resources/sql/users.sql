@@ -56,6 +56,23 @@ LEFT OUTER JOIN users_olds uo
 WHERE u.id = :id::uuid
   AND u.destroyed_at IS NULL
 
+-- :name get-user-with-plans* :query :many-kebab
+-- :doc Return a coll of the active plans for the referenced user.
+SELECT u.*,
+       up.role,
+       up.plan_id,
+       p.tier
+  FROM users u
+  INNER JOIN users_plans up
+    ON u.id = up.user_id
+      AND up.destroyed_at IS NULL
+  INNER JOIN plans p
+    ON p.id = up.plan_id
+      AND p.destroyed_at IS NULL
+  WHERE u.destroyed_at IS NULL
+    AND u.id = :id::uuid
+  ORDER BY p.inserted_at, p.id
+
 -- :name delete-user* :returning-execute :one-kebab
 UPDATE users
 SET destroyed_at = now(),

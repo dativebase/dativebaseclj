@@ -36,7 +36,6 @@
    :ErrorUnavailable error/error-unavailable
    :ErrorUnavailable503 error/error-unavailable-503
    :Form form/form
-   :FormsSearch form/forms-search
    :FormWrite form/form-write
    :Login login/login
    :NewFormData form/new-form-data
@@ -44,6 +43,8 @@
    :PageOfForms form/page-of-forms
    :PageOfUsers user/page-of-users
    :Plan plan/plan
+   :PlanOfUser plan/plan-of-user
+   :Plans plan/plans
    :PlanWrite plan/plan-write
    :User user/user
    :UserAndAPIKey user-and-api-key

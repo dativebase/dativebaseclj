@@ -1,56 +1,66 @@
-(ns dvb.common.openapi.spec.components.user)
+(ns dvb.common.openapi.spec.components.user
+  (:require [dvb.common.openapi.spec.components.common :as c]))
 
 ;; `User`
 (def user
-  {:type :object
-   :properties
-   {:id {:type :string
-         :format :uuid
-         :description "The ID of the user."
-         :example "77b075f8-5bd5-4ff9-a714-ca8fdd1a7796"}
-    :first-name {:type :string
-                 :description "The first name of the user."
-                 :example "Anne"}
-    :last-name {:type :string
-                :description "The last name of the user."
-                :example "Boleyn"}
-    :email {:type :string
-            :format :email
-            :description "The email address of the user."
-            :example "ab@gmail.com"}
-    :is-superuser {:type :boolean
-                   :description "Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users."
-                   :example false
-                   :default false}
-    :created-at {:type :string
-                 :format :date-time
-                 :description "The timestamp of when the user was created."
-                 :example "2023-08-20T01:34:11.780Z"}
-    :updated-at {:type :string
-                 :format :date-time
-                 :description "The timestamp of when the user was last updated."
-                 :example "2023-08-20T01:34:11.780Z"}
-    :destroyed-at {:type :string
-                   :format :date-time
-                   :nullable true
-                   :description "The timestamp of when the user was destroyed; NULL if the user has not been destroyed."
-                   :example nil}}
-   :required [:id
-              :first-name
-              :last-name
-              :email
-              :created-at
-              :updated-at
-              :destroyed-at
-              :is-superuser]
-   :example {:id "acddbb6a-31f6-41ac-90af-557d64082bcf"
-             :first-name "Anne"
-             :last-name "Boleyn"
-             :email "ab@gmail.com"
-             :is-superuser false
-             :created-at "2023-08-20T01:34:11.780Z"
-             :updated-at "2023-08-20T01:34:11.780Z"
-             :destroyed-at nil}})
+  (let [id c/user-id-property
+        created-at (c/created-at-property "user")
+        updated-at (c/updated-at-property "user")
+        destroyed-at (c/destroyed-at-property "user")
+        created-by (c/nullable-created-by-property "user")
+        updated-by (c/nullable-updated-by-property "user")
+        first-name {:type :string
+                    :description "The first name of the user."
+                    :example "Anne"}
+        last-name {:type :string
+                   :description "The last name of the user."
+                   :example "Boleyn"}
+        email {:type :string
+               :format :email
+               :description "The email address of the user."
+               :example "ab@gmail.com"}
+        is-superuser {:type :boolean
+                      :description "Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users."
+                      :example false
+                      :default false}
+        plans {:type :array
+               :description "The plans to which this user has access."
+               :items {:$ref "#/components/schemas/PlanOfUser"}
+               :example []}]
+    {:type :object
+     :properties
+     {:id id
+      :created-at created-at
+      :updated-at updated-at
+      :destroyed-at destroyed-at
+      :created-by created-by
+      :updated-by updated-by
+      :is-superuser is-superuser
+      :email email
+      :last-name last-name
+      :first-name first-name
+      :plans plans}
+     :required [:id
+                :first-name
+                :last-name
+                :email
+                :created-at
+                :updated-at
+                :destroyed-at
+                :is-superuser
+                :created-by
+                :updated-by]
+     :example {:id (:example id)
+               :created-at (:example created-at)
+               :updated-at (:example updated-at)
+               :destroyed-at (:example destroyed-at)
+               :created-by (:example created-by)
+               :updated-by (:example updated-by)
+               :is-superuser (:example is-superuser)
+               :email (:example email)
+               :last-name (:example last-name)
+               :first-name (:example first-name)
+               :plans (:example plans)}}))
 
 ;; `UserWrite`
 (def user-write

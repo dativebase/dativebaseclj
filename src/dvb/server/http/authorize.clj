@@ -1,5 +1,6 @@
 (ns dvb.server.http.authorize
   (:require [dvb.common.openapi.errors :as errors]
+            [dvb.server.http.operations.utils :as u]
             [dvb.server.log :as log]))
 
 (def operation-roles
@@ -25,7 +26,8 @@
     :new-user
     :show-plan
     :show-user
-    :update-user})
+    :update-user
+    :user-plans})
 
 (def superuser-operations
   #{:create-user
@@ -33,11 +35,10 @@
     :edit-user
     :index-users
     :new-user
-    :show-user
     :update-user})
 
 (defn authorize [ctx]
-  (let [{:keys [roles is-superuser?] user-id :id} (-> ctx :security :user)
+  (let [{:keys [roles is-superuser?] user-id :id} (u/security-user ctx)
         old-slug (-> ctx :path :old_slug)
         operation-id (-> ctx :operation :operation-id)
         old-independent-operation? (boolean (operation-id old-independent-operations))

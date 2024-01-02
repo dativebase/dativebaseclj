@@ -16,6 +16,7 @@
          get-users*
          get-user-by-email*
          get-user-with-roles*
+         get-user-with-plans*
          update-user*
          update-user-old*)
 
@@ -37,6 +38,20 @@
                              (filter :old-slug)
                              (map (juxt :old-slug (comp keyword :role)))
                              (into {})))))))
+
+(defn get-user-with-plans [db-conn id]
+  (let [[user :as rows] (get-user-with-plans* db-conn {:id id})]
+    (if user
+      (-> user
+          (dissoc :role :tier :plan-id)
+          (assoc :plans (->> rows
+                             (mapv (fn [{:keys [role tier plan-id]}]
+                                     {:role role
+                                      :tier tier
+                                      :id plan-id}))))
+          edges/user-pg->clj)
+      (when-let [user (get-user db-conn id)]
+        (assoc user :plans [])))))
 
 (defn- hash-user-password [user]
   (if (:password user)

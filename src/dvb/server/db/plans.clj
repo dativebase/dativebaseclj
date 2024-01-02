@@ -9,6 +9,7 @@
          update-plan*
          get-plan*
          get-plans*
+         get-plans-for-user*
          delete-plan*)
 
 (hugsql/def-db-fns "sql/plans.sql")
@@ -44,3 +45,6 @@
    (mapv edges/plan-pg->clj
          (get-plans* db-conn {:limit limit
                               :offset offset}))))
+
+(defn get-plans-for-user [db-conn user-id]
+  (get-plans-for-user* db-conn {:user-id user-id}))

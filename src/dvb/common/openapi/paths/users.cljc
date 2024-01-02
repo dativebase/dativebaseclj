@@ -67,7 +67,8 @@
     :description "Return the user with the provided ID."
     :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
-                 {:$ref "#/components/parameters/userIDParam"}]
+                 {:$ref "#/components/parameters/userIDParam"}
+                 {:$ref "#/components/parameters/includePlansBooleanQueryParam"}]
     :responses
     (assoc common/common-path-responses
            "200" {:description "The user."
@@ -120,4 +121,19 @@
            "200" {:description "Successful user activation request. The user has been fully created. The user's registration status has been changed from 'pending' to 'registered'."
                   :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
            "400" {:description "The request to activate the user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def user-plans-path
+  {:get
+   {:operation-id :user-plans
+    :summary "Get the plans associated with the referenced user"
+    :description "Get the plans associated with the referenced user"
+    :tags [:Users]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    :responses
+    (assoc common/common-path-responses
+           "200" {:description "The plans associated to the referenced user."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/Plans"}}}}
+           "400" {:description "The request for the plans of a user was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
