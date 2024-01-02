@@ -45,6 +45,7 @@
    :required-parameter-absent [400 "A required parameter was not provided."]
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
    :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]
+   :unique-slug-constraint-violated [400 "There is already an OLD in the system with the supplied slug."]
    :user-activation-failed [400 "The supplied user registration key was incorrect. The user could not be activated."]
    ;; 401
    :unauthenticated [401 "The supplied credentials were not valid. Authentication failed."]

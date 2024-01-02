@@ -16,7 +16,8 @@
    :update-form [:administrator :contributor]})
 
 (def old-independent-operations
-  #{:create-plan
+  #{:create-old
+    :create-plan
     :create-user
     :create-user-plan
     :delete-plan
@@ -24,6 +25,7 @@
     :edit-user
     :index-users
     :new-user
+    :show-old
     :show-plan
     :show-user
     :update-user

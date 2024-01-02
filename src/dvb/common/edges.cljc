@@ -295,3 +295,49 @@
   (if (= 200 status)
     (update response :body form-api->clj)
     response))
+
+
+
+
+
+
+
+
+
+;; OLDs
+
+(def old-api->clj-coercions api->clj-coercions)
+(def old-clj->api-coercions clj->api-coercions)
+
+(defn old-clj->api [old]
+  (-> old
+      (perform-coercions old-clj->api-coercions)
+      (select-keys (-> schemas :OLD :properties keys))))
+
+(defn old-write-clj->api [old-write]
+  (-> old-write
+      (perform-coercions old-clj->api-coercions)
+      (select-keys (-> schemas :OLDWrite :properties keys))))
+
+(def old-update-clj->api old-write-clj->api)
+
+(defn old-api->clj [old]
+  (-> old
+      (perform-coercions old-api->clj-coercions)))
+
+(defn old-pg->clj [old] old)
+
+(defn create-old-api->clj [{:as response :keys [status]}]
+  (if (= 201 status)
+    (update response :body old-api->clj)
+    response))
+
+(defn fetch-old-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update response :body old-api->clj)
+    response))
+
+(defn index-olds-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update-in response [:body :data] (partial mapv old-api->clj))
+    response))

@@ -3,6 +3,7 @@
             [dvb.common.openapi.schemas.error :as error]
             [dvb.common.openapi.schemas.form :as form]
             [dvb.common.openapi.schemas.login :as login]
+            [dvb.common.openapi.schemas.old :as old]
             [dvb.common.openapi.schemas.plan :as plan]
             [dvb.common.openapi.schemas.user :as user]
             [dvb.common.openapi.schemas.user-plan :as user-plan]))
@@ -40,7 +41,11 @@
    :Login login/login
    :NewFormData form/new-form-data
    :NewUserData user/new-user-data
+   :OLD old/old
+   :OLDUpdate old/old-update
+   :OLDWrite old/old-write
    :PageOfForms form/page-of-forms
+   :PageOfOLDs old/page-of-olds
    :PageOfUsers user/page-of-users
    :Plan plan/plan
    :PlanOfUser plan/plan-of-user

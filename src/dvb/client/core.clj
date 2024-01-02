@@ -5,6 +5,7 @@
             [clj-http.client :as client]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [dvb.common.specs.olds :as old-specs]
             [dvb.common.specs.plans :as plan-specs]
             [dvb.common.specs.users :as user-specs]
             [dvb.common.specs.user-plans :as user-plan-specs]
@@ -61,6 +62,10 @@
 
 (defn plan-url [base-url plan-id]
   (str base-url "/api/v1/plans/" plan-id))
+
+(defn olds-url [base-url] (str base-url "/api/v1/olds"))
+
+(defn old-url [base-url old-slug] (str base-url "/api/v1/olds/" old-slug))
 
 (defn make-client
   ([] (make-client :local))
@@ -213,6 +218,31 @@
        client/request
        simple-response
        edges/index-users-api->clj)))
+
+(defn create-old
+  "POST /olds"
+  [client old-write]
+  (-> default-request
+      (assoc :url (olds-url (:base-url client))
+             :method :post
+             :body (json/encode
+                    (edges/old-write-clj->api
+                     (merge (gen/generate (s/gen ::old-specs/old-write))
+                            old-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/create-old-api->clj))
+
+(defn show-old
+  "GET /olds/<SLUG>"
+  [client old-slug]
+  (-> default-request
+      (assoc :url (old-url (:base-url client) old-slug))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-old-api->clj))
 
 (defn create-plan
   "POST /plans"

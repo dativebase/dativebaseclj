@@ -31,8 +31,9 @@
             [dvb.common.openapi.paths.forms :as form-paths]
             [dvb.common.openapi.paths.login :as login-paths]
             [dvb.common.openapi.paths.old-users :as old-user-paths]
+            [dvb.common.openapi.paths.olds :as old-paths]
             [dvb.common.openapi.paths.plans :as plan-paths]
-            [dvb.common.openapi.paths.users :as users-paths]
+            [dvb.common.openapi.paths.users :as user-paths]
             [dvb.common.openapi.paths.user-plans :as user-plan-paths]
             [dvb.common.openapi.schemas :as schemas]))
 
@@ -49,6 +50,8 @@
     :description "Operations related to authentication."}
    {:name :Forms
     :description "Operations on forms."}
+   {:name :OLDs
+    :description "Operations on OLDs."}
    {:name :OLDUsers
     :description "Operations on users with access to a specified OLD."}
    {:name :Plans
@@ -87,11 +90,13 @@
    "/api/v1/{old_slug}/forms/{form_id}" form-paths/form-path
    "/api/v1/{old_slug}/forms" form-paths/forms-path
    "/api/v1/{old_slug}/users" old-user-paths/old-users-path
-   "/api/v1/users/new" users-paths/new-user-path
-   "/api/v1/users/{user_id}/activate/{user_registration_key}" users-paths/activate-user-path
-   "/api/v1/users/{user_id}/edit" users-paths/edit-user-path
-   "/api/v1/users/{user_id}" users-paths/user-path
-   "/api/v1/users" users-paths/users-path
+   "/api/v1/users/new" user-paths/new-user-path
+   "/api/v1/users/{user_id}/activate/{user_registration_key}" user-paths/activate-user-path
+   "/api/v1/users/{user_id}/edit" user-paths/edit-user-path
+   "/api/v1/users/{user_id}" user-paths/user-path
+   "/api/v1/users" user-paths/users-path
+   "/api/v1/olds" old-paths/olds-path
+   "/api/v1/olds/{old_slug}" old-paths/old-path
    "/api/v1/plans/{plan_id}" plan-paths/plan-path
    "/api/v1/plans" plan-paths/plans-path
    "/api/v1/user-plans" user-plan-paths/user-plans-path])

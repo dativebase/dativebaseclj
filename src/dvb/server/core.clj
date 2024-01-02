@@ -5,6 +5,7 @@
             [dvb.server.http.server :as server]
             [dvb.server.http.operations.activate-user :as activate-user]
             [dvb.server.http.operations.create-form :as create-form]
+            [dvb.server.http.operations.create-old :as create-old]
             [dvb.server.http.operations.create-plan :as create-plan]
             [dvb.server.http.operations.create-user :as create-user]
             [dvb.server.http.operations.create-user-plan :as create-user-plan]
@@ -19,6 +20,7 @@
             [dvb.server.http.operations.new-form :as new-form]
             [dvb.server.http.operations.new-user :as new-user]
             [dvb.server.http.operations.show-form :as show-form]
+            [dvb.server.http.operations.show-old :as show-old]
             [dvb.server.http.operations.show-plan :as show-plan]
             [dvb.server.http.operations.show-user :as show-user]
             [dvb.server.http.operations.update-form :as update-form]
@@ -36,6 +38,7 @@
 (def operations
   {:activate-user activate-user/handle
    :create-form create-form/handle
+   :create-old create-old/handle
    :create-plan create-plan/handle
    :create-user create-user/handle
    :create-user-plan create-user-plan/handle
@@ -50,6 +53,7 @@
    :new-form new-form/handle
    :new-user new-user/handle
    :show-form show-form/handle
+   :show-old show-old/handle
    :show-plan show-plan/handle
    :show-user show-user/handle
    :update-form update-form/handle
