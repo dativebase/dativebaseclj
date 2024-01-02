@@ -83,42 +83,53 @@
                           resource-pl)
    :items {:$ref (u/format "#/components/schemas/%s" item-schema)}})
 
-(defn page-of-entities-meta-property [resource-pl]
-  {:type :object
-   :properties
-   {:count
-    {:type :integer
-     :description (u/format "The count of all %s in this OLD." resource-pl)
-     :example 1234}
-    :page
-    {:type :integer
-     :description
-     (u/format
-      (str "The 0-based index of the page of %s being returned. This value only"
-           " makes sense given a count of %s in the target OLD and the value of"
-           " items-per-page.")
-      resource-pl resource-pl)
-     :default 0
-     :example 0}
-    :items-per-page
-    {:type :integer
-     :enum [1 5 10 50]
-     :description (u/format "The maximum number of %s in a page of %s."
-                            resource-pl resource-pl)
-     :default 10
-     :example 10}}
-   :required [:count :page :items-per-page]
-   :example {:count 1234
-             :page 0
-             :items-per-page 10}})
+(defn page-of-entities-meta-property
+  ([resource-pl] (page-of-entities-meta-property resource-pl {}))
+  ([resource-pl {:keys [count-description page-description]}]
+   {:type :object
+    :properties
+    {:count
+     {:type :integer
+      :description (or count-description
+                       (u/format "The count of all %s in this OLD." resource-pl))
+      :example 1234}
+     :page
+     {:type :integer
+      :description
+      (or page-description
+          (u/format
+           (str "The 0-based index of the page of %s being returned. This value only"
+                " makes sense given a count of %s in the target OLD and the value of"
+                " items-per-page.")
+           resource-pl resource-pl))
+      :default 0
+      :example 0}
+     :items-per-page
+     {:type :integer
+      :enum [1 5 10 50]
+      :description (u/format "The maximum number of %s in a page of %s."
+                             resource-pl resource-pl)
+      :default 10
+      :example 10}}
+    :required [:count :page :items-per-page]
+    :example {:count 1234
+              :page 0
+              :items-per-page 10}}))
 
-(defn page-of-entities-schema [resource-pl item-schema]
-  (let [data (page-of-entities-data-property resource-pl item-schema)
-        meta (page-of-entities-meta-property resource-pl)]
-    {:type :object
-     :properties {:data data
-                  :meta meta}
-     :required [:data
-                :meta]
-     :example {:data [] ;; TODO
-               :meta (:example meta)}}))
+(defn page-of-entities-schema
+  ([resource-pl item-schema resource-example]
+   (page-of-entities-schema resource-pl item-schema resource-example {}))
+  ([resource-pl item-schema resource-example
+    {:keys [count-description page-description]}]
+   (let [data (page-of-entities-data-property resource-pl item-schema)
+         meta (page-of-entities-meta-property
+               resource-pl
+               {:count-description count-description
+               :page-description page-description})]
+     {:type :object
+      :properties {:data data
+                   :meta meta}
+      :required [:data
+                 :meta]
+      :example {:data [resource-example]
+                :meta (:example meta)}})))

@@ -17,6 +17,11 @@
   ([overrides] (merge (gen/generate (s/gen ::olds-specs/old))
                       overrides)))
 
+(defn gen-old-write
+  ([] (gen-old-write {}))
+  ([overrides] (merge (gen/generate (s/gen ::olds-specs/old-write))
+                      overrides)))
+
 (defn gen-user
   ([] (gen-user {}))
   ([overrides] (gen-user overrides {}))

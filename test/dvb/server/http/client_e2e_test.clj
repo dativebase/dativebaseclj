@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
             [dvb.client.core :as client]
+            [dvb.common.specs.olds :as old-specs]
             [dvb.common.specs.plans :as plan-specs]
             [dvb.common.specs.users :as user-specs]
             [dvb.common.specs.user-plans :as user-plan-specs]
@@ -219,4 +220,33 @@
                     samer (fn [u] (dissoc u :updated-at :destroyed-at))]
                 (is (= (samer created-plan) (samer deleted-plan)))
                 (is (some? (:destroyed-at deleted-plan))))))))
+      (finally (component/stop system)))))
+
+(deftest olds-endpoints-work-end-to-end
+  (let [{:keys [database] :as system} (component/start (new-system))]
+    (try
+      (let [{:keys [user user-password]} (setup database)
+            user-email (:email user)
+            client (client/authenticate-client
+                    (client/make-client :local-test)
+                    user-email user-password)]
+        (testing "We can create a new OLD"
+          (let [{:keys [status] {:as created-old old-slug :slug} :body}
+                (client/create-old client (test-data/gen-old-write))]
+            (is (= 201 status))
+            (is (nil? (:destroyed-at created-old)))
+            (is (old-specs/old? created-old))
+            (testing "We cannot create a new OLD with the same slug that was just used"
+              (let [{:keys [status] error :body}
+                    (client/create-old client (test-data/gen-old-write
+                                               {:slug old-slug}))]
+                (is (= 400 status))
+                (is (= "unique-slug-constraint-violated"
+                       (-> error :errors first :error-code)))))
+            (testing "We can fetch the newly created OLD"
+              (let [{:keys [status] fetched-old :body}
+                    (client/show-old client old-slug)]
+                (is (= 200 status))
+                (is (old-specs/old? fetched-old))
+                (is (= created-old fetched-old)))))))
       (finally (component/stop system)))))

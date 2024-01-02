@@ -1,6 +1,7 @@
 (ns dvb.common.specs.common
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [clojure.string :as str]
             #?(:clj [java-time.api :as jt])))
 
 (defn random-recent-instant []
@@ -19,6 +20,12 @@
                (s/gen int?))))
 
 (s/def ::non-empty-string (s/and string? (complement empty?)))
+
+(s/def :old/slug
+  (s/with-gen
+    ::non-empty-string
+    #(gen/fmap (fn [slug] (str/replace slug "-" ""))
+               (s/gen uuid?))))
 
 (defn uuid-string? [x]
   (and (string? x)
