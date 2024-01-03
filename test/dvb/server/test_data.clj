@@ -45,6 +45,12 @@
    (merge (gen/generate (s/gen ::forms-specs/form))
           overrides)))
 
+(defn gen-form-write
+  ([] (gen-form-write {}))
+  ([overrides]
+   (merge (gen/generate (s/gen ::forms-specs/form-write))
+          overrides)))
+
 (defn db-component []
   (component/start
    (system-db/make-db
@@ -56,7 +62,7 @@
   (test-queries/delete-all-the-things database)
   (let [old (db.olds/create-old
              database {:slug "lan-old"
-                      :name "Language"})
+                       :name "Language"})
         user (db.users/create-user
               database
               {:first-name "Alice"
@@ -87,19 +93,19 @@
                :forms (mapv (fn [_]
                               (db.forms/create-form
                                database
-                               (gen-form {:old-slug slug
-                                          :created-by user-id})))
+                               (gen-form-write {:old-slug slug
+                                                :created-by user-id})))
                             (range 10))))
       (finally (component/stop db-component)))))
 
 (defn set-up-old-user []
   (let [database (db-component)
         {:as user user-id :id}
-        (db.users/create-user database (gen-user
+        (db.users/create-user database (gen-user-write
                                         {:created-by nil
                                          :updated-by nil}))]
     {:user user
-     :old (db.olds/create-old database (gen-old
+     :old (db.olds/create-old database (gen-old-write
                                         {:created-by user-id
                                          :updated-by user-id}))
      :database database}))

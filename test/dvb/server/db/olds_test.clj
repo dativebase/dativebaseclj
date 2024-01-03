@@ -8,7 +8,7 @@
 
 (defn- set-up []
   (let [database (test-data/db-component)]
-    {:user (users/create-user database (test-data/gen-user
+    {:user (users/create-user database (test-data/gen-user-write
                                         {:created-by nil
                                          :updated-by nil}))
      :database database}))
@@ -19,7 +19,7 @@
     (try
       (testing "create-old works"
         (let [old (sut/create-old database
-                                  (test-data/gen-old
+                                  (test-data/gen-old-write
                                    {:created-by user-id
                                     :updated-by user-id}))]
           (is (olds-specs/old? old))
