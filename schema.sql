@@ -163,6 +163,9 @@ ALTER TABLE ONLY public.users
 ALTER TABLE ONLY public.users_plans
     ADD CONSTRAINT users_plans_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY public.users_plans
+    ADD CONSTRAINT users_plans_unique UNIQUE NULLS NOT DISTINCT (user_id, plan_id, destroyed_at);
+
 CREATE INDEX events_history_idx ON public.events USING btree (old_slug, table_name, row_id);
 
 CREATE INDEX forms_inserted_at_id_idx ON public.forms USING btree (inserted_at, id);

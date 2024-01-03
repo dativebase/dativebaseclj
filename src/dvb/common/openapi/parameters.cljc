@@ -31,6 +31,7 @@
                                :pattern "^[a-zA-Z0-9_-]+$"}}
    :planIDParam (id-param "plan")
    :userIDParam (id-param "user")
+   :userPlanIDParam (id-param "user plan")
    :formIDParam (id-param "form")
    :userRegistrationKeyParam {:name :user_registration_key
                               :in :path

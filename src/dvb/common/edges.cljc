@@ -51,6 +51,46 @@
    :updated-at utils/instant->str
    :destroyed-at utils/maybe-instant->str})
 
+;; Member of Plan
+
+(def member-of-plan-pg->clj-coercions
+  {:role keyword})
+
+(def member-of-plan-clj->pg-coercions
+  {:role name})
+
+(def member-of-plan-api->clj-coercions
+  (merge api->clj-coercions
+         member-of-plan-pg->clj-coercions))
+
+(def member-of-plan-clj->api-coercions
+  (merge clj->api-coercions
+         member-of-plan-clj->pg-coercions))
+
+(defn member-of-plan-pg->clj [member-of-plan]
+  (-> member-of-plan
+      (perform-coercions member-of-plan-pg->clj-coercions)))
+
+(defn member-of-plan-clj->api [member-of-plan]
+  (-> member-of-plan
+      (perform-coercions member-of-plan-clj->api-coercions)
+      (select-keys (-> schemas :MemberOfPlan :properties keys))))
+
+(defn member-of-plan-api->clj [member-of-plan]
+  (-> member-of-plan
+      (perform-coercions member-of-plan-api->clj-coercions)))
+
+(defn members-of-plan-pg->clj [members-of-plan]
+  (mapv member-of-plan-pg->clj members-of-plan))
+
+;; TODO: use these in edges for plan
+
+(defn members-of-plan-clj->api [members-of-plan]
+  (mapv member-of-plan-clj->api members-of-plan))
+
+(defn members-of-plan-api->clj [members-of-plan]
+  (mapv member-of-plan-api->clj members-of-plan))
+
 ;; Plan of User
 
 (def plan-of-user-pg->clj-coercions
@@ -158,15 +198,20 @@
 
 ;; Plans
 
-(def plan-pg->clj-coercions {:tier keyword})
+(def plan-pg->clj-coercions
+  {:tier keyword
+   :members members-of-plan-pg->clj})
+
 (def plan-clj->pg-coercions {:tier name})
 
 (def plan-api->clj-coercions
   (merge api->clj-coercions
-         plan-pg->clj-coercions))
+         plan-pg->clj-coercions
+         {:members members-of-plan-api->clj}))
 
 (def plan-clj->api-coercions
-  (merge clj->api-coercions
+  (merge (assoc clj->api-coercions
+                :members members-of-plan-clj->api)
          plan-clj->pg-coercions))
 
 (defn plan-api->clj [plan]
