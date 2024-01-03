@@ -18,6 +18,19 @@ SELECT *
   WHERE id = :id::uuid
     AND destroyed_at IS NULL
 
+-- :name get-plan-with-members* :query :many-kebab
+-- :doc Return a coll of the active members (users) for the referenced plan.
+SELECT p.*,
+       up.role,
+       up.user_id
+  FROM plans p
+    INNER JOIN users_plans up
+      ON p.id = up.plan_id
+        AND up.destroyed_at IS NULL
+  WHERE p.destroyed_at IS NULL
+    AND p.id = :id::uuid
+  ORDER BY p.inserted_at, p.id
+
 -- :name get-plans* :query :many-kebab
 -- :doc Get all plans, ordered by inserted_at.
 SELECT *

@@ -14,7 +14,11 @@
         updated-at (c/updated-at-property "plan")
         destroyed-at (c/destroyed-at-property "plan")
         created-by (c/created-by-property "plan")
-        updated-by (c/updated-by-property "plan")]
+        updated-by (c/updated-by-property "plan")
+        members {:type :array
+                 :description "The users which are members of this plan."
+                 :items {:$ref "#/components/schemas/MemberOfPlan"}
+                 :example []}]
     {:type :object
      :properties {:id id
                   :tier tier
@@ -22,7 +26,8 @@
                   :updated-at updated-at
                   :destroyed-at destroyed-at
                   :created-by created-by
-                  :updated-by updated-by}
+                  :updated-by updated-by
+                  :members members}
      :required [:id
                 :tier
                 :created-at
@@ -36,7 +41,8 @@
                :updated-at (:example updated-at)
                :destroyed-at (:example destroyed-at)
                :created-by (:example created-by)
-               :updated-by (:example updated-by)}}))
+               :updated-by (:example updated-by)
+               :members (:example members)}}))
 
 ;; PlanOfUser
 (def plan-of-user

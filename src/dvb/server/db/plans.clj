@@ -8,6 +8,7 @@
 (declare create-plan*
          update-plan*
          get-plan*
+         get-plan-with-members*
          get-plans*
          get-plans-for-user*
          delete-plan*)
@@ -16,6 +17,19 @@
 
 (defn get-plan [db-conn id]
   (edges/plan-pg->clj (get-plan* db-conn {:id id})))
+
+(defn get-plan-with-members [db-conn id]
+  (let [[plan :as rows] (get-plan-with-members* db-conn {:id id})]
+    (if plan
+      (-> plan
+          (dissoc :role :user-id)
+          (assoc :members (mapv (fn [{:keys [role user-id]}]
+                                  {:role role
+                                   :id user-id})
+                                rows))
+          edges/plan-pg->clj)
+      (when-let [plan (get-plan db-conn id)]
+        (assoc plan :members [])))))
 
 (defn- mutate [mutation db-conn plan]
   (jdbc/with-db-transaction [tconn db-conn]

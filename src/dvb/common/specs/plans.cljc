@@ -3,7 +3,8 @@
   logic should conform to ``::plan``."
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [dvb.common.specs.common :as common]))
+            [dvb.common.specs.common :as common]
+            [dvb.common.specs.user-plans :as user-plan-specs]))
 
 (s/def ::id uuid?)
 (s/def ::tier #{:free :subscriber :supporter})
@@ -13,6 +14,12 @@
 (s/def ::created-by uuid?)
 (s/def ::updated-by uuid?)
 
+(s/def ::member
+  (s/keys :req-un [::id
+                   ::user-plan-specs/role]))
+
+(s/def ::members (s/coll-of ::member))
+
 (s/def ::plan
   (s/keys :req-un [::id
                    ::tier
@@ -20,7 +27,8 @@
                    ::updated-at
                    ::destroyed-at
                    ::created-by
-                   ::updated-by]))
+                   ::updated-by]
+          :opt-un [::members]))
 
 (s/def ::plans (s/coll-of ::plan))
 

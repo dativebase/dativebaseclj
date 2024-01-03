@@ -1,5 +1,6 @@
 (ns dvb.common.openapi.schemas.user
-  (:require [dvb.common.openapi.schemas.common :as c]))
+  (:require [dvb.common.openapi.schemas.common :as c]
+            [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
 ;; `User`
 (def user
@@ -122,3 +123,14 @@
    :example {}})
 
 (def edit-user-data new-user-data)
+
+;; MemberOfPlan
+(def member-of-plan
+  (let [id c/user-id-property]
+    {:type :object
+     :properties {:id id
+                  :role user-plan/role}
+     :required [:id
+                :role]
+     :example {:id (:example id)
+               :role (:example user-plan/role)}}))

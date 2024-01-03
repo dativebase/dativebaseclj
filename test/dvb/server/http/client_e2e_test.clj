@@ -176,11 +176,22 @@
 (deftest plans-endpoints-work-end-to-end
   (let [{:keys [database] :as system} (component/start (new-system))]
     (try
-      (let [{:keys [user user-password]} (setup database)
+      (let [{:keys [user user-password superuser]} (setup database)
+            {u2-pwd :password :as user-2*}
+            (test-data/gen-user-write
+             {:created-by (:id superuser)
+              :updated-by (:id superuser)
+              :is-superuser? false})
+            user-2 (db.users/activate-user
+                    database
+                    (db.users/create-user database user-2*))
             user-email (:email user)
             client (client/authenticate-client
                     (client/make-client :local-test)
-                    user-email user-password)]
+                    user-email user-password)
+            client-2 (client/authenticate-client
+                      (client/make-client :local-test)
+                      (:email user-2) u2-pwd)]
         (testing "We can create a new plan"
           (let [{:keys [status] created-plan :body}
                 (client/create-plan client {:tier :free})]
@@ -192,7 +203,7 @@
               (let [{fetched-plan :body}
                     (client/show-plan client (:id created-plan))]
                 (is (= created-plan fetched-plan))))
-            (testing "We can make our user a manager of the plan"
+            (testing "We can make our user a manager of the plan that our user created"
               (let [{:keys [status] created-user-plan :body}
                     (client/create-user-plan
                      client
@@ -201,6 +212,35 @@
                       :role :manager})]
                 (is (= 201 status))
                 (is (user-plan-specs/user-plan? created-user-plan))))
+            (testing "A DB uniqueness constraint prevents us from creating the same relationship twice."
+              (let [{:keys [status] error :body}
+                    (client/create-user-plan
+                     client
+                     {:user-id (:id user)
+                      :plan-id (:id created-plan)
+                      :role :manager})]
+                (is (= 400 status))
+                (clojure.pprint/pprint error)
+                (is (= "users-plans-unique-constraint-violated"
+                       (-> error :errors first :error-code)))))
+            (testing "Our second user cannot make itself a manager of the plan because it is not authorized (not a superuser, the creator of the plan or a manager of the plan)"
+              (let [{:keys [status] error :body}
+                    (client/create-user-plan
+                     client-2
+                     {:user-id (:id user-2)
+                      :plan-id (:id created-plan)
+                      :role :manager})]
+                (is (= 403 status))
+                (is (= "unauthorized" (-> error :errors first :error-code)))))
+            (testing "The original user can make the second user a manager of the plan that the original user created (and now manages)"
+              (let [{:keys [status] created-user-plan-2 :body}
+                    (client/create-user-plan
+                     client
+                     {:user-id (:id user-2)
+                      :plan-id (:id created-plan)
+                      :role :member})]
+                (is (= 201 status))
+                (is (user-plan-specs/user-plan? created-user-plan-2))))
             (testing "We can fetch our user with its plans."
               (let [{:keys [status] user-with-plans :body}
                     (client/show-user client
@@ -212,6 +252,7 @@
                          :role :manager
                          :tier :free}]
                        (:plans user-with-plans)))))
+            ;; TODO: we need to return the user-plan ID in the :plans of user and the :members of plan ...
             ;; NOTE: no update on purpose. Plans will be updated when billing events occur.
             (testing "We can delete the newly-created plan"
               (let [{deleted-plan :body} (client/delete-plan
@@ -225,7 +266,7 @@
 (deftest olds-endpoints-work-end-to-end
   (let [{:keys [database] :as system} (component/start (new-system))]
     (try
-      (let [{:keys [user user-password]} (setup database)
+      (let [{:keys [user user-password superuser]} (setup database)
             user-email (:email user)
             client (client/authenticate-client
                     (client/make-client :local-test)

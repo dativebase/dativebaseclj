@@ -39,6 +39,7 @@
    :Form form/form
    :FormWrite form/form-write
    :Login login/login
+   :MemberOfPlan user/member-of-plan
    :NewFormData form/new-form-data
    :NewUserData user/new-user-data
    :OLD old/old
@@ -55,5 +56,6 @@
    :UserAndAPIKey user-and-api-key
    :UserPlan user-plan/user-plan
    :UserPlanWrite user-plan/user-plan-write
+   :UserPlanUpdate user-plan/user-plan-update
    :UserUpdate user/user-update
    :UserWrite user/user-write})

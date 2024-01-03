@@ -31,6 +31,7 @@
     :show-user
     :update-old
     :update-user
+    :update-user-plan
     :user-plans})
 
 (def superuser-operations

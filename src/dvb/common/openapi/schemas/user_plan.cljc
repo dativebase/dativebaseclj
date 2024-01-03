@@ -59,3 +59,11 @@
         (update :properties (fn [properties] (select-keys properties upw-keys)))
         (assoc :required upw-keys)
         (update :example (fn [example] (select-keys example upw-keys))))))
+
+;; `UserPlanUpdate`
+(def user-plan-update
+  (let [upu-keys [:role]]
+    (-> user-plan
+        (update :properties (fn [properties] (select-keys properties upu-keys)))
+        (assoc :required upu-keys)
+        (update :example (fn [example] (select-keys example upu-keys))))))

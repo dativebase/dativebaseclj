@@ -56,6 +56,8 @@
     :description "Operations on users with access to a specified OLD."}
    {:name :Plans
     :description "Operations on plans."}
+   {:name :UserPlans
+    :description "Operations on user plans (relationship of users to plans)."}
    {:name :Users
     :description "Operations on users."}])
 
