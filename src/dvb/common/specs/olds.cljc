@@ -28,11 +28,16 @@
   (s/keys :req-un [::slug
                    ::name]))
 
+(s/def ::old-update
+  (s/keys :req-un [::name]))
+
 (defn old? [x] (s/valid? ::old x))
 
 (defn olds? [x] (s/valid? ::olds x))
 
 (defn old-write? [x] (s/valid? ::old-write x))
+
+(defn old-update? [x] (s/valid? ::old-update x))
 
 (comment
 

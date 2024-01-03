@@ -248,5 +248,22 @@
                     (client/show-old client old-slug)]
                 (is (= 200 status))
                 (is (old-specs/old? fetched-old))
-                (is (= created-old fetched-old)))))))
+                (is (= created-old fetched-old))))
+            (testing "We can update the name of the newly created OLD"
+              (let [{:keys [status] updated-old :body}
+                    (client/update-old client old-slug {:name "Funions"})]
+                (is (= 200 status))
+                (is (old-specs/old? updated-old))
+                (is (= (-> created-old
+                           (assoc :name "Funions")
+                           (dissoc :updated-at :updated-by))
+                       (dissoc updated-old :updated-at :updated-by)))
+                (testing "We can delete the newly created OLD"
+                  (let [{:keys [status] deleted-old :body}
+                        (client/delete-old client old-slug)]
+                    (is (= 200 status))
+                    (is (old-specs/old? deleted-old))
+                    (is (= (-> updated-old
+                               (dissoc :updated-at :destroyed-at))
+                           (dissoc deleted-old :updated-at :destroyed-at))))))))))
       (finally (component/stop system)))))

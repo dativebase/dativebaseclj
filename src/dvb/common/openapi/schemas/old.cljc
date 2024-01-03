@@ -48,7 +48,13 @@
               (fn [example] (select-keys example [:slug :name])))))
 
 ;; `OLDUpdate`
-(def old-update (assoc old-write :required []))
+(def old-update
+  (-> old-write
+      (update :properties
+              (fn [properties] (select-keys properties [:name])))
+      (assoc :required [:name])
+      (update :example
+              (fn [example] (select-keys example [:name])))))
 
 ;; `:PageOfOLDs`
 (def page-of-olds

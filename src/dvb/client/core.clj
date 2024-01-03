@@ -234,6 +234,29 @@
       simple-response
       edges/create-old-api->clj))
 
+(defn update-old
+  "PUT /olds/<SLUG>"
+  [client old-slug old-update]
+  (-> default-request
+      (assoc :url (old-url (:base-url client) old-slug)
+             :method :put
+             :body (json/encode old-update))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-old-api->clj))
+
+(defn delete-old
+  "DELETE /olds/<SLUG>"
+  [client old-slug]
+  (-> default-request
+      (assoc :url (old-url (:base-url client) old-slug)
+             :method :delete)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-old-api->clj))
+
 (defn show-old
   "GET /olds/<SLUG>"
   [client old-slug]

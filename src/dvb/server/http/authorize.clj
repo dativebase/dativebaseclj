@@ -21,6 +21,7 @@
     :create-user
     :create-user-plan
     :delete-plan
+    :delete-old
     :delete-user
     :edit-user
     :index-users
@@ -28,6 +29,7 @@
     :show-old
     :show-plan
     :show-user
+    :update-old
     :update-user
     :user-plans})
 
