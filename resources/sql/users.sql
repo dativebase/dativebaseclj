@@ -59,6 +59,7 @@ WHERE u.id = :id::uuid
 -- :name get-user-with-plans* :query :many-kebab
 -- :doc Return a coll of the active plans for the referenced user.
 SELECT u.*,
+       up.id AS user_plan_id,
        up.role,
        up.plan_id,
        p.tier

@@ -8,7 +8,8 @@
     :description "Return the plan with the provided ID."
     :tags [:Plans]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
-                 {:$ref "#/components/parameters/planIDParam"}]
+                 {:$ref "#/components/parameters/planIDParam"}
+                 {:$ref "#/components/parameters/includeMembersBooleanQueryParam"}]
     :responses
     (assoc common/common-path-responses
            "200" {:description "The plan."

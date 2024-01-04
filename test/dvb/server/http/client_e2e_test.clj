@@ -220,7 +220,6 @@
                       :plan-id (:id created-plan)
                       :role :manager})]
                 (is (= 400 status))
-                (clojure.pprint/pprint error)
                 (is (= "users-plans-unique-constraint-violated"
                        (-> error :errors first :error-code)))))
             (testing "Our second user cannot make itself a manager of the plan because it is not authorized (not a superuser, the creator of the plan or a manager of the plan)"
@@ -232,7 +231,7 @@
                       :role :manager})]
                 (is (= 403 status))
                 (is (= "unauthorized" (-> error :errors first :error-code)))))
-            (testing "The original user can make the second user a manager of the plan that the original user created (and now manages)"
+            (testing "The original user can make the second user a member of the plan that the original user created (and now manages)"
               (let [{:keys [status] created-user-plan-2 :body}
                     (client/create-user-plan
                      client
@@ -240,20 +239,63 @@
                       :plan-id (:id created-plan)
                       :role :member})]
                 (is (= 201 status))
-                (is (user-plan-specs/user-plan? created-user-plan-2))))
-            (testing "We can fetch our user with its plans."
-              (let [{:keys [status] user-with-plans :body}
-                    (client/show-user client
-                                      (:id user)
-                                      {:include-plans? true})]
+                (is (user-plan-specs/user-plan? created-user-plan-2))
+                (testing "The member of the plan is not authorized to upgrade itself to manager."
+                  (let [{:keys [status] error :body}
+                        (client/update-user-plan
+                         client-2
+                         (:id created-user-plan-2)
+                         {:role :manager})]
+                    (is (= 403 status))
+                    (is (= "unauthorized" (-> error :errors first :error-code)))))
+                (testing "The original user can upgrade the second user a from member to manager of the plan that the original user created (and now manages)"
+                  (let [{:keys [status] updated-user-plan-2 :body}
+                        (client/update-user-plan
+                         client
+                         (:id created-user-plan-2)
+                         {:role :manager})]
+                    (is (= 200 status))
+                    (is (user-plan-specs/user-plan? updated-user-plan-2))))
+                (testing "We can fetch our user with its plans."
+                  (let [{:keys [status] user-with-plans :body}
+                        (client/show-user client
+                                          (:id user)
+                                          {:include-plans? true})]
+                    (is (= 200 status))
+                    (is (user-specs/user? user-with-plans))
+                    (is (= [{:id (:id created-plan)
+                             :role :manager
+                             :tier :free}]
+                           (mapv (fn [p] (dissoc p :user-plan-id))
+                                 (:plans user-with-plans))))))
+                (testing "We can fetch user 2 with its plans."
+                  (let [{:keys [status] user-with-plans :body}
+                        (client/show-user client
+                                          (:id user-2)
+                                          {:include-plans? true})]
+                    (is (= 200 status))
+                    (is (user-specs/user? user-with-plans))
+                    (is (= [{:id (:id created-plan)
+                             :role :manager
+                             :tier :free}]
+                           (mapv (fn [p] (dissoc p :user-plan-id))
+                                 (:plans user-with-plans))))))))
+            ;; NOTE: no update on purpose. Plans will be updated when billing
+            ;; events occur.
+            (testing "We can fetch our plan with its users"
+              (let [{:keys [status] plan-with-members :body}
+                    (client/show-plan
+                     client
+                     (:id created-plan)
+                     {:include-members? true})]
                 (is (= 200 status))
-                (is (user-specs/user? user-with-plans))
-                (is (= [{:id (:id created-plan)
-                         :role :manager
-                         :tier :free}]
-                       (:plans user-with-plans)))))
-            ;; TODO: we need to return the user-plan ID in the :plans of user and the :members of plan ...
-            ;; NOTE: no update on purpose. Plans will be updated when billing events occur.
+                (is (plan-specs/plan? plan-with-members))
+                (is (= #{{:id (:id user)
+                          :role :manager}
+                         {:id (:id user-2)
+                          :role :manager}}
+                       (set (map (fn [m] (select-keys m [:id :role]))
+                                 (:members plan-with-members)))))))
             (testing "We can delete the newly-created plan"
               (let [{deleted-plan :body} (client/delete-plan
                                           client

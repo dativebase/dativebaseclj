@@ -101,6 +101,7 @@
    "/api/v1/olds/{old_slug}" old-paths/old-path
    "/api/v1/plans/{plan_id}" plan-paths/plan-path
    "/api/v1/plans" plan-paths/plans-path
+   "/api/v1/user-plans/{user_plan_id}" user-plan-paths/user-plan-path
    "/api/v1/user-plans" user-plan-paths/user-plans-path])
 
 (def paths

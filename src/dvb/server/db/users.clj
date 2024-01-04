@@ -43,12 +43,13 @@
   (let [[user :as rows] (get-user-with-plans* db-conn {:id id})]
     (if user
       (-> user
-          (dissoc :role :tier :plan-id)
+          (dissoc :role :tier :plan-id :user-plan-id)
           (assoc :plans (->> rows
-                             (mapv (fn [{:keys [role tier plan-id]}]
+                             (mapv (fn [{:keys [role tier plan-id user-plan-id]}]
                                      {:role role
                                       :tier tier
-                                      :id plan-id}))))
+                                      :id plan-id
+                                      :user-plan-id user-plan-id}))))
           edges/user-pg->clj)
       (when-let [user (get-user db-conn id)]
         (assoc user :plans [])))))

@@ -46,15 +46,19 @@
 
 ;; PlanOfUser
 (def plan-of-user
-  (let [id c/plan-id-property]
+  (let [id c/plan-id-property
+        user-plan-id c/user-plan-id-property]
     {:type :object
      :properties {:id id
+                  :user-plan-id user-plan-id
                   :role user-plan/role
                   :tier tier}
      :required [:id
+                :user-plan-id
                 :role
                 :tier]
      :example {:id (:example id)
+               :user-plan-id (:example user-plan-id)
                :role (:example user-plan/role)
                :tier (:example tier)}}))
 
