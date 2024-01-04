@@ -4,8 +4,7 @@
             [dvb.server.db.olds :as db.olds]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
-            [dvb.server.log :as log])
-  (:import (java.util UUID)))
+            [dvb.server.log :as log]))
 
 (defn handle [{:keys [database]}
               {:as ctx {old-slug :old_slug} :path}]

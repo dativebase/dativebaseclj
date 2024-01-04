@@ -1,6 +1,7 @@
 (ns dvb.server.http.operations.utils
   (:require [dvb.common.openapi.errors :as errors]
-            [dvb.common.openapi.spec :as spec]))
+            [dvb.server.db.users :as db.users]
+            [dvb.server.log :as log]))
 
 (defn minimize-user [user]
   (dissoc user :is-superuser? :email))
@@ -33,3 +34,21 @@
             {:old-slug-from-path old-slug
              :old-slug-from-entity (:old-slug existing-entity)
              :operation operation}))))
+
+(defn validate-mutate-user-plan
+  "Validator reused by operations create-user-plan, update-user-plan, and
+  delete-user-plan."
+  [mutation database {:as _user-plan :keys [user-id]} plan]
+  (let [user (db.users/get-user database user-id)]
+    (when-not user
+      (let [data {:entity-type :user
+                  :entity-id user-id
+                  :operation mutation}]
+        (log/warn "User not found" data)
+        (throw (errors/error-code->ex-info :entity-not-found data))))
+    (when-not plan
+      (let [data {:entity-type :plan
+                  :entity-id (:id plan)
+                  :operation mutation}]
+        (log/warn "Plan not found" data)
+        (throw (errors/error-code->ex-info :entity-not-found data))))))

@@ -13,6 +13,7 @@
             [dvb.server.http.operations.delete-old :as delete-old]
             [dvb.server.http.operations.delete-plan :as delete-plan]
             [dvb.server.http.operations.delete-user :as delete-user]
+            [dvb.server.http.operations.delete-user-plan :as delete-user-plan]
             [dvb.server.http.operations.edit-form :as edit-form]
             [dvb.server.http.operations.edit-user :as edit-user]
             [dvb.server.http.operations.index-forms :as index-forms]
@@ -49,6 +50,7 @@
    :delete-old delete-old/handle
    :delete-plan delete-plan/handle
    :delete-user delete-user/handle
+   :delete-user-plan delete-user-plan/handle
    :edit-form edit-form/handle
    :edit-user edit-user/handle
    :index-forms index-forms/handle

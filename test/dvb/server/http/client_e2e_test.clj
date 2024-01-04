@@ -295,7 +295,28 @@
                          {:id (:id user-2)
                           :role :manager}}
                        (set (map (fn [m] (select-keys m [:id :role]))
-                                 (:members plan-with-members)))))))
+                                 (:members plan-with-members)))))
+                (testing "We can remove the second user's access to the plan by deleting the correct user plan"
+                  (let [user-plan-id (:user-plan-id
+                                      (first (for [m (:members plan-with-members)
+                                                   :when (= (:id user-2)
+                                                            (:id m))] m)))
+                        {:keys [status] deleted-user-plan :body}
+                        (client/delete-user-plan client user-plan-id)]
+                    (is (= 200 status))
+                    (is (user-plan-specs/user-plan? deleted-user-plan))))
+                (testing "The second user no longer has access to the plan"
+                  (let [{:keys [status] plan-with-members :body}
+                        (client/show-plan
+                         client
+                         (:id created-plan)
+                         {:include-members? true})]
+                    (is (= 200 status))
+                    (is (plan-specs/plan? plan-with-members))
+                    (is (= #{{:id (:id user)
+                              :role :manager}}
+                           (set (map (fn [m] (select-keys m [:id :role]))
+                                     (:members plan-with-members)))))))))
             (testing "We can delete the newly-created plan"
               (let [{deleted-plan :body} (client/delete-plan
                                           client
@@ -308,7 +329,7 @@
 (deftest olds-endpoints-work-end-to-end
   (let [{:keys [database] :as system} (component/start (new-system))]
     (try
-      (let [{:keys [user user-password superuser]} (setup database)
+      (let [{:keys [user user-password]} (setup database)
             user-email (:email user)
             client (client/authenticate-client
                     (client/make-client :local-test)
