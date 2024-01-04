@@ -3,9 +3,7 @@
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.http.authorize :as authorize]
-            [dvb.server.http.operations.utils :as u]
-            [dvb.server.log :as log])
-  (:import (java.util UUID)))
+            [dvb.server.log :as log]))
 
 (defn handle
   [{:as _application :keys [database]}

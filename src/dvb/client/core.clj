@@ -313,6 +313,17 @@
       simple-response
       edges/fetch-user-plan-api->clj))
 
+(defn delete-user-plan
+  "DELETE /users-plan/<ID>"
+  [client user-plan-id]
+  (-> default-request
+      (assoc :url (user-plan-url (:base-url client) user-plan-id)
+             :method :delete)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-plan-api->clj))
+
 (defn delete-plan
   "DELETE /plans/<ID>"
   [client plan-id]

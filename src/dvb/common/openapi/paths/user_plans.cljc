@@ -22,7 +22,7 @@
 (def user-plan-path
   {:put
    {:operation-id :update-user-plan
-    :summary "Update the user plan with the provided ID."
+    :summary "Update the user's role in a plan by updating the user-plan with the provided ID."
     :description "Update the user plan with the provided ID using the JSON payload of the request."
     :tags [:UserPlans]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
@@ -39,7 +39,7 @@
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
    :delete
    {:operation-id :delete-user-plan
-    :summary "Delete the user plan with the provided ID."
+    :summary "Remove the user as a member of the plan by deleting the user plan with the provided ID."
     :description "Delete the user plan with the provided ID. This is a soft delete. The user plan data are not actually removed from the database. However, the system will behave as though the user plan relation no longer exists."
     :tags [:UserPlans]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}

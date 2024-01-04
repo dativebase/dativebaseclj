@@ -23,6 +23,7 @@
     :delete-plan
     :delete-old
     :delete-user
+    :delete-user-plan
     :edit-user
     :index-users
     :new-user
@@ -71,3 +72,26 @@
                      :operation-id operation-id
                      :operation-roles current-operation-roles})
           (throw (errors/error-code->ex-info :unauthorized)))))))
+
+(defn authorize-mutate-user-plan
+  [mutation user-plan plan {:as _authenticated-user
+                            authenticated-user-id :id
+                            :keys [is-superuser?]}]
+  (let [plan-managers (->> plan
+                           :members
+                           (filter (comp (partial = :manager) :role))
+                           (map :id))
+        plan-creator (:created-by plan)]
+    (when-not (or is-superuser?
+                  (= authenticated-user-id plan-creator)
+                  (some #{authenticated-user-id} plan-managers))
+      (let [data {:authenticated-user-id authenticated-user-id
+                  :user-id (:user-id user-plan)
+                  :plan-id (:id plan)
+                  :plan-managers plan-managers
+                  :plan-creator plan-creator
+                  :operation-id mutation}]
+        (log/warn "Authenticated user is not authorized to mutate access to this plan."
+                  data)
+        (throw (errors/error-code->ex-info :unauthorized data))))))
+
