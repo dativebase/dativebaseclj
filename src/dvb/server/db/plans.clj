@@ -22,10 +22,11 @@
   (let [[plan :as rows] (get-plan-with-members* db-conn {:id id})]
     (if plan
       (-> plan
-          (dissoc :role :user-id)
-          (assoc :members (mapv (fn [{:keys [role user-id]}]
+          (dissoc :role :user-id :user-plan-id)
+          (assoc :members (mapv (fn [{:keys [role user-id user-plan-id]}]
                                   {:role role
-                                   :id user-id})
+                                   :id user-id
+                                   :user-plan-id user-plan-id})
                                 rows))
           edges/plan-pg->clj)
       (when-let [plan (get-plan db-conn id)]

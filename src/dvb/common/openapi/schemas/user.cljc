@@ -126,11 +126,15 @@
 
 ;; MemberOfPlan
 (def member-of-plan
-  (let [id c/user-id-property]
+  (let [id c/user-id-property
+        user-plan-id c/user-plan-id-property]
     {:type :object
      :properties {:id id
+                  :user-plan-id user-plan-id
                   :role user-plan/role}
      :required [:id
+                :user-plan-id
                 :role]
      :example {:id (:example id)
+               :user-plan-id (:example user-plan-id)
                :role (:example user-plan/role)}}))

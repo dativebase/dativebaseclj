@@ -1,5 +1,6 @@
 (ns dvb.common.openapi.parameters
-  (:require [dvb.common.utils :as u]))
+  (:require [clojure.string :as str]
+            [dvb.common.utils :as u]))
 
 (def uuid-string-regex (str "^"
                             "[a-f0-9]{8}-"
@@ -11,7 +12,8 @@
 (defn id-param [resource]
   {:name (keyword (str resource "_id"))
    :in :path
-   :description (u/format "The ID of the referenced %s." resource)
+   :description (u/format "The ID of the referenced %s."
+                          (str/replace resource "_" " "))
    :required true
    :schema {:type :string
             :pattern uuid-string-regex}})
@@ -31,7 +33,7 @@
                                :pattern "^[a-zA-Z0-9_-]+$"}}
    :planIDParam (id-param "plan")
    :userIDParam (id-param "user")
-   :userPlanIDParam (id-param "user plan")
+   :userPlanIDParam (id-param "user_plan")
    :formIDParam (id-param "form")
    :userRegistrationKeyParam {:name :user_registration_key
                               :in :path
@@ -57,4 +59,10 @@
                                    :description "Whether or not to include the plans of the returned user(s)."
                                    :required false
                                    :schema {:type :boolean
-                                            :default false}}})
+                                            :default false}}
+   :includeMembersBooleanQueryParam {:name :include-members
+                                     :in :query
+                                     :description "Whether or not to include the members of the returned plan(s)."
+                                     :required false
+                                     :schema {:type :boolean
+                                              :default false}}})

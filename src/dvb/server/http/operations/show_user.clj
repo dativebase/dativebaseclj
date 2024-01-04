@@ -19,7 +19,9 @@
           (u/security-user ctx)
           user (if include-plans?
                  (db.users/get-user-with-plans database user-id)
-                 (db.users/get-user database user-id))]
+                 (db.users/get-user database user-id))
+          redacted-access? (not (or is-superuser?
+                                    (= authenticated-user-id user-id)))]
       (when-not user
         (let [data {:entity-type :user
                     :entity-id user-id
@@ -28,6 +30,6 @@
           (throw (errors/error-code->ex-info :entity-not-found data))))
       {:status 200
        :headers {}
-       :body (cond-> (edges/user-clj->api user)
-               (not (or is-superuser? (= authenticated-user-id user-id)))
-               u/minimize-user)})))
+       :body (cond-> user
+               redacted-access? u/minimize-user
+               :always edges/user-clj->api)})))

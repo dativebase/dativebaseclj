@@ -55,6 +55,9 @@
 
 (defn user-plans-url [base-url] (str base-url "/api/v1/user-plans"))
 
+(defn user-plan-url [base-url user-plan-id]
+  (str base-url "/api/v1/user-plans/" user-plan-id))
+
 (defn new-user-url [base-url]
   (str base-url "/api/v1/users/new"))
 
@@ -130,6 +133,7 @@
        client/request
        simple-response
        edges/fetch-user-api->clj)))
+
 
 (defn user-plans
   "GET /users/<ID>/plans"
@@ -297,6 +301,18 @@
       simple-response
       edges/create-user-plan-api->clj))
 
+(defn update-user-plan
+  "PUT /user-plans/<ID>"
+  [client user-plan-id user-plan-update]
+  (-> default-request
+      (assoc :url (user-plan-url (:base-url client) user-plan-id)
+             :method :put
+             :body (json/encode user-plan-update))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-plan-api->clj))
+
 (defn delete-plan
   "DELETE /plans/<ID>"
   [client plan-id]
@@ -310,13 +326,16 @@
 
 (defn show-plan
   "GET /plans/<ID>"
-  [client plan-id]
-  (-> default-request
-      (assoc :url (plan-url (:base-url client) plan-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      edges/fetch-plan-api->clj))
+  ([client plan-id] (show-plan client plan-id {}))
+  ([client plan-id {:keys [include-members?]
+                    :or {include-members? false}}]
+   (-> default-request
+       (assoc :url (plan-url (:base-url client) plan-id)
+              :query-params {:include-members include-members?})
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       edges/fetch-plan-api->clj)))
 
 (defn create-form
   "POST /forms"

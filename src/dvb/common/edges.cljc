@@ -61,10 +61,12 @@
 
 (def member-of-plan-api->clj-coercions
   (merge api->clj-coercions
+         {:user-plan-id utils/str->uuid}
          member-of-plan-pg->clj-coercions))
 
 (def member-of-plan-clj->api-coercions
   (merge clj->api-coercions
+         {:user-plan-id utils/uuid->str}
          member-of-plan-clj->pg-coercions))
 
 (defn member-of-plan-pg->clj [member-of-plan]
@@ -82,8 +84,6 @@
 
 (defn members-of-plan-pg->clj [members-of-plan]
   (mapv member-of-plan-pg->clj members-of-plan))
-
-;; TODO: use these in edges for plan
 
 (defn members-of-plan-clj->api [members-of-plan]
   (mapv member-of-plan-clj->api members-of-plan))
@@ -103,10 +103,12 @@
 
 (def plan-of-user-api->clj-coercions
   (merge api->clj-coercions
+         {:user-plan-id utils/str->uuid}
          plan-of-user-pg->clj-coercions))
 
 (def plan-of-user-clj->api-coercions
   (merge clj->api-coercions
+         {:user-plan-id utils/uuid->str}
          plan-of-user-clj->pg-coercions))
 
 (defn plan-of-user-pg->clj [plan-of-user]
@@ -238,11 +240,6 @@
     (update response :body plan-api->clj)
     response))
 
-(defn fetch-user-plans-api->clj [{:as response :keys [status]}]
-  (if (= 200 status)
-    (update response :body (fn [plans] (map plan-api->clj plans)))
-    response))
-
 ;; User-Plans
 
 (def user-plan-pg->clj-coercions {:role keyword})
@@ -274,6 +271,16 @@
 
 (defn create-user-plan-api->clj [{:as response :keys [status]}]
   (if (= 201 status)
+    (update response :body user-plan-api->clj)
+    response))
+
+(defn fetch-user-plans-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update response :body (fn [plans] (map plan-api->clj plans)))
+    response))
+
+(defn fetch-user-plan-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
     (update response :body user-plan-api->clj)
     response))
 

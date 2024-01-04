@@ -22,7 +22,8 @@ SELECT *
 -- :doc Return a coll of the active members (users) for the referenced plan.
 SELECT p.*,
        up.role,
-       up.user_id
+       up.user_id,
+       up.id AS user_plan_id
   FROM plans p
     INNER JOIN users_plans up
       ON p.id = up.plan_id
