@@ -30,14 +30,10 @@
             (let [selected-old (sut/get-old database (:slug old))]
               (is (= old selected-old))))
           (testing "update-old works"
-            (let [plan-id (random-uuid)
-                  updated-old (sut/update-old database
-                                              (assoc old
-                                                     :name "Siksika"
-                                                     :plan-id plan-id))]
+            (let [updated-old (sut/update-old database
+                                              (assoc old :name "Siksika"))]
               (is (= (-> old
-                         (assoc :name "Siksika"
-                                :plan-id plan-id)
+                         (assoc :name "Siksika")
                          (dissoc :updated-at))
                      (dissoc updated-old :updated-at)))
               (testing "delete-old works"
