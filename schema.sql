@@ -58,8 +58,8 @@ CREATE TABLE public.olds (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     destroyed_at timestamp with time zone,
-    created_by uuid,
-    updated_by uuid,
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL,
     inserted_at timestamp with time zone DEFAULT now() NOT NULL,
     plan_id uuid
 );
@@ -113,8 +113,8 @@ CREATE TABLE public.users_olds (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     destroyed_at timestamp with time zone,
-    created_by uuid,
-    updated_by uuid,
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL,
     inserted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 

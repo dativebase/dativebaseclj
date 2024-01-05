@@ -1,4 +1,5 @@
 -- :name create-user* :returning-execute :one-kebab
+-- :doc Create a new user.
 INSERT INTO users (first_name,
                    last_name,
                    email,
@@ -6,55 +7,57 @@ INSERT INTO users (first_name,
                    is_superuser,
                    created_by,
                    updated_by)
-VALUES (:first-name,
-        :last-name,
-        :email,
-        :password,
-        :is-superuser?,
-        :created-by,
-        :updated-by)
-RETURNING *
+  VALUES (:first-name,
+          :last-name,
+          :email,
+          :password,
+          :is-superuser?,
+          :created-by,
+          :updated-by)
+  RETURNING *
 
 -- :name update-user* :returning-execute :one-kebab
+-- :doc Update the referenced user.
 UPDATE users
-SET first_name = :first-name,
-    last_name = :last-name,
-    email = :email,
-    is_superuser = :is-superuser?,
-    updated_at = now(),
-    updated_by = :updated-by
-WHERE id = :id::uuid
-RETURNING *
+  SET first_name = :first-name,
+      last_name = :last-name,
+      email = :email,
+      is_superuser = :is-superuser?,
+      updated_at = now(),
+      updated_by = :updated-by
+  WHERE id = :id::uuid
+  RETURNING *
 
 -- :name activate-user* :returning-execute :one-kebab
+-- :doc Activate the referenced user by setting its registration status to registered.
 UPDATE users
   SET registration_status = 'registered'
   WHERE id = :id::uuid
-RETURNING *
+  RETURNING *
 
 -- :name get-user* :query :one-kebab
 -- :doc Get a user by its id.
 SELECT *
-FROM users
-WHERE id = :id::uuid
-  AND destroyed_at IS NULL
+  FROM users
+  WHERE id = :id::uuid
+    AND destroyed_at IS NULL
 
 -- :name get-user-by-email* :query :one-kebab
 -- :doc Get a user by its email.
 SELECT *
   FROM users
- WHERE email = :email
-   AND destroyed_at IS NULL
+  WHERE email = :email
+    AND destroyed_at IS NULL
 
 -- :name get-user-with-roles* :query :many-kebab
 -- :doc Get a user by its id, including all the roles on all the OLDs for that user.
 SELECT u.*, uo.role, uo.old_slug
-FROM users u
-LEFT OUTER JOIN users_olds uo
-  ON uo.user_id = u.id
-    AND uo.destroyed_at IS NULL
-WHERE u.id = :id::uuid
-  AND u.destroyed_at IS NULL
+  FROM users u
+  LEFT OUTER JOIN users_olds uo
+    ON uo.user_id = u.id
+      AND uo.destroyed_at IS NULL
+  WHERE u.id = :id::uuid
+    AND u.destroyed_at IS NULL
 
 -- :name get-user-with-plans* :query :many-kebab
 -- :doc Return a coll of the active plans for the referenced user.
@@ -75,45 +78,57 @@ SELECT u.*,
   ORDER BY p.inserted_at, p.id
 
 -- :name delete-user* :returning-execute :one-kebab
+-- :doc Soft-delete the referenced user.
 UPDATE users
-SET destroyed_at = now(),
-    updated_at = now(),
-    updated_by = :updated-by
-WHERE id = :id::uuid
-RETURNING *
+  SET destroyed_at = now(),
+      updated_at = now(),
+      updated_by = :updated-by
+  WHERE id = :id::uuid
+  RETURNING *
 
 -- :name create-user-old* :returning-execute :one-kebab
-INSERT INTO users_olds (user_id, old_slug, role, created_by, updated_by)
-VALUES (:user-id, :old-slug, :role, :created-by, :updated-by)
-RETURNING *
+-- :doc Create a new user-old: the relationship between a user and an OLD.
+INSERT INTO users_olds (user_id,
+                        old_slug,
+                        role,
+                        created_by,
+                        updated_by)
+  VALUES (:user-id,
+          :old-slug,
+          :role,
+          :created-by,
+          :updated-by)
+  RETURNING *
 
 -- :name update-user-old* :returning-execute :one-kebab
+-- :doc Update the role of the specified user-old.
 UPDATE users_olds
-SET role = :role,
-    updated_at = now(),
-    updated_by = :updated-by
-WHERE id = :id::uuid
-RETURNING *
+  SET role = :role,
+      updated_at = now(),
+      updated_by = :updated-by
+  WHERE id = :id::uuid
+  RETURNING *
 
 -- :name delete-user-old* :returning-execute :one-kebab
+-- :doc Soft-delete the user-old referenced by ID.
 UPDATE users_olds
-SET destroyed_at = now(),
-    updated_at = now(),
-    updated_by = :updated-by
-WHERE id = :id::uuid
-RETURNING *
+  SET destroyed_at = now(),
+      updated_at = now(),
+      updated_by = :updated-by
+  WHERE id = :id::uuid
+  RETURNING *
 
 -- :name get-users* :query :many-kebab
 -- :doc Get all users, ordered by created_at.
 SELECT *
   FROM users
- WHERE destroyed_at IS NULL
- ORDER BY inserted_at, id
- LIMIT :limit
-OFFSET :offset
+  WHERE destroyed_at IS NULL
+  ORDER BY inserted_at, id
+  LIMIT :limit
+  OFFSET :offset
 
 -- :name count-users* :query :one-kebab
 -- :doc Get the count of users in the entire database.
 SELECT count(id) AS user_count
   FROM users
- WHERE destroyed_at IS NULL
+  WHERE destroyed_at IS NULL
