@@ -195,6 +195,9 @@ ALTER TABLE ONLY public.olds
     ADD CONSTRAINT fk_olds_created_by_user_id FOREIGN KEY (created_by) REFERENCES public.users(id);
 
 ALTER TABLE ONLY public.olds
+    ADD CONSTRAINT fk_olds_plan_id FOREIGN KEY (plan_id) REFERENCES public.plans(id);
+
+ALTER TABLE ONLY public.olds
     ADD CONSTRAINT fk_olds_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
 
 ALTER TABLE ONLY public.plans
