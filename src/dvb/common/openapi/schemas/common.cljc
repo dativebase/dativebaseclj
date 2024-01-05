@@ -16,6 +16,9 @@
    :format :uuid
    :example "9328472d-c4d4-4d02-b444-1dd0de3479d3"})
 
+(def nullable-entity-id-property
+  (assoc entity-id-property :nullable true))
+
 (defn id-property [resource]
   {:type :string
    :format :uuid

@@ -62,7 +62,8 @@
   (test-queries/delete-all-the-things database)
   (let [old (db.olds/create-old
              database {:slug "lan-old"
-                       :name "Language"})
+                       :name "Language"
+                       :plan-id nil})
         user (db.users/create-user
               database
               {:first-name "Alice"
@@ -107,7 +108,8 @@
     {:user user
      :old (db.olds/create-old database (gen-old-write
                                         {:created-by user-id
-                                         :updated-by user-id}))
+                                         :updated-by user-id
+                                         :plan-id nil}))
      :database database}))
 
 (comment

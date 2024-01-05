@@ -60,7 +60,8 @@ CREATE TABLE public.olds (
     destroyed_at timestamp with time zone,
     created_by uuid,
     updated_by uuid,
-    inserted_at timestamp with time zone DEFAULT now() NOT NULL
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL,
+    plan_id uuid
 );
 
 CREATE TABLE public.plans (

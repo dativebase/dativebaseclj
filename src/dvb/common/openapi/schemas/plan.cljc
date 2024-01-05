@@ -4,7 +4,16 @@
 
 (def tier
   {:type :string
+   :enum ["free"
+          "subscriber"
+          "supporter"]
    :description "The tier of the plan. One of free, subscriber or supporter."
+   :example "supporter"})
+
+(def write-tier
+  {:type :string
+   :enum ["free"]
+   :description "The tier of the plan during initial plan creation. When a plan is created, its tier must start out as free. Only a billing event can elevate the plan tier."
    :example "free"})
 
 ;; `Plan`
@@ -65,11 +74,9 @@
 ;; `PlanWrite`
 (def plan-write
   (-> plan
-      (update :properties
-              (fn [properties] (select-keys properties [:tier])))
-      (assoc :required [:tier])
-      (update :example
-              (fn [example] (select-keys example [:tier])))))
+      (assoc :properties {:tier write-tier}
+             :required [:tier]
+             :example {:tier (:example write-tier)})))
 
 ;; `Plans`
 (def plans

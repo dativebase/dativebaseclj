@@ -1,4 +1,5 @@
 (ns dvb.common.specs.common
+  {:clj-kondo/config '{:linters {:unresolved-namespace {:level :off}}}} ;; not sure why kondo doesn't like my env-dependent requires, but this silences warnings ...
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [clojure.string :as str]

@@ -1,4 +1,5 @@
 (ns dvb.common.edges-test
+  {:clj-kondo/config '{:lint-as {clojure.test.check.clojure-test/defspec clj-kondo.lint-as/def-catch-all}}}
   (:require [clojure.spec.alpha :as s]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen]
@@ -12,7 +13,6 @@
             [dvb.common.specs.users :as user-specs]
             [dvb.common.openapi.validate :as validate]))
 
-
 (defspec generated-clj-users-can-always-be-transformed-into-valid-api-users
   (let [user-schema (-> spec/api serialize/denormalize :components :schemas
                         :User)]
@@ -20,8 +20,10 @@
                   (= user (validate/validate user user-schema)))))
 
 (defspec generated-clj-plans-can-always-be-transformed-into-valid-api-plans
-  (prop/for-all [plan (gen/fmap sut/plan-clj->api (s/gen ::plan-specs/plan))]
-                (= plan (validate/validate plan (:Plan sut/schemas)))))
+  (let [plan-schema (-> spec/api serialize/denormalize :components :schemas
+                        :Plan)]
+    (prop/for-all [plan (gen/fmap sut/plan-clj->api (s/gen ::plan-specs/plan))]
+                  (= plan (validate/validate plan plan-schema)))))
 
 (defspec generated-clj-forms-can-always-be-transformed-into-valid-api-forms
   (prop/for-all [form (gen/fmap sut/form-clj->api (s/gen ::form-specs/form))]

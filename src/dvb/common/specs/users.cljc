@@ -21,10 +21,12 @@
 (s/def ::updated-by (s/nilable uuid?))
 
 ;; for user-with-plans
+(s/def ::user-plan-id ::user-plan-specs/id)
 (s/def ::plan
   (s/keys :req-un [::id
                    ::plan-specs/tier
-                   ::user-plan-specs/role]))
+                   ::user-plan-specs/role
+                   ::user-plan-id]))
 
 (s/def ::plans (s/coll-of ::plan))
 
