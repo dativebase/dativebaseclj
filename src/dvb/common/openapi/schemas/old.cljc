@@ -9,6 +9,9 @@
         name {:type :string
               :description "A human-readable or descriptive name for the OLD. Typically, this is based on the language targeted by the OLD. For example, 'French OLD'."
               :example "French OLD"}
+        plan-id (assoc c/nullable-entity-id-property
+                       :description "The ID of the plan that covers this OLD."
+                       :example "0669c124-e05f-445f-9598-e4821c38f70d")
         created-at (c/created-at-property "OLD")
         updated-at (c/updated-at-property "OLD")
         destroyed-at (c/destroyed-at-property "OLD")
@@ -18,6 +21,7 @@
      :properties
      {:slug slug
       :name name
+      :plan-id plan-id
       :created-at created-at
       :updated-at updated-at
       :destroyed-at destroyed-at
@@ -25,6 +29,7 @@
       :updated-by updated-by}
      :required [:slug
                 :name
+                :plan-id
                 :created-at
                 :updated-at
                 :destroyed-at
@@ -32,6 +37,7 @@
                 :updated-by]
      :example {:slug (:example slug)
                :name (:example name)
+               :plan-id (:example plan-id)
                :created-at (:example created-at)
                :updated-at (:example updated-at)
                :destroyed-at (:example destroyed-at)
@@ -42,19 +48,26 @@
 (def old-write
   (-> old
       (update :properties
-              (fn [properties] (select-keys properties [:slug :name])))
+              (fn [properties] (select-keys properties
+                                            [:slug
+                                             :name
+                                             :plan-id])))
       (assoc :required [:slug :name])
       (update :example
-              (fn [example] (select-keys example [:slug :name])))))
+              (fn [example] (select-keys example [:slug
+                                                  :name
+                                                  :plan-id])))))
 
 ;; `OLDUpdate`
 (def old-update
   (-> old-write
       (update :properties
-              (fn [properties] (select-keys properties [:name])))
-      (assoc :required [:name])
+              (fn [properties] (select-keys properties [:name
+                                                        :plan-id])))
+      (dissoc :required)
       (update :example
-              (fn [example] (select-keys example [:name])))))
+              (fn [example] (select-keys example [:name
+                                                  :plan-id])))))
 
 ;; `:PageOfOLDs`
 (def page-of-olds

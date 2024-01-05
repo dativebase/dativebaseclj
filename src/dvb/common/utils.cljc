@@ -1,4 +1,5 @@
 (ns dvb.common.utils
+  {:clj-kondo/config '{:linters {:unresolved-namespace {:level :off}}}} ;; not sure why kondo doesn't like my env-dependent requires, but this silences warnings ...
   #?(:clj (:refer-clojure :exclude [format]))
   (:require
    #?(:cljs [goog.string :as gstring])

@@ -73,14 +73,20 @@
                      :operation-roles current-operation-roles})
           (throw (errors/error-code->ex-info :unauthorized)))))))
 
+(defn plan-managers [plan]
+  (->> plan
+       :members
+       (filter (comp (partial = :manager) :role))
+       (map :id)))
+
 (defn authorize-mutate-user-plan
+  "Throw an unauthorized exception of the provided authenticated user is not
+  authorized to mutate the provided user-plan relationship to the provided plan.
+  The value of mutation should be a keyword operation ID."
   [mutation user-plan plan {:as _authenticated-user
                             authenticated-user-id :id
                             :keys [is-superuser?]}]
-  (let [plan-managers (->> plan
-                           :members
-                           (filter (comp (partial = :manager) :role))
-                           (map :id))
+  (let [plan-managers (plan-managers plan)
         plan-creator (:created-by plan)]
     (when-not (or is-superuser?
                   (= authenticated-user-id plan-creator)
@@ -95,3 +101,13 @@
                   data)
         (throw (errors/error-code->ex-info :unauthorized data))))))
 
+(defn user-authorized-to-manage-plan? [user plan]
+  (let [{user-id :id :keys [is-superuser?]} user
+        plan-managers (plan-managers plan)]
+    (boolean (or is-superuser? (some #{user-id} plan-managers)))))
+
+(defn authenticated-user-authorized-to-mutate-user?
+  [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]}
+   {:as _user user-id :id}]
+    (boolean (or is-superuser?
+                 (= user-id authenticated-user-id))))

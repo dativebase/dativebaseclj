@@ -21,7 +21,8 @@
         (let [old (sut/create-old database
                                   (test-data/gen-old-write
                                    {:created-by user-id
-                                    :updated-by user-id}))]
+                                    :updated-by user-id
+                                    :plan-id nil}))]
           (is (olds-specs/old? old))
           (is (= (:updated-at old) (:created-at old)))
           (is (nil? (:destroyed-at old)))
@@ -29,8 +30,15 @@
             (let [selected-old (sut/get-old database (:slug old))]
               (is (= old selected-old))))
           (testing "update-old works"
-            (let [updated-old (sut/update-old database (assoc old :name "Siksika"))]
-              (is (= (-> old (assoc :name "Siksika") (dissoc :updated-at))
+            (let [plan-id (random-uuid)
+                  updated-old (sut/update-old database
+                                              (assoc old
+                                                     :name "Siksika"
+                                                     :plan-id plan-id))]
+              (is (= (-> old
+                         (assoc :name "Siksika"
+                                :plan-id plan-id)
+                         (dissoc :updated-at))
                      (dissoc updated-old :updated-at)))
               (testing "delete-old works"
                 (let [deleted-old (sut/delete-old database old)]

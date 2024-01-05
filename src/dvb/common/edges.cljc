@@ -348,18 +348,15 @@
     (update response :body form-api->clj)
     response))
 
-
-
-
-
-
-
-
-
 ;; OLDs
 
-(def old-api->clj-coercions api->clj-coercions)
-(def old-clj->api-coercions clj->api-coercions)
+(def old-api->clj-coercions
+  (assoc api->clj-coercions
+         :plan-id utils/maybe-str->uuid))
+
+(def old-clj->api-coercions
+  (assoc clj->api-coercions
+         :plan-id utils/maybe-uuid->str))
 
 (defn old-clj->api [old]
   (-> old

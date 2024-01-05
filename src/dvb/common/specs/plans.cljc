@@ -14,9 +14,11 @@
 (s/def ::created-by uuid?)
 (s/def ::updated-by uuid?)
 
+(s/def ::user-plan-id ::user-plan-specs/id)
 (s/def ::member
   (s/keys :req-un [::id
-                   ::user-plan-specs/role]))
+                   ::user-plan-specs/role
+                   ::user-plan-id]))
 
 (s/def ::members (s/coll-of ::member))
 

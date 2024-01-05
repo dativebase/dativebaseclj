@@ -9,7 +9,7 @@
 
 (defn- set-up []
   (let [database (test-data/db-component)]
-    {:user (users/create-user database (test-data/gen-user
+    {:user (users/create-user database (test-data/gen-user-write
                                         {:created-by nil
                                          :updated-by nil}))
      :database database}))
