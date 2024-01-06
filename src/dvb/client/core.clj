@@ -8,6 +8,7 @@
             [dvb.common.specs.olds :as old-specs]
             [dvb.common.specs.plans :as plan-specs]
             [dvb.common.specs.users :as user-specs]
+            [dvb.common.specs.user-olds :as user-old-specs]
             [dvb.common.specs.user-plans :as user-plan-specs]
             [dvb.common.edges :as edges]
             [dvb.common.openapi.serialize :as serialize]
@@ -57,6 +58,11 @@
 
 (defn user-plan-url [base-url user-plan-id]
   (str base-url "/api/v1/user-plans/" user-plan-id))
+
+(defn user-olds-url [base-url] (str base-url "/api/v1/user-olds"))
+
+(defn user-old-url [base-url user-old-id]
+  (str base-url "/api/v1/user-olds/" user-old-id))
 
 (defn new-user-url [base-url]
   (str base-url "/api/v1/users/new"))
@@ -135,7 +141,6 @@
        client/request
        simple-response
        edges/fetch-user-api->clj)))
-
 
 (defn user-plans
   "GET /users/<ID>/plans"
@@ -266,13 +271,16 @@
 
 (defn show-old
   "GET /olds/<SLUG>"
-  [client old-slug]
-  (-> default-request
-      (assoc :url (old-url (:base-url client) old-slug))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      edges/fetch-old-api->clj))
+  ([client old-slug] (show-old client old-slug {}))
+  ([client old-slug {:keys [include-users?]
+                     :or {include-users? false}}]
+   (-> default-request
+       (assoc :url (old-url (:base-url client) old-slug)
+              :query-params {:include-users include-users?})
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       edges/fetch-old-api->clj)))
 
 (defn create-plan
   "POST /plans"
@@ -410,6 +418,21 @@
       client/request
       simple-response))
 
+(defn create-user-old
+  "POST /user-olds"
+  [client user-old-write]
+  (-> default-request
+      (assoc :url (user-olds-url (:base-url client))
+             :method :post
+             :body (json/encode
+                    (edges/user-old-clj->api
+                     (merge (gen/generate (s/gen ::user-old-specs/user-old-write))
+                            user-old-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/create-user-old-api->clj))
+
 (comment
 
   (do ;; superuser client
@@ -446,7 +469,7 @@
 
   (show-user client (:id created-user)) ;; 200 OK
 
-  (delete-user client (:id created-user)) ;; 200 OK
+  #_(delete-user client (:id created-user)) ;; 200 OK
 
   (dissoc client :spec)
 

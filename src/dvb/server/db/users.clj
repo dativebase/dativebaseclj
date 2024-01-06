@@ -9,16 +9,13 @@
 (declare activate-user*
          count-users*
          create-user*
-         create-user-old*
          delete-user*
-         delete-user-old*
          get-user*
          get-users*
          get-user-by-email*
          get-user-with-roles*
          get-user-with-plans*
-         update-user*
-         update-user-old*)
+         update-user*)
 
 (hugsql/def-db-fns "sql/users.sql")
 
@@ -81,33 +78,6 @@
 
 (defn get-history [db-conn id]
   (events/get-history db-conn nil "users" id))
-
-(defn- user-old-row->user-old-entity [user-old-row]
-  (update user-old-row :role keyword))
-
-(defn- user-old-entity->user-old-row [user-old-entity]
-  (update user-old-entity :role name))
-
-(defn- mutate-user-old [mutation db-conn user-old]
-  (jdbc/with-db-transaction [tconn db-conn]
-    (let [db-user-old ((case mutation
-                         :create create-user-old*
-                         :update update-user-old*
-                         :delete delete-user-old*)
-                       tconn
-                       (user-old-entity->user-old-row user-old))
-          user-old (user-old-row->user-old-entity db-user-old)]
-      (events/create-event tconn (assoc (utils/mutation user-old "users_olds") :old-slug nil))
-      user-old)))
-
-(def create-user-old (partial mutate-user-old :create))
-
-(def update-user-old (partial mutate-user-old :update))
-
-(def delete-user-old (partial mutate-user-old :delete))
-
-(defn get-user-old-history [db-conn id]
-  (events/get-history db-conn nil "users_olds" id))
 
 (defn count-users [db-conn]
   (:user-count (count-users* db-conn)))

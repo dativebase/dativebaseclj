@@ -9,6 +9,7 @@
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.test-queries :as test-queries]
             [dvb.server.db.users :as db.users]
+            [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.http.openapi.serialize :as openapi.serialize]
             [dvb.server.sh :as sh]
             [dvb.server.system.config :as config]))
@@ -96,7 +97,7 @@
                                          :updated-by nil}))
 
     ;; Grant our user access to our OLD by creating a users_olds row:
-    (def user-old (db.users/create-user-old db {:user-id (:id fetched-user)
+    (def user-old (db.user-olds/create-user-old db {:user-id (:id fetched-user)
                                                 :old-slug old-slug
                                                 :role "administrator"
                                                 :created-by nil

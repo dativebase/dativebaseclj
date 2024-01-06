@@ -1,5 +1,6 @@
 (ns dvb.common.openapi.schemas.user
   (:require [dvb.common.openapi.schemas.common :as c]
+            [dvb.common.openapi.schemas.user-old :as user-old]
             [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
 ;; `User`
@@ -138,3 +139,18 @@
      :example {:id (:example id)
                :user-plan-id (:example user-plan-id)
                :role (:example user-plan/role)}}))
+
+;; UserOfOLD
+(def user-of-old
+  (let [id c/user-id-property
+        user-old-id c/user-old-id-property]
+    {:type :object
+     :properties {:id id
+                  :user-old-id user-old-id
+                  :role user-old/role}
+     :required [:id
+                :user-old-id
+                :role]
+     :example {:id (:example id)
+               :user-old-id (:example user-old-id)
+               :role (:example user-old/role)}}))

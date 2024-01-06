@@ -52,3 +52,21 @@
                   :operation mutation}]
         (log/warn "Plan not found" data)
         (throw (errors/error-code->ex-info :entity-not-found data))))))
+
+(defn validate-mutate-user-old
+  "Validator reused by operations create-user-old, update-user-old, and
+  delete-user-old."
+  [mutation database {:as _user-old :keys [user-id]} old]
+  (let [user (db.users/get-user database user-id)]
+    (when-not user
+      (let [data {:entity-type :user
+                  :entity-id user-id
+                  :operation mutation}]
+        (log/warn "User not found" data)
+        (throw (errors/error-code->ex-info :entity-not-found data))))
+    (when-not old
+      (let [data {:entity-type :old
+                  :old-slug (:slug old)
+                  :operation mutation}]
+        (log/warn "OLD not found" data)
+        (throw (errors/error-code->ex-info :entity-not-found data))))))

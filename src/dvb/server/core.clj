@@ -8,6 +8,7 @@
             [dvb.server.http.operations.create-old :as create-old]
             [dvb.server.http.operations.create-plan :as create-plan]
             [dvb.server.http.operations.create-user :as create-user]
+            [dvb.server.http.operations.create-user-old :as create-user-old]
             [dvb.server.http.operations.create-user-plan :as create-user-plan]
             [dvb.server.http.operations.delete-form :as delete-form]
             [dvb.server.http.operations.delete-old :as delete-old]
@@ -45,11 +46,12 @@
    :create-old create-old/handle
    :create-plan create-plan/handle
    :create-user create-user/handle
+   :create-user-old create-user-old/handle
    :create-user-plan create-user-plan/handle
    :delete-form delete-form/handle
    :delete-old delete-old/handle
    :delete-plan delete-plan/handle
-   #_#_:delete-user delete-user/handle
+   #_#_:delete-user delete-user/handle ;; Note: intentionally disabled
    :delete-user-plan delete-user-plan/handle
    :edit-form edit-form/handle
    :edit-user edit-user/handle

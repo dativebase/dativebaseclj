@@ -6,6 +6,7 @@
             [dvb.common.openapi.schemas.old :as old]
             [dvb.common.openapi.schemas.plan :as plan]
             [dvb.common.openapi.schemas.user :as user]
+            [dvb.common.openapi.schemas.user-old :as user-old]
             [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
 ;; UserAndAPIKey
@@ -54,6 +55,10 @@
    :PlanWrite plan/plan-write
    :User user/user
    :UserAndAPIKey user-and-api-key
+   :UserOfOLD user/user-of-old
+   :UserOLD user-old/user-old
+   :UserOLDWrite user-old/user-old-write
+   :UserOLDUpdate user-old/user-old-update
    :UserPlan user-plan/user-plan
    :UserPlanWrite user-plan/user-plan-write
    :UserPlanUpdate user-plan/user-plan-update

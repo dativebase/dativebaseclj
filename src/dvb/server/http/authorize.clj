@@ -19,10 +19,12 @@
   #{:create-old
     :create-plan
     :create-user
+    :create-user-old
     :create-user-plan
     :delete-plan
     :delete-old
     :delete-user
+    :delete-user-old
     :delete-user-plan
     :edit-user
     :index-users
@@ -32,6 +34,7 @@
     :show-user
     :update-old
     :update-user
+    :update-user-old
     :update-user-plan
     :user-plans})
 
@@ -78,7 +81,7 @@
        (map :id)))
 
 (defn authorize-mutate-user-plan
-  "Throw an unauthorized exception of the provided authenticated user is not
+  "Throw an unauthorized exception if the provided authenticated user is not
   authorized to mutate the provided user-plan relationship to the provided plan.
   The value of mutation should be a keyword operation ID."
   [mutation user-plan plan {:as _authenticated-user
@@ -96,6 +99,34 @@
                   :plan-creator plan-creator
                   :operation-id mutation}]
         (log/warn "Authenticated user is not authorized to mutate access to this plan."
+                  data)
+        (throw (errors/error-code->ex-info :unauthorized data))))))
+
+(defn old-admins [old]
+  (->> old
+       :users
+       (filter (comp (partial = :administrator) :role))
+       (map :id)))
+
+(defn authorize-mutate-user-old
+  "Throw an unauthorized exception if the provided authenticated user is not
+  authorized to mutate the provided user-old relationship to the provided OLD.
+  The value of mutation should be a keyword operation ID."
+  [mutation user-old old {:as _authenticated-user
+                          authenticated-user-id :id
+                          :keys [is-superuser?]}]
+  (let [old-admins (old-admins old)
+        old-creator (:created-by old)]
+    (when-not (or is-superuser?
+                  (= authenticated-user-id old-creator)
+                  (some #{authenticated-user-id} old-admins))
+      (let [data {:authenticated-user-id authenticated-user-id
+                  :user-id (:user-id user-old)
+                  :old-slug (:slug old)
+                  :old-admins old-admins
+                  :old-creator old-creator
+                  :operation-id mutation}]
+        (log/warn "Authenticated user is not authorized to mutate access to this OLD."
                   data)
         (throw (errors/error-code->ex-info :unauthorized data))))))
 

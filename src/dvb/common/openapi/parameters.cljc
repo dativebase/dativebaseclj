@@ -10,7 +10,7 @@
                             "[a-f0-9]{12}$"))
 
 (defn id-param [resource]
-  {:name (keyword (str resource "_id"))
+  {:name (keyword (str (str/lower-case resource) "_id"))
    :in :path
    :description (u/format "The ID of the referenced %s."
                           (str/replace resource "_" " "))
@@ -34,6 +34,7 @@
    :planIDParam (id-param "plan")
    :userIDParam (id-param "user")
    :userPlanIDParam (id-param "user_plan")
+   :userOLDIDParam (id-param "user_OLD")
    :formIDParam (id-param "form")
    :userRegistrationKeyParam {:name :user_registration_key
                               :in :path
@@ -65,4 +66,10 @@
                                      :description "Whether or not to include the members of the returned plan(s)."
                                      :required false
                                      :schema {:type :boolean
-                                              :default false}}})
+                                              :default false}}
+   :includeUsersBooleanQueryParam {:name :include-users
+                                   :in :query
+                                   :description "Whether or not to include the users of the returned OLD(s)."
+                                   :required false
+                                   :schema {:type :boolean
+                                            :default false}}})

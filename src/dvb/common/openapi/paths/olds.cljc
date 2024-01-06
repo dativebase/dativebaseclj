@@ -8,7 +8,8 @@
     :description "Return the OLD with the provided slug."
     :tags [:OLDs]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
-                 {:$ref "#/components/parameters/oldSlugPathParam"}]
+                 {:$ref "#/components/parameters/oldSlugPathParam"}
+                 {:$ref "#/components/parameters/includeUsersBooleanQueryParam"}]
     :responses
     (assoc common/common-path-responses
            "200" {:description "The OLD."

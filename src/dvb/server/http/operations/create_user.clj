@@ -25,7 +25,7 @@
       (catch Exception e (throw-500 e)))))
 
 (defn authorize
-  [{:as user-write new-user-is-superuser? :is-superuser?}
+  [{:as _user-write new-user-is-superuser? :is-superuser?}
    {:as authenticated-user authenticated-user-is-superuser? :is-superuser?}]
   (when (and new-user-is-superuser?
              (not authenticated-user-is-superuser?))

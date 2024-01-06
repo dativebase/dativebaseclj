@@ -6,6 +6,7 @@
             [dvb.common.specs.plans :as plan-specs]
             [dvb.common.specs.users :as user-specs]
             [dvb.common.specs.user-plans :as user-plan-specs]
+            [dvb.common.specs.user-olds :as user-old-specs]
             [dvb.server.core :as core]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.users :as db.users]
@@ -206,8 +207,6 @@
 ;; Bootstrap AKA Sign-up
 ;; We can create a free account and get started with creating users and OLDs
 ;; right away.
-;; TODO: support user creation and test it here.
-;; TODO: add query param to GET /plans to return OLDs under that plan.
 (deftest bootstrap-end-to-end
   (let [{:keys [database] :as system} (component/start (new-system))]
     (try
@@ -232,7 +231,7 @@
           ;; probably, ultimately, redirect to Dative, or some other
           ;; human-readable HTML or SPA.
           (testing "The unauthenticated client can activate the new user."
-            (let [{:as user-from-db :keys [registration-key]}
+            (let [{:as _user-from-db :keys [registration-key]}
                   (db.users/get-user database user-id)
                   {:keys [status] {:as activated-user} :body}
                   (client/activate-user
@@ -240,7 +239,7 @@
                    user-id
                    registration-key)]
               (is (= 200 status))
-              (is (user-specs/user? created-user))))
+              (is (user-specs/user? activated-user))))
           (testing "We can make an authenticated client with the now-registered
                     user and use it to make the user a manager of a new free
                     plan, and create a new OLD, running under that plan."
@@ -261,7 +260,14 @@
                                                               {:include-members? true})
                   {{:as old old-slug :slug} :body} (client/create-old
                                                     client {:plan-id plan-id})
-                  summary {:user
+                  {user-old :body} (client/create-user-old
+                                    client {:user-id user-id
+                                            :old-slug old-slug
+                                            :role :administrator})
+                  {old-with-users :body} (client/show-old
+                                          client old-slug {:include-users? true})
+                  ;; Following is useful for pprinting
+                  _summary {:user
                            (-> user-with-plans
                                (select-keys [:id :email :is-superuser? :plans])
                                (assoc :password user-password))
@@ -271,10 +277,51 @@
                            (-> user-plan
                                (select-keys [:id :role :plan-id :user-id]))
                            :old (-> old
-                                    (select-keys [:slug :name :plan-id]))}]
-              (plan-specs/plan? plan)
-              (plan-specs/plan? plan-with-members)
-              (user-specs/user? user-with-plans)))))
+                                    (select-keys [:slug :name :plan-id]))
+                           :old-with-users (-> old-with-users
+                                               (select-keys [:slug :name :plan-id :users]))
+                           :user-old
+                           (-> user-old
+                               (select-keys [:id :role :old-slug :user-id]))}]
+              (is (plan-specs/plan? plan))
+              (is (plan-specs/plan? plan-with-members))
+              (is (user-specs/user? user-with-plans))
+              (is (old-specs/old? old))
+              (is (old-specs/old? old-with-users))
+              (is (= [{:id user-id
+                       :user-old-id (:id user-old)
+                       :role :administrator}]
+                     (:users old-with-users)))
+              (testing "We can create a new user and give it access to our OLD."
+                (let [additional-user-password "5678"
+                      {:keys [status]
+                       {:as additional-user
+                        additional-user-id :id} :body}
+                      (client/create-user client
+                                          {:password additional-user-password
+                                           :is-superuser? false})]
+                  (is (= 201 status))
+                  (is (user-specs/user? additional-user))
+                  (testing "We can make the new user a contributor in the new OLD."
+                    (let [{:keys [status] {:as user-old} :body}
+                          (client/create-user-old
+                           client
+                           {:user-id additional-user-id
+                            :old-slug old-slug
+                            :role :contributor})]
+                      (is (= 201 status))
+                      (is (user-old-specs/user-old? user-old))
+                      (let [{old-with-users :body}
+                            (client/show-old client old-slug
+                                             {:include-users? true})]
+                        (is (= #{{:id user-id
+                                  :role :administrator}
+                                 {:id additional-user-id
+                                  :role :contributor}}
+                               (->> old-with-users
+                                    :users
+                                    (map (fn [u] (select-keys u [:id :role])))
+                                    set))))))))))))
       (finally (component/stop system)))))
 
 ;; End-to-end test that verifies:
@@ -308,7 +355,7 @@
             (is (nil? (:destroyed-at created-plan)))
             (is (= :free (:tier created-plan)))
             (is (plan-specs/plan? created-plan))
-            (testing "We can fetch the newly created plan"
+            (testing "We can fetch the newly created plan."
               (let [{fetched-plan :body}
                     (client/show-plan client (:id created-plan))]
                 (is (= created-plan fetched-plan))))
@@ -456,7 +503,7 @@
                 (is (= 400 status))
                 (is (= "unique-slug-constraint-violated"
                        (-> error :errors first :error-code)))))
-            (testing "We can fetch the newly created OLD"
+            (testing "We can fetch the newly created OLD."
               (let [{:keys [status] fetched-old :body}
                     (client/show-old client old-slug)]
                 (is (= 200 status))
