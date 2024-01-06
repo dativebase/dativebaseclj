@@ -49,6 +49,9 @@
     :description "Create a new user then return the created user."
     :tags [:Users]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}]
+    :security [{}
+               {:x-api-key []
+                :x-app-id []}] ;; security is optional on purpose; creation of a (non-superuser) user does not require authentication
     :request-body
     {:description "The payload to create a user. This payload must conform to the schema UserWrite."
      :required true
@@ -75,19 +78,20 @@
                   :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
            "400" {:description "The request for a specific user was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
-   :delete
-   {:operation-id :delete-user
-    :summary "Delete the user with the provided ID."
-    :description "Delete the user with the provided ID. This is a soft delete. The user data are not actually removed from the database. However, the system will behave as though the user no longer exists."
-    :tags [:Users]
-    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
-                 {:$ref "#/components/parameters/userIDParam"}]
-    :responses
-    (assoc common/common-path-responses
-           "200" {:description "The deleted user."
-                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
-           "400" {:description "The request to delete the specified user was invalid."
-                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
+   ;; Deliberately disabled (perhaps provisionally)
+   #_:delete
+   #_{:operation-id :delete-user
+      :summary "Delete the user with the provided ID."
+      :description "Delete the user with the provided ID. This is a soft delete. The user data are not actually removed from the database. However, the system will behave as though the user no longer exists."
+      :tags [:Users]
+      :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                   {:$ref "#/components/parameters/userIDParam"}]
+      :responses
+      (assoc common/common-path-responses
+             "200" {:description "The deleted user."
+                    :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+             "400" {:description "The request to delete the specified user was invalid."
+                    :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}
    :put
    {:operation-id :update-user
     :summary "Update the user with the provided ID."
@@ -115,7 +119,7 @@
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/userIDParam"}
                  {:$ref "#/components/parameters/userRegistrationKeyParam"}]
-    :security [] ;; no security on purpose
+    :security [] ;; no security on purpose; activation of a user does not require authentication
     :responses
     (assoc common/common-path-responses
            "200" {:description "Successful user activation request. The user has been fully created. The user's registration status has been changed from 'pending' to 'registered'."

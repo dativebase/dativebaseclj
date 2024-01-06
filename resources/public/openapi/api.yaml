@@ -936,65 +936,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ErrorServer500'}
-    delete:
-      operationId: delete_user
-      summary: Delete the user with the provided ID.
-      description: Delete the user with the provided ID. This is a soft delete. The user data are not actually removed from the database. However, the system will behave as though the user no longer exists.
-      tags: [Users]
-      parameters:
-      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
-      - {$ref: '#/components/parameters/userIDParam'}
-      responses:
-        '429':
-          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
-          headers:
-            Retry_After:
-              description: The number of seconds that the client must wait before making further requests to this API.
-              schema: {type: integer, minimum: 0}
-              example: 60
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
-        '404':
-          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
-        '401':
-          description: The client is not authenticated and therefore cannot perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
-        '503':
-          description: The DativeBase is unavailable.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
-        '400':
-          description: The request to delete the specified user was invalid.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
-        '200':
-          description: The deleted user.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/User'}
-        '403':
-          description: The client is not authorized to perform this operation.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
-        '406':
-          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
-        '500':
-          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorServer500'}
     put:
       operationId: update_user
       summary: Update the user with the provided ID.
@@ -1563,6 +1504,10 @@ paths:
       tags: [Users]
       parameters:
       - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      security:
+      - {}
+      - x_api_key: []
+        x_app_id: []
       requestBody:
         description: The payload to create a user. This payload must conform to the schema UserWrite.
         required: true

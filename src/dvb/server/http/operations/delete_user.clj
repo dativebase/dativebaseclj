@@ -1,4 +1,6 @@
 (ns dvb.server.http.operations.delete-user
+  "WARNING: this operation is currenlty not exposed by the API. We may want to
+  keep it that way. User deletion is complicated."
   (:require [dvb.common.edges :as edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]

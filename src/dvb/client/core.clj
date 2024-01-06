@@ -118,8 +118,10 @@
       (assoc client :authenticated? false))))
 
 (defn add-authentication-headers [request {:as _client :keys [api-key]}]
-  (update request :headers merge {"X-APP-ID" (:id api-key)
-                                  "X-API-KEY" (:key api-key)}))
+  (if api-key
+    (update request :headers merge {"X-APP-ID" (:id api-key)
+                                    "X-API-KEY" (:key api-key)})
+    request))
 
 (defn show-user
   "GET /users/<ID>"
@@ -199,7 +201,8 @@
       simple-response
       edges/fetch-user-api->clj))
 
-(defn delete-user
+;; NOTE: deliberately not implemented
+#_(defn delete-user
   "DELETE /users/<ID>"
   [client user-id]
   (-> default-request
