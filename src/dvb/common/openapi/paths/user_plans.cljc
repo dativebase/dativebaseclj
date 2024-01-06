@@ -16,7 +16,7 @@
     (assoc common/common-path-responses
            "201" {:description "The created user plan, including server-side-generated values such as the ID."
                   :content {:application-json {:schema {:$ref "#/components/schemas/UserPlan"}}}}
-           "400" {:description "The request to create a new plan was invalid."
+           "400" {:description "The request to create a new user plan was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
 
 (def user-plan-path

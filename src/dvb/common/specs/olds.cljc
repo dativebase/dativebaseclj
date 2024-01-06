@@ -1,7 +1,8 @@
 (ns dvb.common.specs.olds
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [dvb.common.specs.common :as common]))
+            [dvb.common.specs.common :as common]
+            [dvb.common.specs.user-olds :as user-old-specs]))
 
 (s/def ::slug :old/slug)
 (s/def ::name ::common/non-empty-string)
@@ -12,6 +13,13 @@
 (s/def ::created-by uuid?)
 (s/def ::updated-by uuid?)
 
+(s/def ::user-old-id ::user-old-specs/id)
+(s/def ::user
+  (s/keys :req-un [:dvb.common.specs.users/id
+                   ::user-old-specs/role
+                   ::user-old-id]))
+(s/def ::users (s/coll-of ::user))
+
 (s/def ::old
   (s/keys :req-un [::slug
                    ::name
@@ -20,7 +28,8 @@
                    ::destroyed-at
                    ::created-by
                    ::updated-by]
-          :opt-un [::inserted-at]))
+          :opt-un [::inserted-at
+                   ::users]))
 
 (s/def ::olds (s/coll-of ::old))
 

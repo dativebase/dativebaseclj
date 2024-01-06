@@ -39,6 +39,9 @@
 (def user-plan-id-property
   (assoc (id-property "user plan") :example "b9f9caf0-11ff-4e1d-8b3f-87f2d07bbd8d"))
 
+(def user-old-id-property
+  (assoc (id-property "user OLD") :example "e222245f-1acb-47b8-8a4f-617168cc3a8b"))
+
 (defn old-slug-property [resource]
   {:type :string
    :description (u/format "The unique identifier of the OLD to which this %s belongs." resource)

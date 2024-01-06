@@ -13,8 +13,9 @@ TODOs
 
 - WIP: Ensure authorization logic for exsiting operations is coherent and
   documented.
-- TODO: support user creation and test it here.
-- TODO: add query param to GET /plans to return OLDs under that plan.
+- TODO: add query param to GET /plans to return OLDs under that plan. Add tests
+  for this in bootstrap-end-to-end.
+
 
 Authorization
 ================================================================================

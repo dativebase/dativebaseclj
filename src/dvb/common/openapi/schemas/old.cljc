@@ -16,7 +16,11 @@
         updated-at (c/updated-at-property "OLD")
         destroyed-at (c/destroyed-at-property "OLD")
         created-by (c/created-by-property "OLD")
-        updated-by (c/updated-by-property "OLD")]
+        updated-by (c/updated-by-property "OLD")
+        users {:type :array
+               :description "The users which have access to this OLD."
+               :items {:$ref "#/components/schemas/UserOfOLD"}
+               :example []}]
     {:type :object
      :properties
      {:slug slug
@@ -26,7 +30,8 @@
       :updated-at updated-at
       :destroyed-at destroyed-at
       :created-by created-by
-      :updated-by updated-by}
+      :updated-by updated-by
+      :users users}
      :required [:slug
                 :name
                 :plan-id
@@ -42,7 +47,8 @@
                :updated-at (:example updated-at)
                :destroyed-at (:example destroyed-at)
                :created-by (:example created-by)
-               :updated-by (:example updated-by)}}))
+               :updated-by (:example updated-by)
+               :users (:example users)}}))
 
 ;; `OLDWrite`
 (def old-write

@@ -34,6 +34,7 @@
             [dvb.common.openapi.paths.olds :as old-paths]
             [dvb.common.openapi.paths.plans :as plan-paths]
             [dvb.common.openapi.paths.users :as user-paths]
+            [dvb.common.openapi.paths.user-olds :as user-old-paths]
             [dvb.common.openapi.paths.user-plans :as user-plan-paths]
             [dvb.common.openapi.schemas :as schemas]))
 
@@ -58,6 +59,8 @@
     :description "Operations on plans."}
    {:name :UserPlans
     :description "Operations on user plans (relationship of users to plans)."}
+   {:name :UserOLDs
+    :description "Operations on user OLDs (relationship of users to OLDs)."}
    {:name :Users
     :description "Operations on users."}])
 
@@ -102,7 +105,9 @@
    "/api/v1/plans/{plan_id}" plan-paths/plan-path
    "/api/v1/plans" plan-paths/plans-path
    "/api/v1/user-plans/{user_plan_id}" user-plan-paths/user-plan-path
-   "/api/v1/user-plans" user-plan-paths/user-plans-path])
+   "/api/v1/user-plans" user-plan-paths/user-plans-path
+   "/api/v1/user-olds/{user_old_id}" user-old-paths/user-old-path
+   "/api/v1/user-olds" user-old-paths/user-olds-path])
 
 (def paths
   (->> paths*

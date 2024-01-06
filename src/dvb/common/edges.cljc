@@ -91,6 +91,46 @@
 (defn members-of-plan-api->clj [members-of-plan]
   (mapv member-of-plan-api->clj members-of-plan))
 
+;; User of OLD
+
+(def user-of-old-pg->clj-coercions
+  {:role keyword})
+
+(def user-of-old-clj->pg-coercions
+  {:role name})
+
+(def user-of-old-api->clj-coercions
+  (merge api->clj-coercions
+         {:user-old-id utils/str->uuid}
+         user-of-old-pg->clj-coercions))
+
+(def user-of-old-clj->api-coercions
+  (merge clj->api-coercions
+         {:user-old-id utils/uuid->str}
+         user-of-old-clj->pg-coercions))
+
+(defn user-of-old-pg->clj [user-of-old]
+  (-> user-of-old
+      (perform-coercions user-of-old-pg->clj-coercions)))
+
+(defn user-of-old-clj->api [user-of-old]
+  (-> user-of-old
+      (perform-coercions user-of-old-clj->api-coercions)
+      (select-keys (-> schemas :UserOfOLD :properties keys))))
+
+(defn user-of-old-api->clj [user-of-old]
+  (-> user-of-old
+      (perform-coercions user-of-old-api->clj-coercions)))
+
+(defn users-of-old-pg->clj [users-of-old]
+  (mapv user-of-old-pg->clj users-of-old))
+
+(defn users-of-old-clj->api [users-of-old]
+  (mapv user-of-old-clj->api users-of-old))
+
+(defn users-of-old-api->clj [users-of-old]
+  (mapv user-of-old-api->clj users-of-old))
+
 ;; Plan of User
 
 (def plan-of-user-pg->clj-coercions
@@ -350,13 +390,18 @@
 
 ;; OLDs
 
+(def old-pg->clj-coercions
+  {:users users-of-old-pg->clj})
+
 (def old-api->clj-coercions
-  (assoc api->clj-coercions
-         :plan-id utils/maybe-str->uuid))
+  (merge api->clj-coercions
+         {:users users-of-old-api->clj
+          :plan-id utils/maybe-str->uuid}))
 
 (def old-clj->api-coercions
   (assoc clj->api-coercions
-         :plan-id utils/maybe-uuid->str))
+         :plan-id utils/maybe-uuid->str
+         :users users-of-old-clj->api))
 
 (defn old-clj->api [old]
   (-> old
@@ -389,4 +434,46 @@
 (defn index-olds-api->clj [{:as response :keys [status]}]
   (if (= 200 status)
     (update-in response [:body :data] (partial mapv old-api->clj))
+    response))
+
+;; User-OLDs
+
+(def user-old-pg->clj-coercions {:role keyword})
+(def user-old-clj->pg-coercions {:role name})
+
+(def user-old-api->clj-coercions
+  (merge api->clj-coercions
+         user-old-pg->clj-coercions
+         {:user-id utils/str->uuid}))
+
+(def user-old-clj->api-coercions
+  (merge clj->api-coercions
+         user-old-clj->pg-coercions
+         {:user-id utils/uuid->str}))
+
+(defn user-old-api->clj [user-old]
+  (perform-coercions user-old user-old-api->clj-coercions))
+
+(defn user-old-clj->api [user-old]
+  (perform-coercions user-old user-old-clj->api-coercions))
+
+(defn user-old-pg->clj [user-old]
+  (perform-coercions user-old user-old-pg->clj-coercions))
+
+(defn user-old-clj->pg [user-old]
+  (perform-coercions user-old user-old-clj->pg-coercions))
+
+(defn create-user-old-api->clj [{:as response :keys [status]}]
+  (if (= 201 status)
+    (update response :body user-old-api->clj)
+    response))
+
+(defn fetch-user-olds-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update response :body (fn [olds] (map old-api->clj olds)))
+    response))
+
+(defn fetch-user-old-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update response :body user-old-api->clj)
     response))
