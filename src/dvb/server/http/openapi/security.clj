@@ -52,15 +52,18 @@
    OpenAPI specification of this API. The value of `security-option` is a vector
    of maps, each with a `:type` key."
   [http-component ctx security-option]
-  (let [security-option-type (-> security-option first :type)
-        security-handler (-> http-component :security-handlers
-                             security-option-type)
-        data (apply merge
-                    (map (partial get-security-scheme-data (:request ctx))
-                         security-option))]
-    (when-not security-handler
-      (throw (errors/error-code->ex-info :error-unimplemented-security-handler)))
-    (security-handler http-component ctx data)))
+  (if (empty? security-option)
+    (do (log/warn "Empty security option. Alowing unauthenticated access to API endpoint.")
+        {:authenticated? true})
+    (let [security-option-type (-> security-option first :type)
+          security-handler (-> http-component :security-handlers
+                               security-option-type)
+          data (apply merge
+                      (map (partial get-security-scheme-data (:request ctx))
+                           security-option))]
+      (when-not security-handler
+        (throw (errors/error-code->ex-info :error-unimplemented-security-handler)))
+      (security-handler http-component ctx data))))
 
 (defn run-security
   "Run each security option entailed by the supplied OpenAPI spec under

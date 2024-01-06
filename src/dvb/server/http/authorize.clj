@@ -36,11 +36,9 @@
     :user-plans})
 
 (def superuser-operations
-  #{:create-user
-    :delete-user
+  #{:delete-user ;; NOTE: delete-user operation is currently not supported
     :edit-user
-    :new-user
-    :update-user})
+    :new-user})
 
 (defn authorize [ctx]
   (let [{:keys [roles is-superuser?] user-id :id} (u/security-user ctx)

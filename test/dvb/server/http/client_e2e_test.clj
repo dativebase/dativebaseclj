@@ -93,11 +93,13 @@
             (let [user-keys (->> body :data (mapcat keys) set)]
               (is (not (some #{:email} user-keys)))
               (is (not (some #{:is-superuser?} user-keys))))))
+
         (testing "The superuser-authenticated client can create a new user"
           (let [new-user-password "1234"
                 {:keys [status] created-user :body}
                 (client/create-user superuser-client
-                                    {:password new-user-password})]
+                                    {:password new-user-password
+                                     :is-superuser? false})]
             (is (= 201 status))
             (is (uuid? (:id created-user)))
             (is (jt/instant? (:created-at created-user)))
@@ -107,13 +109,15 @@
               (let [{fetched-user :body} (client/show-user
                                           superuser-client (:id created-user))]
                 (is (= created-user fetched-user))))
-            (testing "The superuser-authenticated client can update the newly created user"
+            (testing "The superuser-authenticated client can update the newly
+                     created user"
               (let [{updated-user :body} (client/update-user
                                           superuser-client
                                           (:id created-user)
                                           {:first-name "Timothy"})]
                 (is (= (-> created-user
-                           (assoc :first-name "Timothy")
+                           (assoc :first-name "Timothy"
+                                  :updated-by su-id)
                            (dissoc :updated-at))
                        (dissoc updated-user :updated-at)))
                 (testing "The non-superuser-authenticated client can fetch the newly-created user but receives a redacted version"
@@ -155,18 +159,122 @@
                                     (:email created-user)
                                     new-user-password)]
                     (is (:authenticated? new-client))))
-                (testing "The user-authenticated client is not authorized to delete the newly-created user"
-                  (let [{:keys [status] error :body} (client/delete-user
-                                                      user-client (:id updated-user))]
-                    (is (= 403 status))
-                    (is (= "unauthorized" (-> error :errors first :error-code)))))
-                (testing "The superuser-authenticated client can delete the newly-created user"
-                  (let [{deleted-user :body} (client/delete-user
-                                              superuser-client
-                                              (:id updated-user))
-                        samer (fn [u] (dissoc u :updated-at :destroyed-at))]
-                    (is (= (samer updated-user) (samer deleted-user)))
-                    (is (some? (:destroyed-at deleted-user))))))))))
+                (testing "User deletion."
+                  (testing "User deletion attempts return 404."
+                    (let [{:keys [status] error :body} (client/delete-user
+                                                        user-client (:id updated-user))]
+                      (is (= 404 status))
+                      (is (= "unrecognized-operation"
+                             (-> error :errors first :error-code)))))
+                  ;; NOTE: deliberately commented out because DELETE /users/:id is disabled
+                  #_(testing "The user-authenticated client is not authorized to delete the newly-created user"
+                      (let [{:keys [status] error :body} (client/delete-user
+                                                          user-client (:id updated-user))]
+                        (is (= 403 status))
+                        (is (= "unauthorized" (-> error :errors first :error-code)))))
+                  #_(testing "The superuser-authenticated client can delete the newly-created user"
+                      (let [{deleted-user :body} (client/delete-user
+                                                  superuser-client
+                                                  (:id updated-user))
+                            samer (fn [u] (dissoc u :updated-at :destroyed-at))]
+                        (is (= (samer updated-user) (samer deleted-user)))
+                        (is (some? (:destroyed-at deleted-user))))))))))
+
+        ;; Unauthenticated client can bootstrap: create a new (non-superuser) user.
+        ;; See the bootstrap-end-to-end test below for more in this vein
+        (testing "An unauthenticated client can create a new user"
+          (let [new-user-password "1234"
+                unauthenticated-client (client/make-client :local-test)
+                {:keys [status] created-user :body}
+                (client/create-user unauthenticated-client
+                                    {:password new-user-password
+                                     :is-superuser? false})]
+            (is (= 201 status))
+            (is (user-specs/user? created-user))))
+
+        (testing "An unauthenticated client canNOT create a new SUPERuser"
+          (let [new-user-password "1234"
+                unauthenticated-client (client/make-client :local-test)
+                {:keys [status] error :body}
+                (client/create-user unauthenticated-client
+                                    {:password new-user-password
+                                     :is-superuser? true})]
+            (is (= 403 status))
+            (is (= "unauthorized" (-> error :errors first :error-code))))))
+      (finally (component/stop system)))))
+
+;; Bootstrap AKA Sign-up
+;; We can create a free account and get started with creating users and OLDs
+;; right away.
+;; TODO: support user creation and test it here.
+;; TODO: add query param to GET /plans to return OLDs under that plan.
+(deftest bootstrap-end-to-end
+  (let [{:keys [database] :as system} (component/start (new-system))]
+    (try
+      (testing "An unauthenticated client can create a new user."
+        (let [user-password "1234"
+              unauthenticated-client (client/make-client :local-test)
+              {:keys [status]
+               {:as created-user
+                user-id :id
+                user-email :email
+                :keys [created-by is-superuser?]} :body}
+              (client/create-user unauthenticated-client
+                                  {:password user-password
+                                   :is-superuser? false})]
+          (is (= 201 status))
+          (is (user-specs/user? created-user))
+          (is (nil? created-by))
+          (is (false? is-superuser?))
+          ;; WARNING: In the real world, the activation key would be emailed to
+          ;; the user as a link they can simply visit.
+          ;; TODO: Given the above, GET /activate-user should
+          ;; probably, ultimately, redirect to Dative, or some other
+          ;; human-readable HTML or SPA.
+          (testing "The unauthenticated client can activate the new user."
+            (let [{:as user-from-db :keys [registration-key]}
+                  (db.users/get-user database user-id)
+                  {:keys [status] {:as activated-user} :body}
+                  (client/activate-user
+                   unauthenticated-client
+                   user-id
+                   registration-key)]
+              (is (= 200 status))
+              (is (user-specs/user? created-user))))
+          (testing "We can make an authenticated client with the now-registered
+                    user and use it to make the user a manager of a new free
+                    plan, and create a new OLD, running under that plan."
+            (let [client (client/authenticate-client
+                          (client/make-client :local-test)
+                          user-email
+                          user-password)
+                  {{:as plan plan-id :id} :body}
+                  (client/create-plan client {:tier :free})
+                  {user-plan :body} (client/create-user-plan
+                                     client {:user-id user-id
+                                             :plan-id plan-id
+                                             :role :manager})
+                  {user-with-plans :body} (client/show-user client user-id
+                                                            {:include-plans? true})
+                  {plan-with-members :body} (client/show-plan client
+                                                              plan-id
+                                                              {:include-members? true})
+                  {{:as old old-slug :slug} :body} (client/create-old
+                                                    client {:plan-id plan-id})
+                  summary {:user
+                           (-> user-with-plans
+                               (select-keys [:id :email :is-superuser? :plans])
+                               (assoc :password user-password))
+                           :plan (-> plan-with-members
+                                     (select-keys [:id :tier :members]))
+                           :user-plan
+                           (-> user-plan
+                               (select-keys [:id :role :plan-id :user-id]))
+                           :old (-> old
+                                    (select-keys [:slug :name :plan-id]))}]
+              (plan-specs/plan? plan)
+              (plan-specs/plan? plan-with-members)
+              (user-specs/user? user-with-plans)))))
       (finally (component/stop system)))))
 
 ;; End-to-end test that verifies:

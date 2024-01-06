@@ -10,7 +10,13 @@
 (s/def ::id uuid?)
 (s/def ::first-name ::common/non-empty-string)
 (s/def ::last-name ::common/non-empty-string)
-(s/def ::email ::common/non-empty-string)
+
+(s/def ::email
+  (s/with-gen
+    ::common/non-empty-string
+    #(gen/fmap (fn [uuid] (str uuid "@bmail.com"))
+               (s/gen uuid?))))
+
 (s/def ::password ::common/non-empty-string)
 (s/def ::is-superuser? boolean?)
 (s/def ::created-at ::common/created-at)

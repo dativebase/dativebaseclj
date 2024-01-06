@@ -21,7 +21,9 @@
              :entity-id user-id
              :operation :update-user}))))
 
-(defn- authorize [authenticated-user user]
+(defn- authorize
+  "Only superusers and the user itself can update a user."
+  [authenticated-user user]
   (when-not (authorize/authenticated-user-authorized-to-mutate-user?
              authenticated-user user)
     (let [data {:authenticated-user-id (:id authenticated-user)
