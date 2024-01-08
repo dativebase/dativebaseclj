@@ -6,25 +6,35 @@
             [dvb.server.http.operations.utils :as utils]
             [dvb.server.log :as log]))
 
+(defn validate [existing-old old-slug]
+  (when-not existing-old
+    (throw (errors/error-code->ex-info
+            :entity-not-found
+            {:entity-type :old
+             :old-slug old-slug
+             :operation :delete-old}))))
+
 (defn handle [{:keys [database]}
               {:as ctx {old-slug :old_slug} :path}]
-  (let [updated-by (utils/security-user-id ctx)]
-    (log/info "Deleting a old.")
+  (let [{:as authenticated-user authenticated-user-id :id}
+        (utils/security-user ctx)
+        log-ctx {:authenticated-user-id authenticated-user-id
+                 :old-slug old-slug}]
+    (log/info "Deleting an OLD." log-ctx)
     (authorize/authorize ctx)
-    (let [existing-old (db.olds/get-old database old-slug)]
-      (when-not existing-old
-        (throw (errors/error-code->ex-info
-                :entity-not-found
-                {:entity-type :old
-                 :old-slug old-slug
-                 :operation :delete-old})))
+    (let [existing-old (db.olds/get-old-with-users database old-slug)]
+      (validate existing-old old-slug)
+      (authorize/authorize-mutate-old
+       :delete-old existing-old authenticated-user)
       (try
-        {:status 200
-         :headers {}
-         :body (edges/old-clj->api (db.olds/delete-old
-                                     database
-                                     {:slug old-slug
-                                      :updated-by updated-by}))}
+        (let [deleted-old (edges/old-clj->api (db.olds/delete-old
+                                               database
+                                               {:slug old-slug
+                                                :updated-by authenticated-user-id}))]
+          (log/info "Deleted an OLD." log-ctx)
+          {:status 200
+           :headers {}
+           :body deleted-old})
         (catch Exception e
           (throw (errors/error-code->ex-info
                   :entity-deletion-internal-error

@@ -1133,7 +1133,7 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
         '400':
-          description: The request to create a new plan was invalid.
+          description: The request to create a new user plan was invalid.
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ErrorBadRequest400'}

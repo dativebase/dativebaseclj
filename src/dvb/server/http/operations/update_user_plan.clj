@@ -18,6 +18,22 @@
       (db.user-plans/update-user-plan database user-plan-to-update)
       (catch Exception e (throw-500 e)))))
 
+(defn- validate-role-transition
+  "You can't un-manager a user from a plan when that user is that plan's last
+  manager."
+  [from-role to-role plan-members]
+  (let [managers (db.plans/plan-managers plan-members)]
+    (when (and (= :manager from-role)
+               (not= :manager to-role)
+               (<= 1 (count managers)))
+      (let [message "Refusing to leave a plan without at least one manager. Please assign another user the manager role on this plan before retrying this request."
+            data {:message message
+                  :managers managers}]
+        (log/warn message data)
+        (throw (errors/error-code->ex-info
+                :entity-creation-internal-error
+                data))))))
+
 (defn handle [{:keys [database]}
               {:as ctx
                {:as user-plan-update} :request-body
@@ -32,8 +48,11 @@
         plan (db.plans/get-plan-with-members database (:plan-id user-plan))]
     (utils/validate-mutate-user-plan
      :update-user-plan database user-plan plan)
-    (authorize/authorize-mutate-user-plan
-     :update-user-plan user-plan-update plan authenticated-user)
+    (validate-role-transition (:role user-plan)
+                              (:role user-plan-update)
+                              (:members plan))
+    (authorize/authorize-mutate-plan
+     :update-user-plan plan authenticated-user)
     (let [update-fn (partial update-user-plan database)
           response {:status 200
                     :headers {}

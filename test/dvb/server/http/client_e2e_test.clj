@@ -10,6 +10,7 @@
             [dvb.server.core :as core]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.users :as db.users]
+            [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.system.config :as config]
             [dvb.server.test-data :as test-data]
             [java-time.api :as jt]))
@@ -35,11 +36,11 @@
         {old-slug :slug :as old*} (assoc (test-data/gen-old-write provenance)
                                          :plan-id nil)
         old (db.olds/create-old database old*)]
-    (db.users/create-user-old
+    (db.user-olds/create-user-old
      database (merge provenance {:user-id (:id user)
                                  :old-slug old-slug
                                  :role "contributor"}))
-    (db.users/create-user-old
+    (db.user-olds/create-user-old
      database (merge provenance {:user-id su-id
                                  :old-slug old-slug
                                  :role "contributor"}))
@@ -68,17 +69,17 @@
             user-client (client/authenticate-client
                          (client/make-client :local-test)
                          user-email user-password)]
-        (testing "Directly-constructed users have no creators or updaters"
+        (testing "Directly-constructed users have no creators or updaters."
           (is (nil? (:created-by superuser :empty)))
           (is (nil? (:updated-by superuser :empty))))
-        (testing "User was created by superuser"
+        (testing "User was created by superuser."
           (is (= su-id (:created-by user)))
           (is (= su-id (:updated-by user))))
-        (testing "We can authenticated with a superuser"
+        (testing "We can authenticated with a superuser."
           (is (:authenticated? superuser-client)))
-        (testing "We can authenticated with a user"
+        (testing "We can authenticated with a user."
           (is (:authenticated? user-client)))
-        (testing "We can index the users with the superuser-authenticated client"
+        (testing "We can index the users with the superuser-authenticated client."
           (let [{:keys [status body]} (client/index-users superuser-client)]
             (is (= 200 status))
             (is (user-specs/users? (:data body)))
@@ -86,7 +87,7 @@
             (let [user-keys (->> body :data (mapcat keys) set)]
               (is (some #{:email} user-keys))
               (is (some #{:is-superuser?} user-keys)))))
-        (testing "The user-authenticated client can index the users but receives redacted data"
+        (testing "The user-authenticated client can index the users but receives redacted data."
           (let [{:keys [status body]} (client/index-users user-client)]
             (is (= 200 status))
             (is (user-specs/users? (:data body)))
@@ -94,8 +95,7 @@
             (let [user-keys (->> body :data (mapcat keys) set)]
               (is (not (some #{:email} user-keys)))
               (is (not (some #{:is-superuser?} user-keys))))))
-
-        (testing "The superuser-authenticated client can create a new user"
+        (testing "The superuser-authenticated client can create a new user."
           (let [new-user-password "1234"
                 {:keys [status] created-user :body}
                 (client/create-user superuser-client
@@ -106,12 +106,12 @@
             (is (jt/instant? (:created-at created-user)))
             (is (jt/instant? (:updated-at created-user)))
             (is (nil? (:destroyed-at created-user)))
-            (testing "The superuser-authenticated client can fetch the newly created user"
+            (testing "The superuser-authenticated client can fetch the newly created user."
               (let [{fetched-user :body} (client/show-user
                                           superuser-client (:id created-user))]
                 (is (= created-user fetched-user))))
             (testing "The superuser-authenticated client can update the newly
-                     created user"
+                     created user."
               (let [{updated-user :body} (client/update-user
                                           superuser-client
                                           (:id created-user)
@@ -121,14 +121,14 @@
                                   :updated-by su-id)
                            (dissoc :updated-at))
                        (dissoc updated-user :updated-at)))
-                (testing "The non-superuser-authenticated client can fetch the newly-created user but receives a redacted version"
+                (testing "The non-superuser-authenticated client can fetch the newly-created user but receives a redacted version."
                   (let [{:keys [status] user :body}
                         (client/show-user user-client (:id created-user))]
                     (is (= 200 status))
                     (is (user-specs/user? user))
                     (is (not (contains? user :email)))
                     (is (not (contains? user :is-superuser?)))))
-                (testing "The non-superuser-authenticated client cannot update the newly-created user"
+                (testing "The non-superuser-authenticated client cannot update the newly-created user."
                   (let [{:keys [status] error :body}
                         (client/update-user
                          user-client
@@ -136,7 +136,7 @@
                          {:first-name "Danuary"})]
                     (is (= 403 status))
                     (is (= "unauthorized" (-> error :errors first :error-code)))))
-                (testing "It is not possible to authenticate with the newly-created user because it has not yet been activated"
+                (testing "It is not possible to authenticate with the newly-created user because it has not yet been activated."
                   (let [{:keys [status] error :body}
                         (client/login
                          (client/make-client :local-test)
@@ -154,7 +154,7 @@
                     (is (= 200 status))
                     (is (= (dissoc updated-user :updated-at)
                            (dissoc activated-user :updated-at)))))
-                (testing "It is possible to authenticate with the newly-activated user"
+                (testing "It is possible to authenticate with the newly-activated user."
                   (let [new-client (client/authenticate-client
                                     (client/make-client :local-test)
                                     (:email created-user)
@@ -168,22 +168,21 @@
                       (is (= "unrecognized-operation"
                              (-> error :errors first :error-code)))))
                   ;; NOTE: deliberately commented out because DELETE /users/:id is disabled
-                  #_(testing "The user-authenticated client is not authorized to delete the newly-created user"
+                  #_(testing "The user-authenticated client is not authorized to delete the newly-created user."
                       (let [{:keys [status] error :body} (client/delete-user
                                                           user-client (:id updated-user))]
                         (is (= 403 status))
                         (is (= "unauthorized" (-> error :errors first :error-code)))))
-                  #_(testing "The superuser-authenticated client can delete the newly-created user"
+                  #_(testing "The superuser-authenticated client can delete the newly-created user."
                       (let [{deleted-user :body} (client/delete-user
                                                   superuser-client
                                                   (:id updated-user))
                             samer (fn [u] (dissoc u :updated-at :destroyed-at))]
                         (is (= (samer updated-user) (samer deleted-user)))
                         (is (some? (:destroyed-at deleted-user))))))))))
-
         ;; Unauthenticated client can bootstrap: create a new (non-superuser) user.
         ;; See the bootstrap-end-to-end test below for more in this vein
-        (testing "An unauthenticated client can create a new user"
+        (testing "An unauthenticated client can create a new user."
           (let [new-user-password "1234"
                 unauthenticated-client (client/make-client :local-test)
                 {:keys [status] created-user :body}
@@ -192,8 +191,7 @@
                                      :is-superuser? false})]
             (is (= 201 status))
             (is (user-specs/user? created-user))))
-
-        (testing "An unauthenticated client canNOT create a new SUPERuser"
+        (testing "An unauthenticated client canNOT create a new SUPERuser."
           (let [new-user-password "1234"
                 unauthenticated-client (client/make-client :local-test)
                 {:keys [status] error :body}
@@ -260,12 +258,6 @@
                                                               {:include-members? true})
                   {{:as old old-slug :slug} :body} (client/create-old
                                                     client {:plan-id plan-id})
-                  {user-old :body} (client/create-user-old
-                                    client {:user-id user-id
-                                            :old-slug old-slug
-                                            :role :administrator})
-                  {old-with-users :body} (client/show-old
-                                          client old-slug {:include-users? true})
                   ;; Following is useful for pprinting
                   _summary {:user
                            (-> user-with-plans
@@ -277,21 +269,15 @@
                            (-> user-plan
                                (select-keys [:id :role :plan-id :user-id]))
                            :old (-> old
-                                    (select-keys [:slug :name :plan-id]))
-                           :old-with-users (-> old-with-users
-                                               (select-keys [:slug :name :plan-id :users]))
-                           :user-old
-                           (-> user-old
-                               (select-keys [:id :role :old-slug :user-id]))}]
+                                    (select-keys [:slug :name :plan-id :users]))}]
               (is (plan-specs/plan? plan))
               (is (plan-specs/plan? plan-with-members))
               (is (user-specs/user? user-with-plans))
               (is (old-specs/old? old))
-              (is (old-specs/old? old-with-users))
               (is (= [{:id user-id
-                       :user-old-id (:id user-old)
                        :role :administrator}]
-                     (:users old-with-users)))
+                     (mapv (fn [u] (select-keys u [:id :role]))
+                           (:users old))))
               (testing "We can create a new user and give it access to our OLD."
                 (let [additional-user-password "5678"
                       {:keys [status]
@@ -348,55 +334,63 @@
             client-2 (client/authenticate-client
                       (client/make-client :local-test)
                       (:email user-2) u2-pwd)]
-        (testing "We can create a new plan"
-          (let [{:keys [status] created-plan :body}
+        (testing "We can create a new plan."
+          (let [{:keys [status] {:as created-plan plan-id :id} :body}
                 (client/create-plan client {:tier :free})]
             (is (= 201 status))
             (is (nil? (:destroyed-at created-plan)))
             (is (= :free (:tier created-plan)))
             (is (plan-specs/plan? created-plan))
+            (let [user-member (->> created-plan
+                                   :members
+                                   (filter (comp (partial = (:id user)) :id))
+                                   first)]
+              (is (some? user-member))
+              (is (= :manager (:role user-member))))
+            (testing "We cannot create a second plan with the same user: one plan per user."
+              (let [{:keys [status] error :body}
+                    (client/create-plan client {:tier :free})]
+                (is (= 403 status))
+                (is (= "unauthorized" (-> error :errors first :error-code)))))
             (testing "We can fetch the newly created plan."
               (let [{fetched-plan :body}
-                    (client/show-plan client (:id created-plan))]
-                (is (= created-plan fetched-plan))))
-            (testing "We can make our user a manager of the plan that our user created"
-              (let [{:keys [status] created-user-plan :body}
-                    (client/create-user-plan
-                     client
-                     {:user-id (:id user)
-                      :plan-id (:id created-plan)
-                      :role :manager})]
-                (is (= 201 status))
-                (is (user-plan-specs/user-plan? created-user-plan))))
-            (testing "A DB uniqueness constraint prevents us from creating the same relationship twice."
+                    (client/show-plan client plan-id)]
+                (is (= (dissoc created-plan :members) fetched-plan))))
+            (testing "A DB uniqueness constraint prevents us from trying to make
+                      our client's user a manager of this plan again."
+              ;; (Note: our client is automatically made a manager during plan creation.)
               (let [{:keys [status] error :body}
                     (client/create-user-plan
                      client
                      {:user-id (:id user)
-                      :plan-id (:id created-plan)
+                      :plan-id plan-id
                       :role :manager})]
                 (is (= 400 status))
                 (is (= "users-plans-unique-constraint-violated"
                        (-> error :errors first :error-code)))))
-            (testing "Our second user cannot make itself a manager of the plan because it is not authorized (not a superuser, the creator of the plan or a manager of the plan)"
+            (testing "Our second user cannot make itself a manager of the plan
+                      because it is not authorized (not a superuser, the creator
+                      of the plan or a manager of the plan)."
               (let [{:keys [status] error :body}
                     (client/create-user-plan
                      client-2
                      {:user-id (:id user-2)
-                      :plan-id (:id created-plan)
+                      :plan-id plan-id
                       :role :manager})]
                 (is (= 403 status))
                 (is (= "unauthorized" (-> error :errors first :error-code)))))
-            (testing "The original user can make the second user a member of the plan that the original user created (and now manages)"
+            (testing "The original user can make the second user a member of the
+                      plan that the original user created (and now manages)."
               (let [{:keys [status] created-user-plan-2 :body}
                     (client/create-user-plan
                      client
                      {:user-id (:id user-2)
-                      :plan-id (:id created-plan)
+                      :plan-id plan-id
                       :role :member})]
                 (is (= 201 status))
                 (is (user-plan-specs/user-plan? created-user-plan-2))
-                (testing "The member of the plan is not authorized to upgrade itself to manager."
+                (testing "The (non-manager) member of the plan is not authorized
+                          to upgrade itself to manager."
                   (let [{:keys [status] error :body}
                         (client/update-user-plan
                          client-2
@@ -404,7 +398,9 @@
                          {:role :manager})]
                     (is (= 403 status))
                     (is (= "unauthorized" (-> error :errors first :error-code)))))
-                (testing "The original user can upgrade the second user a from member to manager of the plan that the original user created (and now manages)"
+                (testing "The original user can upgrade the second user from
+                          member to manager of the plan that the original user
+                          created (and manages)."
                   (let [{:keys [status] updated-user-plan-2 :body}
                         (client/update-user-plan
                          client
@@ -419,7 +415,7 @@
                                           {:include-plans? true})]
                     (is (= 200 status))
                     (is (user-specs/user? user-with-plans))
-                    (is (= [{:id (:id created-plan)
+                    (is (= [{:id plan-id
                              :role :manager
                              :tier :free}]
                            (mapv (fn [p] (dissoc p :user-plan-id))
@@ -431,19 +427,17 @@
                                           {:include-plans? true})]
                     (is (= 200 status))
                     (is (user-specs/user? user-with-plans))
-                    (is (= [{:id (:id created-plan)
+                    (is (= [{:id plan-id
                              :role :manager
                              :tier :free}]
                            (mapv (fn [p] (dissoc p :user-plan-id))
                                  (:plans user-with-plans))))))))
             ;; NOTE: no update on purpose. Plans will be updated when billing
             ;; events occur.
-            (testing "We can fetch our plan with its users"
+            (testing "We can fetch our plan with its users."
               (let [{:keys [status] plan-with-members :body}
                     (client/show-plan
-                     client
-                     (:id created-plan)
-                     {:include-members? true})]
+                     client plan-id {:include-members? true})]
                 (is (= 200 status))
                 (is (plan-specs/plan? plan-with-members))
                 (is (= #{{:id (:id user)
@@ -452,7 +446,8 @@
                           :role :manager}}
                        (set (map (fn [m] (select-keys m [:id :role]))
                                  (:members plan-with-members)))))
-                (testing "We can remove the second user's access to the plan by deleting the correct user plan"
+                (testing "We can remove the second user's access to the plan by
+                          deleting the correct user plan."
                   (let [user-plan-id (:user-plan-id
                                       (first (for [m (:members plan-with-members)
                                                    :when (= (:id user-2)
@@ -461,23 +456,37 @@
                         (client/delete-user-plan client user-plan-id)]
                     (is (= 200 status))
                     (is (user-plan-specs/user-plan? deleted-user-plan))))
-                (testing "The second user no longer has access to the plan"
+                (testing "The second user no longer has access to the plan."
                   (let [{:keys [status] plan-with-members :body}
                         (client/show-plan
-                         client
-                         (:id created-plan)
-                         {:include-members? true})]
+                         client plan-id {:include-members? true})]
                     (is (= 200 status))
                     (is (plan-specs/plan? plan-with-members))
                     (is (= #{{:id (:id user)
                               :role :manager}}
                            (set (map (fn [m] (select-keys m [:id :role]))
                                      (:members plan-with-members)))))))))
-            (testing "We can delete the newly-created plan"
+            (testing "We can create an OLD running under our plan."
+              (let [{{:as old old-slug :slug} :body}
+                    (client/create-old client {:plan-id plan-id})]
+                (is (old-specs/old? old))
+                (testing "We cannot delete the newly-created plan right now because
+                      it has OLDs running under it."
+                  (let [{:keys [status] error :body}
+                        (client/delete-plan client (:id created-plan))]
+                    (is (= 400 status))
+                    (is (= "plan-with-olds-not-delible"
+                           (-> error :errors first :error-code)))))
+                (testing "We can stop paying for the OLD under our plan."
+                  (let [{:keys [status] updated-old :body}
+                        (client/update-old client old-slug {:plan-id nil})]
+                    (is (= 200 status))
+                    (is (old-specs/old? updated-old))
+                    (is (nil? (:plan-id updated-old)))))))
+            (testing "We can delete the newly-created plan."
               (let [{deleted-plan :body} (client/delete-plan
-                                          client
-                                          (:id created-plan))
-                    samer (fn [u] (dissoc u :updated-at :destroyed-at))]
+                                          client plan-id)
+                    samer (fn [u] (dissoc u :updated-at :destroyed-at :members))]
                 (is (= (samer created-plan) (samer deleted-plan)))
                 (is (some? (:destroyed-at deleted-plan))))))))
       (finally (component/stop system)))))
@@ -490,13 +499,13 @@
             client (client/authenticate-client
                     (client/make-client :local-test)
                     user-email user-password)]
-        (testing "We can create a new OLD"
+        (testing "We can create a new OLD."
           (let [{:keys [status] {:as created-old old-slug :slug} :body}
                 (client/create-old client (test-data/gen-old-write))]
             (is (= 201 status))
             (is (nil? (:destroyed-at created-old)))
             (is (old-specs/old? created-old))
-            (testing "We cannot create a new OLD with the same slug that was just used"
+            (testing "We cannot create a new OLD with the same slug that was just used."
               (let [{:keys [status] error :body}
                     (client/create-old client (test-data/gen-old-write
                                                {:slug old-slug}))]
@@ -505,20 +514,28 @@
                        (-> error :errors first :error-code)))))
             (testing "We can fetch the newly created OLD."
               (let [{:keys [status] fetched-old :body}
-                    (client/show-old client old-slug)]
+                    (client/show-old client old-slug {:include-users? true})]
                 (is (= 200 status))
                 (is (old-specs/old? fetched-old))
                 (is (= created-old fetched-old))))
-            (testing "We can update the name of the newly created OLD"
+            (testing "We can update the name of the newly created OLD."
               (let [{:keys [status] updated-old :body}
                     (client/update-old client old-slug {:name "Funions"})]
                 (is (= 200 status))
                 (is (old-specs/old? updated-old))
                 (is (= (-> created-old
                            (assoc :name "Funions")
-                           (dissoc :updated-at :updated-by))
+                           (dissoc :updated-at :updated-by :users))
                        (dissoc updated-old :updated-at :updated-by)))
-                (testing "We can delete the newly created OLD"
+                (testing "We can query all of the OLDs in the system"
+                  (let [{:keys [status] {first-page-of-olds :data
+                                         :keys [meta]} :body}
+                        (client/index-olds client)]
+                    (is (= 200 status))
+                    (is (old-specs/olds? first-page-of-olds))
+                    (is (<= (count first-page-of-olds) (:items-per-page meta)))
+                    (is (zero? (:page meta)))))
+                (testing "We can delete the newly created OLD."
                   (let [{:keys [status] deleted-old :body}
                         (client/delete-old client old-slug)]
                     (is (= 200 status))
@@ -551,13 +568,9 @@
             client-2 (client/authenticate-client
                       (client/make-client :local-test)
                       user-2-email user-2-password)]
-        (testing "Happy path: user creates plan and OLD paid for by it"
+        (testing "Happy path: user creates plan and OLD paid for by it."
           (let [{plan :body} (client/create-plan client {:tier :free})
                 {plan-id :id} plan
-                {user-plan :body} (client/create-user-plan
-                                   client {:user-id user-id
-                                           :plan-id plan-id
-                                           :role :manager})
                 {user-with-plans :body} (client/show-user client user-id
                                                           {:include-plans? true})
                 {plan-with-members :body} (client/show-plan client
@@ -571,22 +584,18 @@
                              (assoc :password user-password))
                          :plan (-> plan-with-members
                                    (select-keys [:id :tier :members]))
-                         :user-plan
-                         (-> user-plan
-                             (select-keys [:id :role :plan-id :user-id]))
                          :old (-> old
                                   (select-keys [:slug :name :plan-id]))}]
-            (testing "The user is manager of the plan"
+            (testing "The user is manager of the plan."
               (is (= {:role :manager
-                      :plan-id plan-id
-                      :user-id user-id}
-                     (-> summary :user-plan (dissoc :id)))))
-            (testing "The OLD is paid for by the plan"
+                      :id user-id}
+                     (-> plan :members first (select-keys [:role :id])))))
+            (testing "The OLD is paid for by the plan."
               (is (= {:slug old-slug
                       :plan-id plan-id}
                      (-> summary :old (dissoc :name)))))
             (testing "Sad-ish path: a second user cannot pay for their OLD under
-                      a plan not managed by that user"
+                      a plan not managed by that user."
               (let [{:keys [status] error :body} (client/create-old
                                                   client-2 {:plan-id plan-id})]
                 (is (= 403 status))
@@ -595,7 +604,7 @@
                 (is (old-specs/old? old-2))
                 (is (nil? (:plan-id old-2)))
                 (testing "If a manager of the plan makes user 2 a manager too,
-                          then user 2 can cover its OLD with the plan"
+                          then user 2 can cover its OLD with the plan."
                   (client/create-user-plan
                    client {:user-id user-2-id
                            :plan-id plan-id

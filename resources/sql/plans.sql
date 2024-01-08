@@ -28,9 +28,24 @@ SELECT p.*,
     INNER JOIN users_plans up
       ON p.id = up.plan_id
         AND up.destroyed_at IS NULL
+    INNER JOIN users u
+      ON u.id = up.user_id
+        AND u.destroyed_at IS NULL
   WHERE p.destroyed_at IS NULL
     AND p.id = :id::uuid
   ORDER BY p.inserted_at, p.id
+
+-- :name get-plan-with-olds* :query :many-kebab
+-- :doc Return a coll of the OLDs running under the referenced plan, as well as all of the plan data.
+SELECT p.*,
+       o.slug AS old_slug
+  FROM plans p
+    LEFT JOIN olds o
+      ON o.plan_id = p.id
+        AND o.destroyed_at IS NULL
+ WHERE p.destroyed_at IS NULL
+   AND p.id = :id::uuid
+ ORDER BY p.inserted_at, p.id
 
 -- :name get-plans* :query :many-kebab
 -- :doc Get all plans, ordered by inserted_at.

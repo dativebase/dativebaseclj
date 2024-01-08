@@ -25,27 +25,6 @@
           (throw-500 e)))
       (catch Exception e (throw-500 e)))))
 
-(defn authorize [user-old-write old
-                 {:as _authenticated-user authenticated-user-id :id
-                  :keys [is-superuser?]}]
-  (let [old-admins (->> old
-                        :users
-                        (filter (comp (partial = :administrator) :role))
-                        (map :id))
-        old-creator (:created-by old)]
-    (when-not (or is-superuser?
-                  (= authenticated-user-id old-creator)
-                  (some #{authenticated-user-id} old-admins))
-      (let [data {:authenticated-user-id authenticated-user-id
-                  :user-id (:user-id user-old-write)
-                  :old-slug (:slug old)
-                  :old-admins old-admins
-                  :old-creator old-creator
-                  :operation-id :create-user-old}]
-        (log/warn "Authenticated user is not authorized to grant access to this OLD."
-                  data)
-        (throw (errors/error-code->ex-info :unauthorized data))))))
-
 (defn handle [{:keys [database]}
               {:as ctx {:as user-old-write :keys [old-slug]} :request-body}]
   (log/info "Creating a user OLD.")
@@ -56,8 +35,7 @@
         old (db.olds/get-old-with-users database old-slug)]
     (utils/validate-mutate-user-old
      :create-user-old database user-old-write old)
-    (authorize/authorize-mutate-user-old
-     :create-user-old user-old-write old authenticated-user)
+    (authorize/authorize-mutate-old :create-user-old old authenticated-user)
     (let [create-fn (partial create-user-old database)
           response {:status 201
                     :headers {}

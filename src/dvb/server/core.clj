@@ -18,6 +18,7 @@
             [dvb.server.http.operations.edit-form :as edit-form]
             [dvb.server.http.operations.edit-user :as edit-user]
             [dvb.server.http.operations.index-forms :as index-forms]
+            [dvb.server.http.operations.index-olds :as index-olds]
             [dvb.server.http.operations.index-users :as index-users]
             [dvb.server.http.operations.login :as login]
             [dvb.server.http.operations.new-form :as new-form]
@@ -56,6 +57,7 @@
    :edit-form edit-form/handle
    :edit-user edit-user/handle
    :index-forms index-forms/handle
+   :index-olds index-olds/handle
    :index-users index-users/handle
    :login login/handle
    :new-form new-form/handle

@@ -1,9 +1,11 @@
 (ns dvb.server.http.operations.create-old
-  (:require [clojure.string :as str]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
             [dvb.common.edges :as edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.plans :as db.plans]
+            [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
             [dvb.server.log :as log])
@@ -40,22 +42,33 @@
                     data)
           (throw (errors/error-code->ex-info :unauthorized data)))))))
 
-(defn handle [{:keys [database]}
+(defn handle
+  "Create a new OLD. OLD creation entails making the creating user an
+  administrator of the OLD by creating a row in the users_olds table."
+  [{:keys [database]}
               {:as ctx old-write :request-body}]
   (let [authenticated-user (utils/security-user ctx)
-        authenticated-user-id (:id authenticated-user)]
-    (log/info "Creating an OLD.")
-    (authorize/authorize ctx)
-    (authorize-old-plan database old-write authenticated-user)
-    (let [creator (partial create-old database)
-          response {:status 201
-                    :headers {}
-                    :body (-> old-write
-                              edges/old-api->clj
-                              (update :plan-id identity)
-                              (assoc :created-by authenticated-user-id
-                                     :updated-by authenticated-user-id)
-                              creator
-                              edges/old-clj->api)}]
-      (log/info "Created an OLD.")
-      response)))
+        authenticated-user-id (:id authenticated-user)
+        log-ctx {:authenticated-user-id authenticated-user-id}]
+    (log/info "Creating an OLD." log-ctx)
+    (jdbc/with-db-transaction [tx database]
+      (authorize/authorize ctx)
+      (authorize-old-plan tx old-write authenticated-user)
+      (let [{:as _created-old old-slug :slug}
+            (create-old tx (-> old-write
+                               edges/old-api->clj
+                               (update :plan-id identity)
+                               (assoc :created-by authenticated-user-id
+                                      :updated-by authenticated-user-id)))]
+        (db.user-olds/create-user-old
+         tx {:user-id authenticated-user-id
+             :old-slug old-slug
+             :role :administrator
+             :created-by authenticated-user-id
+             :updated-by authenticated-user-id})
+        (let [response {:status 201
+                        :headers {}
+                        :body (edges/old-clj->api
+                               (db.olds/get-old-with-users tx old-slug))}]
+          (log/info "Created an OLD." log-ctx)
+          response)))))

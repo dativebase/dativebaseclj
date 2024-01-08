@@ -7,6 +7,7 @@
             [dvb.server.db.events :as db.events]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.db.olds :as db.olds]
+            [dvb.server.db.plans :as db.plans]
             [dvb.server.db.test-queries :as test-queries]
             [dvb.server.db.users :as db.users]
             [dvb.server.db.user-olds :as db.user-olds]
@@ -62,6 +63,10 @@
     (test-queries/delete-all-the-things (:database component.repl/system))
 
     (def db (:database component.repl/system))
+
+    (db.plans/get-plan-with-olds db #uuid "2b87ce5c-6efb-41a0-ab15-4d48ebae93cf")
+
+    (db.plans/get-plan-with-members db #uuid "3ce8e204-254d-483f-9561-10a2f665e640")
 
     (def email "uu1@gmail.com")
 

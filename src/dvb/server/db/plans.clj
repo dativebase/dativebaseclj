@@ -9,6 +9,7 @@
          update-plan*
          get-plan*
          get-plan-with-members*
+         get-plan-with-olds*
          get-plans*
          get-plans-for-user*
          delete-plan*)
@@ -31,6 +32,23 @@
           edges/plan-pg->clj)
       (when-let [plan (get-plan db-conn id)]
         (assoc plan :members [])))))
+
+(defn get-plan-with-olds [db-conn id]
+  (let [[plan :as rows] (get-plan-with-olds* db-conn {:id id})]
+    (if plan
+      (-> plan
+          (dissoc :old-slug)
+          (assoc :olds (->> rows
+                            (map :old-slug)
+                            (filter some?)
+                            set sort vec))
+          edges/plan-pg->clj)
+      (when-let [plan (get-plan db-conn id)]
+        (assoc plan :olds [])))))
+
+(defn get-plan-with-olds-and-members [db-conn id]
+  (assoc (get-plan-with-olds db-conn id)
+         :members (:members (get-plan-with-members db-conn id))))
 
 (defn- mutate [mutation db-conn plan]
   (jdbc/with-db-transaction [tconn db-conn]
@@ -63,3 +81,10 @@
 
 (defn get-plans-for-user [db-conn user-id]
   (get-plans-for-user* db-conn {:user-id user-id}))
+
+;; TODO: should probably rename to plan-manager-ids
+(defn plan-managers [plan]
+  (->> plan
+       :members
+       (filter (comp (partial = :manager) :role))
+       (map :id)))
