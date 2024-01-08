@@ -56,8 +56,8 @@
         plan (db.plans/get-plan-with-members database plan-id)]
     (utils/validate-mutate-user-plan
      :create-user-plan database user-plan-write plan)
-    (authorize/authorize-mutate-user-plan
-     :create-user-plan user-plan-write plan authenticated-user)
+    (authorize/authorize-mutate-plan
+     :create-user-plan plan authenticated-user)
     (let [create-fn (partial create-user-plan database)
           response {:status 201
                     :headers {}

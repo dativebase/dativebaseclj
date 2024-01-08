@@ -87,7 +87,7 @@ UPDATE users
   RETURNING *
 
 -- :name get-users* :query :many-kebab
--- :doc Get all users, ordered by created_at.
+-- :doc Get all users, ordered by inserted_at.
 SELECT *
   FROM users
   WHERE destroyed_at IS NULL

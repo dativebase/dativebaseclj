@@ -49,3 +49,18 @@ UPDATE olds
       updated_by = :updated-by
   WHERE slug = :slug
   RETURNING *
+
+-- :name get-olds* :query :many-kebab
+-- :doc Get all OLDs, ordered by inserted_at.
+SELECT *
+  FROM olds
+  WHERE destroyed_at IS NULL
+  ORDER BY inserted_at, slug
+  LIMIT :limit
+  OFFSET :offset
+
+-- :name count-olds* :query :one-kebab
+-- :doc Get the count of OLDs in the entire database.
+SELECT count(slug) AS old_count
+  FROM olds
+  WHERE destroyed_at IS NULL

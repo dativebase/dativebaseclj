@@ -7,6 +7,7 @@
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.test-queries :as test-queries]
             [dvb.server.db.users :as db.users]
+            [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.encrypt :as encrypt]
             [dvb.server.system.db :as system-db]
             [clojure.spec.gen.alpha :as gen]
@@ -72,7 +73,7 @@
                :username "ab"
                :password (encrypt/hashpw "password")
                :is-superuser? false})
-        user-old (db.users/create-user-old
+        user-old (db.user-olds/create-user-old
                   database
                   {:user-id (:id user)
                    :old-slug (:slug old)

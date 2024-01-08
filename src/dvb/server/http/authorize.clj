@@ -1,5 +1,7 @@
 (ns dvb.server.http.authorize
   (:require [dvb.common.openapi.errors :as errors]
+            [dvb.server.db.olds :as db.olds]
+            [dvb.server.db.plans :as db.plans]
             [dvb.server.http.operations.utils :as u]
             [dvb.server.log :as log]))
 
@@ -27,6 +29,7 @@
     :delete-user-old
     :delete-user-plan
     :edit-user
+    :index-olds
     :index-users
     :new-user
     :show-old
@@ -39,9 +42,7 @@
     :user-plans})
 
 (def superuser-operations
-  #{:delete-user ;; NOTE: delete-user operation is currently not supported
-    :edit-user
-    :new-user})
+  #{})
 
 (defn authorize [ctx]
   (let [{:keys [roles is-superuser?] user-id :id} (u/security-user ctx)
@@ -74,69 +75,57 @@
                      :operation-roles current-operation-roles})
           (throw (errors/error-code->ex-info :unauthorized)))))))
 
-(defn plan-managers [plan]
-  (->> plan
-       :members
-       (filter (comp (partial = :manager) :role))
-       (map :id)))
+(defn user-authorized-to-administer-old?
+  "Return true if, and only if, the provided user is authorized to administer
+  the provided OLD, i.e., only if the user is an administrator of the OLD."
+  [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]} old]
+  (boolean (or is-superuser?
+               (some #{authenticated-user-id} (db.olds/old-admins old)))))
 
-(defn authorize-mutate-user-plan
-  "Throw an unauthorized exception if the provided authenticated user is not
-  authorized to mutate the provided user-plan relationship to the provided plan.
-  The value of mutation should be a keyword operation ID."
-  [mutation user-plan plan {:as _authenticated-user
-                            authenticated-user-id :id
-                            :keys [is-superuser?]}]
-  (let [plan-managers (plan-managers plan)
-        plan-creator (:created-by plan)]
-    (when-not (or is-superuser?
-                  (= authenticated-user-id plan-creator)
-                  (some #{authenticated-user-id} plan-managers))
-      (let [data {:authenticated-user-id authenticated-user-id
-                  :user-id (:user-id user-plan)
-                  :plan-id (:id plan)
-                  :plan-managers plan-managers
-                  :plan-creator plan-creator
-                  :operation-id mutation}]
-        (log/warn "Authenticated user is not authorized to mutate access to this plan."
-                  data)
-        (throw (errors/error-code->ex-info :unauthorized data))))))
-
-(defn old-admins [old]
-  (->> old
-       :users
-       (filter (comp (partial = :administrator) :role))
-       (map :id)))
-
-(defn authorize-mutate-user-old
-  "Throw an unauthorized exception if the provided authenticated user is not
-  authorized to mutate the provided user-old relationship to the provided OLD.
-  The value of mutation should be a keyword operation ID."
-  [mutation user-old old {:as _authenticated-user
-                          authenticated-user-id :id
-                          :keys [is-superuser?]}]
-  (let [old-admins (old-admins old)
-        old-creator (:created-by old)]
-    (when-not (or is-superuser?
-                  (= authenticated-user-id old-creator)
-                  (some #{authenticated-user-id} old-admins))
-      (let [data {:authenticated-user-id authenticated-user-id
-                  :user-id (:user-id user-old)
-                  :old-slug (:slug old)
-                  :old-admins old-admins
-                  :old-creator old-creator
-                  :operation-id mutation}]
-        (log/warn "Authenticated user is not authorized to mutate access to this OLD."
-                  data)
-        (throw (errors/error-code->ex-info :unauthorized data))))))
-
-(defn user-authorized-to-manage-plan? [user plan]
-  (let [{user-id :id :keys [is-superuser?]} user
-        plan-managers (plan-managers plan)]
-    (boolean (or is-superuser? (some #{user-id} plan-managers)))))
-
-(defn authenticated-user-authorized-to-mutate-user?
+(defn user-authorized-to-manage-plan?
   [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]}
-   {:as _user user-id :id}]
+   plan]
+  (boolean (or is-superuser?
+               (some #{authenticated-user-id} (db.plans/plan-managers plan)))))
+
+(defn user-authorized-to-mutate-user?
+  [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]}
+   {:as _target-user target-user-id :id}]
     (boolean (or is-superuser?
-                 (= user-id authenticated-user-id))))
+                 (= target-user-id authenticated-user-id))))
+
+;; Authorizers.
+;;
+;; The following functions throw a 403 exception when specific conditions are
+;; not met.
+
+(defn authorize-mutate-old
+  "Throw an unauthorized exception if the provided authenticated user is not
+  authorized to mutate the provided OLD. The value of mutation should be a
+  keyword operation ID, e.g., :create-user-old."
+  [mutation old {:as authenticated-user authenticated-user-id :id}]
+  (when-not (user-authorized-to-administer-old? authenticated-user old)
+    (let [old-admins (db.olds/old-admins old)
+          message "Authenticated user is not authorized to mutate this OLD."
+          data {:message message
+                :authenticated-user-id authenticated-user-id
+                :old-slug (:slug old)
+                :old-admins old-admins
+                :operation-id mutation}]
+      (log/warn message data)
+      (throw (errors/error-code->ex-info :unauthorized data)))))
+
+(defn authorize-mutate-plan
+  "Throw an unauthorized exception if the provided authenticated user is not
+  authorized to mutate the provided plan. The value of mutation should be a
+  keyword operation ID, e.g., :update-user-plan."
+  [mutation plan {:as authenticated-user authenticated-user-id :id}]
+  (when-not (user-authorized-to-manage-plan? authenticated-user plan)
+    (let [message "Authenticated user is not authorized to mutate this plan."
+          data {:message message
+                :authenticated-user-id authenticated-user-id
+                :plan-id (:id plan)
+                :plan-managers (db.plans/plan-managers plan)
+                :operation-id mutation}]
+      (log/warn message data)
+      (throw (errors/error-code->ex-info :unauthorized data)))))

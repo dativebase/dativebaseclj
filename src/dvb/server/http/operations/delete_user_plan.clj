@@ -24,8 +24,8 @@
                 {:entity-type :user-plan
                  :entity-id user-plan-id
                  :operation :delete-user-plan})))
-      (authorize/authorize-mutate-user-plan
-       :delete-user-plan existing-user-plan plan authenticated-user)
+      (authorize/authorize-mutate-plan
+       :delete-user-plan plan authenticated-user)
       (try
         {:status 200
          :headers {}

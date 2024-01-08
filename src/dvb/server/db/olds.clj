@@ -1,15 +1,23 @@
 (ns dvb.server.db.olds
   (:require [clojure.java.jdbc :as jdbc]
-            [hugsql.core :as hugsql]
-            [dvb.server.db.events :as events]))
+            [dvb.server.db.events :as events]
+            [hugsql.core :as hugsql]))
 
-(declare get-old*
+(declare count-olds*
+         get-old*
+         get-olds*
          get-old-with-users*
          delete-old*
          create-old*
          update-old*)
 
 (hugsql/def-db-fns "sql/olds.sql")
+
+(defn old-admins [old]
+  (->> old
+       :users
+       (filter (comp (partial = :administrator) :role))
+       (map :id)))
 
 (defn get-old [db-conn slug] (get-old* db-conn {:slug slug}))
 
@@ -47,3 +55,13 @@
 
 (defn get-history [db-conn slug]
   (events/get-history db-conn slug "olds" nil))
+
+(defn count-olds [db-conn]
+  (:old-count (count-olds* db-conn)))
+
+(defn get-olds
+  ([db-conn] (get-olds db-conn 10))
+  ([db-conn limit] (get-olds db-conn limit 0))
+  ([db-conn limit offset]
+   (get-olds* db-conn {:limit limit
+                       :offset offset})))

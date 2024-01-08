@@ -206,9 +206,9 @@
       simple-response
       edges/fetch-user-api->clj))
 
-;; NOTE: deliberately not implemented
-#_(defn delete-user
-  "DELETE /users/<ID>"
+(defn delete-user
+  "DELETE /users/<ID>. Note: client fn is implemented but the endpoint is not,
+  so this will return 404."
   [client user-id]
   (-> default-request
       (assoc :url (user-url (:base-url client) user-id)
@@ -281,6 +281,19 @@
        client/request
        simple-response
        edges/fetch-old-api->clj)))
+
+(defn index-olds
+  "GET /olds"
+  ([client] (index-olds client {}))
+  ([client {:keys [page items-per-page]
+            :or {page 0 items-per-page 10}}]
+   (-> default-request
+       (assoc :url (olds-url (:base-url client))
+              :query-params {:page page :items-per-page items-per-page})
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       edges/index-olds-api->clj)))
 
 (defn create-plan
   "POST /plans"
