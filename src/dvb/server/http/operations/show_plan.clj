@@ -8,13 +8,19 @@
 (defn handle
   [{:as _application :keys [database]}
    {:as ctx {plan-id :plan_id} :path
-    {include-members? :include-members} :query}]
+    {include-members? :include-members
+     include-olds? :include-olds} :query}]
   (log/info "Showing a plan." {:plan-id plan-id
-                               :include-members? include-members?})
+                               :include-members? include-members?
+                               :include-olds? include-olds?})
   (authorize/authorize ctx)
-  (let [plan (if include-members?
-               (db.plans/get-plan-with-members database plan-id)
-               (db.plans/get-plan database plan-id))]
+  (let [plan
+        ((cond
+           (and include-olds? include-members?) db.plans/get-plan-with-olds-and-members
+           include-members? db.plans/get-plan-with-members
+           include-olds? db.plans/get-plan-with-olds
+           :else db.plans/get-plan)
+         database plan-id)]
     (when-not plan
       (let [data {:entity-type :plan
                   :entity-id plan-id

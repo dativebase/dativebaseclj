@@ -362,11 +362,14 @@
 (defn show-plan
   "GET /plans/<ID>"
   ([client plan-id] (show-plan client plan-id {}))
-  ([client plan-id {:keys [include-members?]
-                    :or {include-members? false}}]
+  ([client plan-id {:keys [include-members?
+                           include-olds?]
+                    :or {include-members? false
+                         include-olds? false}}]
    (-> default-request
        (assoc :url (plan-url (:base-url client) plan-id)
-              :query-params {:include-members include-members?})
+              :query-params {:include-members include-members?
+                             :include-olds include-olds?})
        (add-authentication-headers client)
        client/request
        simple-response

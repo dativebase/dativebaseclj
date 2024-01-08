@@ -9,7 +9,8 @@
     :tags [:Plans]
     :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
                  {:$ref "#/components/parameters/planIDParam"}
-                 {:$ref "#/components/parameters/includeMembersBooleanQueryParam"}]
+                 {:$ref "#/components/parameters/includeMembersBooleanQueryParam"}
+                 {:$ref "#/components/parameters/includeOLDsBooleanQueryParam"}]
     :responses
     (assoc common/common-path-responses
            "200" {:description "The plan."

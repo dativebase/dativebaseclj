@@ -1,5 +1,6 @@
 (ns dvb.common.openapi.schemas.plan
   (:require [dvb.common.openapi.schemas.common :as c]
+            [dvb.common.openapi.schemas.old :as old]
             [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
 (def tier
@@ -27,7 +28,11 @@
         members {:type :array
                  :description "The users which are members of this plan."
                  :items {:$ref "#/components/schemas/MemberOfPlan"}
-                 :example []}]
+                 :example []}
+        olds {:type :array
+              :description "The OLDs that are running under this plan."
+              :items old/slug
+              :example []}]
     {:type :object
      :properties {:id id
                   :tier tier
@@ -36,7 +41,8 @@
                   :destroyed-at destroyed-at
                   :created-by created-by
                   :updated-by updated-by
-                  :members members}
+                  :members members
+                  :olds olds}
      :required [:id
                 :tier
                 :created-at
@@ -51,7 +57,8 @@
                :destroyed-at (:example destroyed-at)
                :created-by (:example created-by)
                :updated-by (:example updated-by)
-               :members (:example members)}}))
+               :members (:example members)
+               :olds (:example olds)}}))
 
 ;; PlanOfUser
 (def plan-of-user
