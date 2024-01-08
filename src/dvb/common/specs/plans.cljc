@@ -21,6 +21,7 @@
                    ::user-plan-id]))
 
 (s/def ::members (s/coll-of ::member))
+(s/def ::olds (s/coll-of :old/slug))
 
 (s/def ::plan
   (s/keys :req-un [::id
@@ -30,7 +31,8 @@
                    ::destroyed-at
                    ::created-by
                    ::updated-by]
-          :opt-un [::members]))
+          :opt-un [::members
+                   ::olds]))
 
 (s/def ::plans (s/coll-of ::plan))
 

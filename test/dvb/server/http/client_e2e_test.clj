@@ -470,6 +470,14 @@
               (let [{{:as old old-slug :slug} :body}
                     (client/create-old client {:plan-id plan-id})]
                 (is (old-specs/old? old))
+                (testing "We can view our plan with its members and its OLDs"
+                  (let [{:keys [status] plan-with-members-and-olds :body}
+                        (client/show-plan client plan-id
+                                          {:include-members? true
+                                           :include-olds? true})]
+                    (is (= 200 status))
+                    (is (plan-specs/plan? plan-with-members-and-olds))
+                    (is (= [old-slug] (:olds plan-with-members-and-olds)))))
                 (testing "We cannot delete the newly-created plan right now because
                       it has OLDs running under it."
                   (let [{:keys [status] error :body}

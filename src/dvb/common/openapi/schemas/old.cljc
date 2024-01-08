@@ -1,12 +1,14 @@
 (ns dvb.common.openapi.schemas.old
   (:require [dvb.common.openapi.schemas.common :as c]))
 
+(def slug
+  {:type :string
+   :description "The unique slug of the OLD. This should typically be an external identifier for a language. For example, 'fra' for French as that is the ISO 639-3 code for that language; see https://en.wikipedia.org/wiki/French_language."
+   :example "fra"})
+
 ;; `OLD`
 (def old
-  (let [slug {:type :string
-              :description "The unique slug of the OLD. This should typically be an external identifier for a language. For example, 'fra' for French as that is the ISO 639-3 code for that language; see https://en.wikipedia.org/wiki/French_language."
-              :example "fra"}
-        name {:type :string
+  (let [name {:type :string
               :description "A human-readable or descriptive name for the OLD. Typically, this is based on the language targeted by the OLD. For example, 'French OLD'."
               :example "French OLD"}
         plan-id (assoc c/nullable-entity-id-property

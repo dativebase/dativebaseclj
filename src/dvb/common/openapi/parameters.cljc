@@ -55,6 +55,12 @@
                             :schema {:type :integer
                                      :enum [1 5 10 50]
                                      :default 10}}
+   :includeOLDsBooleanQueryParam {:name :include-olds
+                                  :in :query
+                                  :description "Whether or not to include the OLDs of the returned plan(s)."
+                                  :required false
+                                  :schema {:type :boolean
+                                           :default false}}
    :includePlansBooleanQueryParam {:name :include-plans
                                    :in :query
                                    :description "Whether or not to include the plans of the returned user(s)."
