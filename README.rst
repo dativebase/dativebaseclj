@@ -11,29 +11,38 @@ storing, searching, sharing, and analyzing linguistic data.
 TODOs
 ================================================================================
 
-- WIP: Ensure authorization logic for exsiting operations is coherent and
-  documented.
 - TODO: add query param to GET /plans to return OLDs under that plan. Add tests
   for this in bootstrap-end-to-end.
+- TODO: Consider introducing rate limiting on user creation to help prevent
+  abuse, i.e., overloading the system with user creation requests from bots.
+- TODO: Support user deactivation.
+- TODO: Add signup endpoint, which is a convenience
+- TODO: As a user of DativeBase, I should be able to request access to an OLD.
+- TODO: As a non-superuser, I should be able to view my own data in full.
+- TODO: Split up edges into sub-namespaces.
 
 
 Authorization
 ================================================================================
 
-This section details the authorization rules in DativeBase.
+This section details the authorization rules in DativeBase. The guiding
+principle underlying the authorization design decisions described below is that
+anyone should be able to sign up for a free DativeBase plan and get started
+using DativeBase right away.
 
-A fundamental distinction is between OLD-specific resources, like forms, and
-OLD-independent resources, like users, plans and OLDs.
+Our first important, foundational distinction is that between OLD-specific
+resources, like forms, and OLD-independent resources, like users, plans and OLDs.
 
 In general, if a user has the contributor or administrator role for a given OLD,
 then that user will be authorized to make mutative (data-changing) requests on
 any resource under said OLD. A user with the viewer role under an OLD can only
 make read requests on that OLD.
 
-A user may either be a superuser or not. Most users are not superusers. A
-superuser can, in general, perform any read or write action in the system. All
-entities must reference a user as their creator and updater. The only exception
-to this is the user entity, which must be boostrap-able without a user.
+A second salient distinction is superuser status. Each user is a superuser or a
+non-superuser. Most users are non-superusers. A superuser can, in general,
+perform any read or write action in the system. All entities must reference a
+user as their creator and updater. The only exception to this is the user
+entity itself, which must be boostrap-able without a user.
 
 An OLD must have an active plan in order to be usable. If an action on an OLD is
 not covered by the entitlements granted by the plan, then the action will be
@@ -43,35 +52,47 @@ prohibited.
 Authorization for the User Resource
 --------------------------------------------------------------------------------
 
+Users are the entrypoint to DativeBase. Anyone can create a user and then use
+that user to create a free plan and then a number of OLDs running under that
+free plan.
+
+
 User Creation
 ````````````````````````````````````````````````````````````````````````````````
 
-A new user may be created via the create-user operation. Authentication is not
-required in order to create a user in DativeBase. Such user creation is
-effectively signup. Anybody on the public internet should be able to sign up to
-DativeBase. They should be able to create a user, a free plan, and one or more
-OLDs (with restricted entitlements) under said plan.
+A new user may be created via the create-user operation, i.e., POST /users.
 
-Obviously, a user created without authentication may never be a superuser.
+Authentication is not required in order to create a user in DativeBase. Such
+user creation is effectively signup. Anybody on the public internet should be
+able to sign up to DativeBase. They should be able to create a user, a free
+plan, and one or more OLDs (with restricted entitlements) under said plan.
 
-In addition, a user created without authentication must activate the user by
-hitting a specific endpoint with a random UUID in its path. This URL will be
-emailed to the user in production.
+Obviously, since a superuser has unlimited access, a user created without
+authentication may never be a superuser.
 
-TODO: We should probably have rate limiting to help prevent abuse (ie
-overloading the system with user creation) here.
+In addition, a user created without authentication must be activated before it
+can be used. User activation means hitting a specific endpoint with a specific,
+randomly generated UUID in its path. In production, this URL will be emailed to
+the user.
 
 
 User Update & Delete
 ````````````````````````````````````````````````````````````````````````````````
 
-User update is only allowed to superusers and the target user itself.
+User update is only allowed to superusers and the target user itself. Only a
+superuser can update a user into a superuser. Therefore, a superuser can only be
+created by someone with backend access to the DativeBase system.
 
 User deletion is prohibited. Soft deletion may be supported in the future. Lossy
 or non-lossy user redaction may also be supported in the future. The challenge
 with user deletion is that provenance is crucial to a knowledge base such as
 DativeBase. Therefore, full user deletion, without careful attention, would
 corrupt the data.
+
+It would probably be wise to support user deactivation (as a minimal user
+deletion strategy) in the short term. It should be noted that a user could still
+exist in the system while having access to no OLDs and no plans, which in itself
+is a form of deactivation.
 
 
 User Read
@@ -81,20 +102,92 @@ Any authenticated and activated user can view (read) the set of users in
 DativeBase. Users need to be able to view other users in order to be able to add
 these users to their OLDs and/or to their plans.
 
-TODO: As a user of DativeBase, I should be able to request access to an OLD.
+On the other hand, users should be able to submit a request for access to an OLD
+and administrators should be able to view such requests.
 
-However, non-superusers receive limited user data. They are not able to view the
-email addresses of users, for example.
+Note that non-superusers receive limited user data. They are not able to view the
+email addresses of users, for example. A non-superuser can view their own data
+in full, howeever.
+
+
+
+Authorization for the Plan Resource
+--------------------------------------------------------------------------------
+
+Once a non-superuser has been created, the typical next step is to create a free
+plan with that user. A free plan allows limited access to the DativeBase
+service. The details are still to-be-developed. However, we may provisionally
+assume that each free plan allows for 3 OLDs building under it, each with a
+maximum number of forms. Further restrictions may be enabled later.
+
+
+Plan Creation
+````````````````````````````````````````````````````````````````````````````````
+
+Any user may create a new, free plan. This is accomplished via a POST /plans
+request.
+
+However, each (non-superuser) user is permitted to be the manager of at most 1
+plan. Given that creating a plan also entails the creator receiving a manager
+role on said plan, this means, in effect, that each (non-superuser) user can
+only create one plan. (If the user revokes their manager role over the plan,
+then they may create a new plan.)
+
+
+Plan Update & Delete
+````````````````````````````````````````````````````````````````````````````````
+
+Plan update is not currently supported. The only property of a plan that can
+meaningfully be updated is the tier and upgrading the tier from free to higher
+requires a billing event.
+
+A plan can be deleted by a superuser or one of the plan's managers. However, a
+plan cannot be deleted while it is supporting OLDs. If any OLDs are running
+under a plan, then these OLDs must first be removed from the plan before it can
+be deleted. To remove an OLD from a plan, update the OLD (PUT /olds/:id) while
+setting the plan ID to nil.
 
 
 Authorization for the OLD Resource
 --------------------------------------------------------------------------------
 
-Any user can create an OLD. An  ...
+OLDs are a core resource in DativeBase. Each OLD (= Online Linguistic Database)
+is a data set, usually focused on a particular language, but sometimes on a
+research topic.
 
 
-Authorization for the Plan Resource
+OLD Creation
+````````````````````````````````````````````````````````````````````````````````
+
+Any user may create an OLD via the POST /olds operation. Creation of an OLD
+automatically entails making the creating user an administrator of the
+newly-created OLD.
+
+An OLD that is not covered by a plan is not usable. An OLD can be configured to
+be paid for under a plan during OLD creation or OLD update. In either case, the
+authenticated user must be a manager of the plan in question (or a superuser of
+the system) in order for the request to be authorized.
+
+
+OLD Update & Deletion
+````````````````````````````````````````````````````````````````````````````````
+
+An OLD can be updated or deleted only by its administrators and by superusers.
+
+All users can read the collection of OLDs (index) and get details on a specific
+OLD (show). Users need to be able to browse the set of OLDs in order for
+DativeBase to work.
+
+
+Authorization for Forms and Other OLD-Dependent Resources
 --------------------------------------------------------------------------------
+
+Forms belong to OLDs. As do tags, corpora, files, phonologies, etc. A user's
+authorization to read or write OLD-specific resources depends on that user's
+role within the OLD.
+
+An administrator can perform any action. A contributor can perform most write
+actions and all reads. A viewer can perform all read actions but no writes.
 
 
 User Flows
