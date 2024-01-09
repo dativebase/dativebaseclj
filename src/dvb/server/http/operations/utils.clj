@@ -54,8 +54,7 @@
         (throw (errors/error-code->ex-info :entity-not-found data))))))
 
 (defn validate-mutate-user-old
-  "Validator reused by operations create-user-old, update-user-old, and
-  delete-user-old."
+  "Validator currently only used by operation create-user-old."
   [mutation database {:as _user-old :keys [user-id]} old]
   (let [user (db.users/get-user database user-id)]
     (when-not user

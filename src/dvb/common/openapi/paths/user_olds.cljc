@@ -1,11 +1,6 @@
 (ns dvb.common.openapi.paths.user-olds
   (:require [dvb.common.openapi.paths.common :as common]))
 
-;; TODO UserOLDWrite
-;; userOLDIDParam
-;; UserOLDUpdate
-;; UserOLD
-
 (def user-olds-path
   {:post
    {:operation-id :create-user-old

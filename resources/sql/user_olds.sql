@@ -15,8 +15,8 @@ INSERT INTO users_olds (user_id,
 -- :name get-user-old* :query :one-kebab
 -- :doc Get a user OLD by its ID.
 SELECT *
-  FROM users_plans
-  WHERE id = :id
+  FROM users_olds
+  WHERE id = :id::uuid
     AND destroyed_at IS NULL
 
 -- :name get-user-olds* :query :many-kebab
@@ -45,18 +45,3 @@ UPDATE users_olds
       updated_by = :updated-by
   WHERE id = :id::uuid
   RETURNING *
-
--- :name get-users* :query :many-kebab
--- :doc Get all users, ordered by created_at.
-SELECT *
-  FROM users
-  WHERE destroyed_at IS NULL
-  ORDER BY inserted_at, id
-  LIMIT :limit
-  OFFSET :offset
-
--- :name count-users* :query :one-kebab
--- :doc Get the count of users in the entire database.
-SELECT count(id) AS user_count
-  FROM users
-  WHERE destroyed_at IS NULL

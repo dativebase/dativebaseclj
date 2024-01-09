@@ -48,11 +48,13 @@
    :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]
    :unique-slug-constraint-violated [400 "There is already an OLD in the system with the supplied slug."]
    :user-activation-failed [400 "The supplied user registration key was incorrect. The user could not be activated."]
+   :user-deactivation-failed [400 "The attempt to deactivate the user failed."]
    :users-olds-unique-constraint-violated [400 "There is already a user OLD relationship in the system linking the specified user and OLD. Update that one instead of creating a new one."]
    :users-plans-unique-constraint-violated [400 "There is already a user plan relationship in the system linking the specified user and plan. Update that one instead of creating a new one."]
    ;; 401
    :unauthenticated [401 "The supplied credentials were not valid. Authentication failed."]
    :unregistered-user [401 "The supplied credentials were valid but the user has not completed registration. The user must visit the email link that was sent to them in order to complete registration."]
+   :deactivated-user [401 "The supplied credentials were valid but the user has been deactivated."]
    ;; 403
    :unauthorized [403 "The authenticated user is not authorized for the target operation."]
    ;; 404

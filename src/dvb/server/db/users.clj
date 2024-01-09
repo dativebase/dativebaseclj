@@ -9,12 +9,14 @@
 (declare activate-user*
          count-users*
          create-user*
+         deactivate-user*
          delete-user*
          get-user*
          get-users*
          get-user-by-email*
-         get-user-with-roles*
+         get-user-with-olds*
          get-user-with-plans*
+         get-user-with-roles*
          update-user*)
 
 (hugsql/def-db-fns "sql/users.sql")
@@ -36,6 +38,22 @@
                              (map (juxt :old-slug (comp keyword :role)))
                              (into {})))))))
 
+(defn get-user-with-olds [db-conn id]
+  (let [[user :as rows] (get-user-with-olds* db-conn {:id id})]
+    (if user
+      (-> user
+          (dissoc :role :user-old-id :old-slug :name)
+          (assoc :olds (->> rows
+                            (filter :old-slug)
+                            (mapv (fn [{:keys [role user-old-id old-slug name]}]
+                                    {:role role
+                                     :slug old-slug
+                                     :name name
+                                     :user-old-id user-old-id}))))
+          edges/user-pg->clj)
+      (when-let [user (get-user db-conn id)]
+        (assoc user :olds [])))))
+
 (defn get-user-with-plans [db-conn id]
   (let [[user :as rows] (get-user-with-plans* db-conn {:id id})]
     (if user
@@ -51,6 +69,10 @@
       (when-let [user (get-user db-conn id)]
         (assoc user :plans [])))))
 
+(defn get-user-with-plans-and-olds [db-conn id]
+  (assoc (get-user-with-plans db-conn id)
+         :olds (:olds (get-user-with-olds db-conn id))))
+
 (defn- hash-user-password [user]
   (if (:password user)
     (update user :password encrypt/hashpw)
@@ -63,7 +85,8 @@
                        :create create-user*
                        :update update-user*
                        :delete delete-user*
-                       :activate activate-user*) tconn user)
+                       :activate activate-user*
+                       :deactivate deactivate-user*) tconn user)
             user (edges/user-pg->clj db-user)]
         (events/create-event tconn (utils/mutation user "users"))
         user))))
@@ -75,6 +98,8 @@
 (def delete-user (partial mutate :delete))
 
 (def activate-user (partial mutate :activate))
+
+(def deactivate-user (partial mutate :deactivate))
 
 (defn get-history [db-conn id]
   (events/get-history db-conn nil "users" id))

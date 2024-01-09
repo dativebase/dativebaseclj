@@ -10,6 +10,7 @@
             [dvb.server.http.operations.create-user :as create-user]
             [dvb.server.http.operations.create-user-old :as create-user-old]
             [dvb.server.http.operations.create-user-plan :as create-user-plan]
+            [dvb.server.http.operations.deactivate-user :as deactivate-user]
             [dvb.server.http.operations.delete-form :as delete-form]
             [dvb.server.http.operations.delete-old :as delete-old]
             [dvb.server.http.operations.delete-plan :as delete-plan]
@@ -30,6 +31,7 @@
             [dvb.server.http.operations.update-form :as update-form]
             [dvb.server.http.operations.update-old :as update-old]
             [dvb.server.http.operations.update-user :as update-user]
+            [dvb.server.http.operations.update-user-old :as update-user-old]
             [dvb.server.http.operations.update-user-plan :as update-user-plan]
             [dvb.server.http.operations.user-plans :as user-plans]
             [dvb.server.http.security.api-key :as api-key]
@@ -49,6 +51,7 @@
    :create-user create-user/handle
    :create-user-old create-user-old/handle
    :create-user-plan create-user-plan/handle
+   :deactivate-user deactivate-user/handle
    :delete-form delete-form/handle
    :delete-old delete-old/handle
    :delete-plan delete-plan/handle
@@ -69,6 +72,7 @@
    :update-form update-form/handle
    :update-old update-old/handle
    :update-user update-user/handle
+   :update-user-old update-user-old/handle
    :update-user-plan update-user-plan/handle
    :user-plans user-plans/handle})
 

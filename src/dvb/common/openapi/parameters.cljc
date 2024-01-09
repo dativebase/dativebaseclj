@@ -57,7 +57,7 @@
                                      :default 10}}
    :includeOLDsBooleanQueryParam {:name :include-olds
                                   :in :query
-                                  :description "Whether or not to include the OLDs of the returned plan(s)."
+                                  :description "Whether or not to include the OLDs associated to the target entity or entities."
                                   :required false
                                   :schema {:type :boolean
                                            :default false}}

@@ -127,6 +127,21 @@
            "400" {:description "The request to activate the user was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
 
+(def deactivate-user-path
+  {:get
+   {:operation-id :deactivate-user
+    :summary "Deactivate a user"
+    :description "Deactivate a user"
+    :tags [:Authentication]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    :responses
+    (assoc common/common-path-responses
+           "200" {:description "Successful user deactivation request. The user has been deactivated. It will still exist as a reference in the system. However, it is no longer possible to authenticate via this user. The user's registration status has been changed from 'registered' to 'deactivated'."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to deactivate the user was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
 (def user-plans-path
   {:get
    {:operation-id :user-plans

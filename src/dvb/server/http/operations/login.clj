@@ -29,6 +29,11 @@
                 {:email email})
       (throw (errors/error-code->ex-info :unauthenticated)))
     (when-not (= :registered (:registration-status user))
+      (when (= :deactivated (:registration-status user))
+        (log/warn "Login attempt with a deactivated user."
+                  {:email email
+                   :registration-status (:registration-status user)})
+        (throw (errors/error-code->ex-info :deactivated-user)))
       (log/warn "Login attempt with an unregistered user. User must move from pending to registered in order to authenticate."
                 {:email email
                  :registration-status (:registration-status user)})

@@ -80,13 +80,14 @@
   the provided OLD, i.e., only if the user is an administrator of the OLD."
   [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]} old]
   (boolean (or is-superuser?
-               (some #{authenticated-user-id} (db.olds/old-admins old)))))
+               (some #{authenticated-user-id} (db.olds/old-admin-ids old)))))
 
 (defn user-authorized-to-manage-plan?
   [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]}
    plan]
   (boolean (or is-superuser?
-               (some #{authenticated-user-id} (db.plans/plan-managers plan)))))
+               (some #{authenticated-user-id}
+                     (db.plans/plan-manager-ids plan)))))
 
 (defn user-authorized-to-mutate-user?
   [{:as _authenticated-user authenticated-user-id :id :keys [is-superuser?]}

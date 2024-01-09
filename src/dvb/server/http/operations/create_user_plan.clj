@@ -28,10 +28,7 @@
 (defn authorize [user-plan-write plan
                  {:as _authenticated-user authenticated-user-id :id
                   :keys [is-superuser?]}]
-  (let [plan-managers (->> plan
-                           :members
-                           (filter (comp (partial = :manager) :role))
-                           (map :id))
+  (let [plan-managers (db.plans/plan-manager-ids plan)
         plan-creator (:created-by plan)]
     (when-not (or is-superuser?
                   (= authenticated-user-id plan-creator)
