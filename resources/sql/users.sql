@@ -35,6 +35,15 @@ UPDATE users
   WHERE id = :id::uuid
   RETURNING *
 
+-- :name deactivate-user* :returning-execute :one-kebab
+-- :doc Deactivate the referenced user by setting its registration status to deactivated.
+UPDATE users
+  SET registration_status = 'deactivated',
+      updated_at = now(),
+      updated_by = :updated-by
+  WHERE id = :id::uuid
+  RETURNING *
+
 -- :name get-user* :query :one-kebab
 -- :doc Get a user by its id.
 SELECT *
@@ -56,6 +65,26 @@ SELECT u.*, uo.role, uo.old_slug
   LEFT OUTER JOIN users_olds uo
     ON uo.user_id = u.id
       AND uo.destroyed_at IS NULL
+  LEFT OUTER JOIN olds o
+    ON o.slug = uo.old_slug
+      AND o.destroyed_at IS NULL
+  WHERE u.id = :id::uuid
+    AND u.destroyed_at IS NULL
+
+-- :name get-user-with-olds* :query :many-kebab
+-- :doc Get a user by its id, including details on all of the OLDs to which the user has access. Like get-user-with-roles* but with more data.
+SELECT u.*,
+       uo.role,
+       uo.id AS user_old_id,
+       uo.old_slug,
+       o.name
+  FROM users u
+  LEFT OUTER JOIN users_olds uo
+    ON uo.user_id = u.id
+      AND uo.destroyed_at IS NULL
+  LEFT OUTER JOIN olds o
+    ON o.slug = uo.old_slug
+      AND o.destroyed_at IS NULL
   WHERE u.id = :id::uuid
     AND u.destroyed_at IS NULL
 

@@ -17,6 +17,9 @@
     #(gen/fmap (fn [uuid] (str uuid "@bmail.com"))
                (s/gen uuid?))))
 
+(s/def ::registration-status #{:pending
+                               :registered
+                               :deactivated})
 (s/def ::password ::common/non-empty-string)
 (s/def ::is-superuser? boolean?)
 (s/def ::created-at ::common/created-at)
@@ -49,7 +52,8 @@
                    ::password
                    ::is-superuser?
                    ::plans
-                   ::inserted-at]))
+                   ::inserted-at
+                   ::registration-status]))
 
 (s/def ::users (s/coll-of ::user))
 

@@ -55,7 +55,8 @@
         (assoc-in [:properties :message :example] example-message)
         (assoc-in [:properties :error-code]
                   {:type :string
-                   :enum ["unauthorized"
+                   :enum ["deactivated-user"
+                          "unauthorized"
                           "unauthenticated"
                           "unregistered-user"]
                    :description "A short error code for uniquely identifying and categorizing the failure."

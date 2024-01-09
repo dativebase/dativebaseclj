@@ -97,6 +97,7 @@
    "/api/v1/{old_slug}/users" old-user-paths/old-users-path
    "/api/v1/users/new" user-paths/new-user-path
    "/api/v1/users/{user_id}/activate/{user_registration_key}" user-paths/activate-user-path
+   "/api/v1/users/{user_id}/deactivate" user-paths/deactivate-user-path
    "/api/v1/users/{user_id}/edit" user-paths/edit-user-path
    "/api/v1/users/{user_id}" user-paths/user-path
    "/api/v1/users" user-paths/users-path

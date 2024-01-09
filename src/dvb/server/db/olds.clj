@@ -13,12 +13,6 @@
 
 (hugsql/def-db-fns "sql/olds.sql")
 
-(defn old-admins [old]
-  (->> old
-       :users
-       (filter (comp (partial = :administrator) :role))
-       (map :id)))
-
 (defn get-old [db-conn slug] (get-old* db-conn {:slug slug}))
 
 (defn get-old-with-users [db-conn slug]
@@ -65,3 +59,14 @@
   ([db-conn limit offset]
    (get-olds* db-conn {:limit limit
                        :offset offset})))
+
+(defn old-admins [old-with-users]
+  (when-not (contains? old-with-users :users)
+    (throw (ex-info "Fn old-admins only works on an OLD with a :users key"
+                    {:old-with-users old-with-users})))
+  (->> old-with-users
+       :users
+       (filterv (comp (partial = :administrator) :role))))
+
+(defn old-admin-ids [old-with-users]
+  (mapv :id (old-admins old-with-users)))

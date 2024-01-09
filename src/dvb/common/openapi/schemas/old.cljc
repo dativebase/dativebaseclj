@@ -1,17 +1,20 @@
 (ns dvb.common.openapi.schemas.old
-  (:require [dvb.common.openapi.schemas.common :as c]))
+  (:require [dvb.common.openapi.schemas.common :as c]
+            [dvb.common.openapi.schemas.user-old :as user-old]))
 
 (def slug
   {:type :string
    :description "The unique slug of the OLD. This should typically be an external identifier for a language. For example, 'fra' for French as that is the ISO 639-3 code for that language; see https://en.wikipedia.org/wiki/French_language."
    :example "fra"})
 
+(def name
+  {:type :string
+   :description "A human-readable or descriptive name for the OLD. Typically, this is based on the language targeted by the OLD. For example, 'French OLD'."
+   :example "French OLD"})
+
 ;; `OLD`
 (def old
-  (let [name {:type :string
-              :description "A human-readable or descriptive name for the OLD. Typically, this is based on the language targeted by the OLD. For example, 'French OLD'."
-              :example "French OLD"}
-        plan-id (assoc c/nullable-entity-id-property
+  (let [plan-id (assoc c/nullable-entity-id-property
                        :description "The ID of the plan that covers this OLD."
                        :example "0669c124-e05f-445f-9598-e4821c38f70d")
         created-at (c/created-at-property "OLD")
@@ -51,6 +54,22 @@
                :created-by (:example created-by)
                :updated-by (:example updated-by)
                :users (:example users)}}))
+
+;; `OLDOfUser`
+(def old-of-user
+  {:type :object
+   :properties {:role user-old/role
+                :user-old-id c/user-old-id-property
+                :slug slug
+                :name name}
+   :required [:role
+              :user-old-id
+              :slug
+              :name]
+   :example {:role (:example user-old/role)
+             :user-old-id (:example c/user-old-id-property)
+             :slug (:example slug)
+             :name (:example name)}})
 
 ;; `OLDWrite`
 (def old-write

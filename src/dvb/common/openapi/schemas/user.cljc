@@ -3,6 +3,14 @@
             [dvb.common.openapi.schemas.user-old :as user-old]
             [dvb.common.openapi.schemas.user-plan :as user-plan]))
 
+(def registration-status
+  {:type :string
+   :enum ["pending"
+          "registered"
+          "deactivated"]
+   :description "The registration status of the user. All users start out as pending. Successful activation transitions the user to registered. If the user is deactivated, its registration status becomes deactivated."
+   :example "registered"})
+
 ;; `User`
 (def user
   (let [id c/user-id-property
@@ -41,7 +49,8 @@
       :email email
       :last-name last-name
       :first-name first-name
-      :plans plans}
+      :plans plans
+      :registration-status registration-status}
      :required [:id
                 :first-name
                 :last-name
@@ -60,7 +69,8 @@
                :email (:example email)
                :last-name (:example last-name)
                :first-name (:example first-name)
-               :plans (:example plans)}}))
+               :plans (:example plans)
+               :registration-status (:example registration-status)}}))
 
 ;; `UserWrite`
 (def user-write

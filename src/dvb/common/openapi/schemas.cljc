@@ -44,6 +44,7 @@
    :NewFormData form/new-form-data
    :NewUserData user/new-user-data
    :OLD old/old
+   :OLDOfUser old/old-of-user
    :OLDUpdate old/old-update
    :OLDWrite old/old-write
    :PageOfForms form/page-of-forms

@@ -82,9 +82,13 @@
 (defn get-plans-for-user [db-conn user-id]
   (get-plans-for-user* db-conn {:user-id user-id}))
 
-;; TODO: should probably rename to plan-manager-ids
-(defn plan-managers [plan]
-  (->> plan
+(defn plan-managers [plan-with-members]
+  (when-not (contains? plan-with-members :members)
+    (throw (ex-info "Fn plan-managers only works on a plan with a :members key"
+                    {:plan-with-members plan-with-members})))
+  (->> plan-with-members
        :members
-       (filter (comp (partial = :manager) :role))
-       (map :id)))
+       (filterv (comp (partial = :manager) :role))))
+
+(defn plan-manager-ids [plan-with-members]
+  (mapv :id (plan-managers plan-with-members)))

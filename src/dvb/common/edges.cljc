@@ -173,6 +173,46 @@
 (defn plans-of-user-api->clj [plans-of-user]
   (mapv plan-of-user-api->clj plans-of-user))
 
+;; OLD of User
+
+(def old-of-user-pg->clj-coercions
+  {:role keyword})
+
+(def old-of-user-clj->pg-coercions
+  {:role name})
+
+(def old-of-user-api->clj-coercions
+  (merge api->clj-coercions
+         {:user-old-id utils/str->uuid}
+         old-of-user-pg->clj-coercions))
+
+(def old-of-user-clj->api-coercions
+  (merge clj->api-coercions
+         {:user-old-id utils/uuid->str}
+         old-of-user-clj->pg-coercions))
+
+(defn old-of-user-pg->clj [old-of-user]
+  (-> old-of-user
+      (perform-coercions old-of-user-pg->clj-coercions)))
+
+(defn old-of-user-clj->api [old-of-user]
+  (-> old-of-user
+      (perform-coercions old-of-user-clj->api-coercions)
+      (select-keys (-> schemas :OLDOfUser :properties keys))))
+
+(defn old-of-user-api->clj [old-of-user]
+  (-> old-of-user
+      (perform-coercions old-of-user-api->clj-coercions)))
+
+(defn olds-of-user-pg->clj [olds-of-user]
+  (mapv old-of-user-pg->clj olds-of-user))
+
+(defn olds-of-user-clj->api [olds-of-user]
+  (mapv old-of-user-clj->api olds-of-user))
+
+(defn olds-of-user-api->clj [olds-of-user]
+  (mapv old-of-user-api->clj olds-of-user))
+
 ;; Users
 
 (def user-clj->api-rename-keys {:is-superuser? :is-superuser})
@@ -182,7 +222,8 @@
 
 (def user-pg->clj-coercions
   {:registration-status keyword
-   :plans plans-of-user-pg->clj})
+   :plans plans-of-user-pg->clj
+   :olds olds-of-user-pg->clj})
 
 (def user-clj->pg-coercions
   {:registration-status name})

@@ -50,7 +50,7 @@
      :update-user-plan database user-plan plan)
     (validate-role-transition (:role user-plan)
                               (:role user-plan-update)
-                              (:members plan))
+                              plan)
     (authorize/authorize-mutate-plan
      :update-user-plan plan authenticated-user)
     (let [update-fn (partial update-user-plan database)

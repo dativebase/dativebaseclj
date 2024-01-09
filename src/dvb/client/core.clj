@@ -49,6 +49,9 @@
 (defn activate-user-url [base-url user-id registration-key]
   (str base-url "/api/v1/users/" user-id "/activate/" registration-key))
 
+(defn deactivate-user-url [base-url user-id]
+  (str base-url "/api/v1/users/" user-id "/deactivate"))
+
 (defn edit-user-url [base-url user-id]
   (str base-url "/api/v1/users/" user-id "/edit"))
 
@@ -202,6 +205,16 @@
   [client user-id registration-key]
   (-> default-request
       (assoc :url (activate-user-url (:base-url client) user-id registration-key))
+      client/request
+      simple-response
+      edges/fetch-user-api->clj))
+
+(defn deactivate-user
+  "GET /users/<ID>/deactivate"
+  [client user-id]
+  (-> default-request
+      (assoc :url (deactivate-user-url (:base-url client) user-id))
+      (add-authentication-headers client)
       client/request
       simple-response
       edges/fetch-user-api->clj))
@@ -448,6 +461,18 @@
       client/request
       simple-response
       edges/create-user-old-api->clj))
+
+(defn update-user-old
+  "PUT /user-olds/<ID>"
+  [client user-old-id user-old-update]
+  (-> default-request
+      (assoc :url (user-old-url (:base-url client) user-old-id)
+             :method :put
+             :body (json/encode user-old-update))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      edges/fetch-user-old-api->clj))
 
 (comment
 

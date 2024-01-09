@@ -31,6 +31,7 @@ SELECT p.*,
     INNER JOIN users u
       ON u.id = up.user_id
         AND u.destroyed_at IS NULL
+        AND u.registration_status = 'registered'
   WHERE p.destroyed_at IS NULL
     AND p.id = :id::uuid
   ORDER BY p.inserted_at, p.id
