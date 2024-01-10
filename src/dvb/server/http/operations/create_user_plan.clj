@@ -1,7 +1,7 @@
 (ns dvb.server.http.operations.create-user-plan
   (:require [clojure.string :as str]
             [dvb.common.openapi.errors :as errors]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.user-plans :as user-plan-edges]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.db.user-plans :as db.user-plans]
             [dvb.server.http.authorize :as authorize]
@@ -47,7 +47,7 @@
               {:as ctx {:as user-plan-write :keys [plan-id]} :request-body}]
   (log/info "Creating a user plan.")
   (authorize/authorize ctx)
-  (let [user-plan-write (edges/user-plan-api->clj user-plan-write)
+  (let [user-plan-write (user-plan-edges/api->clj user-plan-write)
         {:as authenticated-user authenticated-user-id :id}
         (utils/security-user ctx)
         plan (db.plans/get-plan-with-members database plan-id)]
@@ -62,6 +62,6 @@
                               (assoc :created-by authenticated-user-id
                                      :updated-by authenticated-user-id)
                               create-fn
-                              edges/user-plan-clj->api)}]
+                              user-plan-edges/clj->api)}]
       (log/info "Created a user plan.")
       response)))

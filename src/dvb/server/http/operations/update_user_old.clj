@@ -1,6 +1,6 @@
 (ns dvb.server.http.operations.update-user-old
   (:require [dvb.common.openapi.errors :as errors]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.user-olds :as user-old-edges]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.http.authorize :as authorize]
@@ -33,7 +33,7 @@
                  :user-old-id user-old-id}]
     (log/info "Updating a user OLD." log-ctx)
     (authorize/authorize ctx)
-    (let [user-old-update (edges/user-old-api->clj user-old-update)
+    (let [user-old-update (user-old-edges/api->clj user-old-update)
           {:as existing-user-old :keys [old-slug]} (db.user-olds/get-user-old
                                                     database user-old-id)
           old (db.olds/get-old-with-users database old-slug)]
@@ -49,6 +49,6 @@
                                 (assoc :updated-by authenticated-user-id
                                        :id user-old-id)
                                 update-fn
-                                edges/user-old-clj->api)}]
+                                user-old-edges/clj->api)}]
         (log/info "Updated a user OLD." log-ctx)
         response))))

@@ -1,7 +1,7 @@
 (ns dvb.server.http.operations.create-user-old
   (:require [clojure.string :as str]
             [dvb.common.openapi.errors :as errors]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.user-olds :as user-old-edges]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.http.authorize :as authorize]
@@ -29,7 +29,7 @@
               {:as ctx {:as user-old-write :keys [old-slug]} :request-body}]
   (log/info "Creating a user OLD.")
   (authorize/authorize ctx)
-  (let [user-old-write (edges/user-old-api->clj user-old-write)
+  (let [user-old-write (user-old-edges/api->clj user-old-write)
         {:as authenticated-user authenticated-user-id :id}
         (utils/security-user ctx)
         old (db.olds/get-old-with-users database old-slug)]
@@ -43,6 +43,6 @@
                               (assoc :created-by authenticated-user-id
                                      :updated-by authenticated-user-id)
                               create-fn
-                              edges/user-old-clj->api)}]
+                              user-old-edges/clj->api)}]
       (log/info "Created a user OLD.")
       response)))

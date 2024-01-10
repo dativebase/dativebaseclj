@@ -1,6 +1,6 @@
 (ns dvb.server.http.operations.index-olds
   (:require [clojure.java.jdbc :as jdbc]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.olds :as old-edges]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as u]
@@ -14,7 +14,7 @@
     (let [{{:keys [page items-per-page]} :query} ctx]
       (jdbc/with-db-transaction [tx database {:isolation :repeatable-read}]
         (let [old-count (db.olds/count-olds tx)
-              olds (mapv edges/old-clj->api
+              olds (mapv old-edges/clj->api
                          (db.olds/get-olds
                           tx items-per-page
                           (pagination/offset! page items-per-page old-count)))]

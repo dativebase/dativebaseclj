@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.show-user
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.users :as user-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
@@ -32,4 +32,4 @@
        :headers {}
        :body (cond-> user
                redacted-access? u/minimize-user
-               :always edges/user-clj->api)})))
+               :always user-edges/clj->api)})))

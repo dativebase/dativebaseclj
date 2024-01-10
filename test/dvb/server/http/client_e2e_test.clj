@@ -268,7 +268,7 @@
                   {plan-with-members :body} (client/show-plan client
                                                               plan-id
                                                               {:include-members? true})
-                  {{:as old old-slug :slug} :body} (client/create-old
+                  {{:as old old-slug :slug} :body} (client/create-old ;
                                                     client {:plan-id plan-id})
                   ;; Following is useful for pprinting
                   _summary {:user (-> user-with-plans

@@ -1,6 +1,6 @@
 (ns dvb.server.http.operations.update-user-plan
   (:require [dvb.common.openapi.errors :as errors]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.user-plans :as user-plan-edges]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.db.user-plans :as db.user-plans]
             [dvb.server.http.authorize :as authorize]
@@ -25,7 +25,7 @@
   (log/info "Updating a user plan.")
   (authorize/authorize ctx)
   (let [user-plan-id (UUID/fromString user-plan-id)
-        user-plan-update (edges/user-plan-api->clj user-plan-update)
+        user-plan-update (user-plan-edges/api->clj user-plan-update)
         {:as authenticated-user authenticated-user-id :id}
         (utils/security-user ctx)
         existing-user-plan (db.user-plans/get-user-plan database user-plan-id)
@@ -44,6 +44,6 @@
                               (assoc :id user-plan-id
                                      :updated-by authenticated-user-id)
                               update-fn
-                              edges/user-plan-clj->api)}]
+                              user-plan-edges/clj->api)}]
       (log/info "Updated a user plan.")
       response)))

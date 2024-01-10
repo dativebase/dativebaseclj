@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.delete-user-old
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.user-olds :as user-old-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.user-olds :as db.user-olds]
@@ -31,7 +31,7 @@
       (try
         {:status 200
          :headers {}
-         :body (edges/user-old-clj->api (db.user-olds/delete-user-old
+         :body (user-old-edges/clj->api (db.user-olds/delete-user-old
                                           database
                                           {:id (:id existing-user-old)
                                            :updated-by authenticated-user-id}))}

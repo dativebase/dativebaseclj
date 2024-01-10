@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.show-form
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.forms :as form-edges]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.log :as log]))
@@ -12,7 +12,7 @@
   (if-let [form (db.forms/get-form database form-id)]
     {:status 200
      :headers {}
-     :body (edges/form-clj->api form)}
+     :body (form-edges/clj->api form)}
     {:status 404
      :headers {}
      :body

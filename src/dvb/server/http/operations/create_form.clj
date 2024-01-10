@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.create-form
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.forms :as form-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
@@ -28,8 +28,8 @@
                                     :old-slug old-slug
                                     :created-by created-by
                                     :updated-by created-by)
-                             edges/form-api->clj
+                             form-edges/api->clj
                              (create-form database)
-                             edges/form-clj->api)}]
+                             form-edges/clj->api)}]
     (log/info "Created a form.")
     response))

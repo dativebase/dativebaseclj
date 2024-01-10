@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.delete-form
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.forms :as form-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
@@ -21,7 +21,7 @@
     (try
       {:status 200
        :headers {}
-       :body (edges/form-clj->api (db.forms/delete-form
+       :body (form-edges/clj->api (db.forms/delete-form
                                    database
                                    {:id (:id existing-form)
                                     :updated-by updated-by}))}

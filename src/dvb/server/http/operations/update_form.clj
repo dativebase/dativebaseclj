@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.update-form
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.forms :as form-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.forms :as db.forms]
             [dvb.server.http.authorize :as authorize]
@@ -11,7 +11,7 @@
                {old-slug :old_slug form-id :form_id} :path}]
   (log/info "Updating a form.")
   (authorize/authorize ctx)
-  (let [form-update (edges/form-api->clj form-update)
+  (let [form-update (form-edges/api->clj form-update)
         existing-form (db.forms/get-form database form-id)
         updated-by (utils/security-user-id ctx)]
     (utils/validate-entity-operation
@@ -30,7 +30,7 @@
     (try
       {:status 200
        :headers {}
-       :body (edges/form-clj->api
+       :body (form-edges/clj->api
               (db.forms/update-form database
                                     (merge existing-form
                                            form-update
