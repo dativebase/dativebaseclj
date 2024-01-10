@@ -263,10 +263,6 @@
                           user-password)
                   {{:as plan plan-id :id} :body}
                   (client/create-plan client {:tier :free})
-                  {user-plan :body} (client/create-user-plan
-                                     client {:user-id user-id
-                                             :plan-id plan-id
-                                             :role :manager})
                   {user-with-plans :body} (client/show-user client user-id
                                                             {:include-plans? true})
                   {plan-with-members :body} (client/show-plan client
@@ -275,15 +271,11 @@
                   {{:as old old-slug :slug} :body} (client/create-old
                                                     client {:plan-id plan-id})
                   ;; Following is useful for pprinting
-                  _summary {:user
-                           (-> user-with-plans
-                               (select-keys [:id :email :is-superuser? :plans])
-                               (assoc :password user-password))
+                  _summary {:user (-> user-with-plans
+                                      (select-keys [:id :email :is-superuser? :plans])
+                                      (assoc :password user-password))
                            :plan (-> plan-with-members
                                      (select-keys [:id :tier :members]))
-                           :user-plan
-                           (-> user-plan
-                               (select-keys [:id :role :plan-id :user-id]))
                            :old (-> old
                                     (select-keys [:slug :name :plan-id :users]))}]
               (is (plan-specs/plan? plan))

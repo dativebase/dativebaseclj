@@ -11,12 +11,27 @@ storing, searching, sharing, and analyzing linguistic data.
 TODOs
 ================================================================================
 
-- TODO: Add signup endpoint, which is a convenience
+- TODO: Add signup endpoint, which is a convenience.
+  - Separate steps, which are not a part of signup (because you might want to
+    create a user without creating a plan and an OLD.)
+    - create-user (needs email, password)
+    - activate-user (needs registration key, emailed to user's email)
+  - Possible steps for signup:
+    - create-plan (and create-user-plan)
+    - create-old (and create-user-old)
+  - Inputs for signup:
+    - The authenticated user, who becomes administrator of the OLD and manager
+      of the plan.
+    - The slug and name of the OLD.
+  - Outputs (return values) of signup:
+    - The user (with its OLDs and plans), the OLD created, and the plan created.
+
 - TODO: As a user of DativeBase, I should be able to request access to an OLD.
 - TODO: As a non-superuser, I should be able to view my own data in full.
 - TODO: Split up edges into sub-namespaces.
 - TODO: Consider introducing rate limiting on user creation to help prevent
   abuse, i.e., overloading the system with user creation requests from bots.
+- TODO: Support password reset
 
 
 Authorization
