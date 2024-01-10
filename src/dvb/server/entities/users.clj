@@ -1,8 +1,6 @@
 (ns dvb.server.entities.users
   (:require [clojure.java.jdbc :as jdbc]
             [dvb.server.db.api-keys :as db.api-keys]
-            [dvb.server.db.olds :as db.olds]
-            [dvb.server.db.plans :as db.plans]
             [dvb.server.db.users :as db.users]))
 
 (defn deactivate

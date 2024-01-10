@@ -1,5 +1,7 @@
 (ns dvb.server.http.operations.utils
   (:require [dvb.common.openapi.errors :as errors]
+            [dvb.server.db.olds :as db.olds]
+            [dvb.server.db.plans :as db.plans]
             [dvb.server.db.users :as db.users]
             [dvb.server.log :as log]))
 
@@ -69,3 +71,35 @@
                   :operation mutation}]
         (log/warn "OLD not found" data)
         (throw (errors/error-code->ex-info :entity-not-found data))))))
+
+(defn validate-old-role-transition
+  "Validate the transition of a user from from-role to to-role wrt OLD
+  old-with-users. Users are prohibited from de-administrator-ing a user from an
+  OLD when that user is that OLD's last administrator."
+  [from-role to-role old-with-users]
+  (let [administrators (db.olds/old-admins old-with-users)]
+    (when (and (= :administrator from-role)
+               (not= :administrator to-role)
+               (<= (count administrators) 1))
+      (let [message "Refusing to leave an OLD without at least one administrator. Please assign another user the administrator role on this OLD before retrying this request."
+            data {:message message
+                  :managers administrators
+                  :error-code :no-administratorless-olds}]
+        (log/warn message data)
+        (throw (errors/error-code->ex-info :role-transition-violation data))))))
+
+(defn validate-plan-role-transition
+  "Validate the transition of a user from from-role to to-role wrt plan
+  plan-with-members. Users are prohibited from de-manager-ing a user from a
+  plan when that user is that plan's last manager."
+  [from-role to-role plan-with-members]
+  (let [managers (db.plans/plan-managers plan-with-members)]
+    (when (and (= :manager from-role)
+               (not= :manager to-role)
+               (<= (count managers) 1))
+      (let [message "Refusing to leave a plan without at least one manager. Please assign another user the manager role on this plan before retrying this request."
+            data {:message message
+                  :managers managers
+                  :error-code :no-managerless-plans}]
+        (log/warn message data)
+        (throw (errors/error-code->ex-info :role-transition-violation data))))))

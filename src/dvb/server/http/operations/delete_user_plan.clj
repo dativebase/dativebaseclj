@@ -24,6 +24,7 @@
                 {:entity-type :user-plan
                  :entity-id user-plan-id
                  :operation :delete-user-plan})))
+      (utils/validate-plan-role-transition (:role existing-user-plan) nil plan)
       (authorize/authorize-mutate-plan
        :delete-user-plan plan authenticated-user)
       (try
