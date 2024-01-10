@@ -7,7 +7,7 @@
    :description "The unique slug of the OLD. This should typically be an external identifier for a language. For example, 'fra' for French as that is the ISO 639-3 code for that language; see https://en.wikipedia.org/wiki/French_language."
    :example "fra"})
 
-(def name
+(def old-name
   {:type :string
    :description "A human-readable or descriptive name for the OLD. Typically, this is based on the language targeted by the OLD. For example, 'French OLD'."
    :example "French OLD"})
@@ -29,7 +29,7 @@
     {:type :object
      :properties
      {:slug slug
-      :name name
+      :name old-name
       :plan-id plan-id
       :created-at created-at
       :updated-at updated-at
@@ -46,7 +46,7 @@
                 :created-by
                 :updated-by]
      :example {:slug (:example slug)
-               :name (:example name)
+               :name (:example old-name)
                :plan-id (:example plan-id)
                :created-at (:example created-at)
                :updated-at (:example updated-at)
@@ -61,7 +61,7 @@
    :properties {:role user-old/role
                 :user-old-id c/user-old-id-property
                 :slug slug
-                :name name}
+                :name old-name}
    :required [:role
               :user-old-id
               :slug
@@ -69,7 +69,7 @@
    :example {:role (:example user-old/role)
              :user-old-id (:example c/user-old-id-property)
              :slug (:example slug)
-             :name (:example name)}})
+             :name (:example old-name)}})
 
 ;; `OLDWrite`
 (def old-write

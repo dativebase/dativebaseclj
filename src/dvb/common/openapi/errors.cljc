@@ -43,6 +43,7 @@
    :old-slug-mismatch [400 "The OLD slug in the path and the OLD slug in the referenced entity do not match."]
    :one-of-validator-matches-multiple [400 "The input matches more than one oneOf validators."]
    :plan-with-olds-not-delible [400 "The attempt to delete a plan was halted because the plan is supporting active OLDs. First transfer the OLDs to a different plan, then delete the plan."]
+   :role-transition-violation [400 "The attempted update was prohibited because it is a role transition that would leave a managed entity without a user authorized to manage it."]
    :required-parameter-absent [400 "A required parameter was not provided."]
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
    :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]

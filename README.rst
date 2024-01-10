@@ -11,7 +11,6 @@ storing, searching, sharing, and analyzing linguistic data.
 TODOs
 ================================================================================
 
-- TODO: Implement DELETE /user-olds/:id.
 - TODO: Add signup endpoint, which is a convenience
 - TODO: As a user of DativeBase, I should be able to request access to an OLD.
 - TODO: As a non-superuser, I should be able to view my own data in full.

@@ -1,13 +1,11 @@
 (ns dvb.server.http.operations.update-user-old
-  (:require [clojure.string :as str]
-            [dvb.common.openapi.errors :as errors]
+  (:require [dvb.common.openapi.errors :as errors]
             [dvb.common.edges :as edges]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.user-olds :as db.user-olds]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
-            [dvb.server.log :as log])
-  (:import (org.postgresql.util PSQLException)))
+            [dvb.server.log :as log]))
 
 (defn- validate [user-old-update {:as existing-user-old user-old-id :id}]
   (when-not existing-user-old
@@ -40,6 +38,9 @@
                                                     database user-old-id)
           old (db.olds/get-old-with-users database old-slug)]
       (validate user-old-update existing-user-old)
+      (utils/validate-old-role-transition (:role existing-user-old)
+                                          (:role user-old-update)
+                                          old)
       (authorize/authorize-mutate-old :update-user-old old authenticated-user)
       (let [update-fn (partial db.user-olds/update-user-old database)
             response {:status 200
