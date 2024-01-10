@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.show-plan
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.plans :as plan-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.http.authorize :as authorize]
@@ -29,4 +29,4 @@
         (throw (errors/error-code->ex-info :entity-not-found data))))
     {:status 200
      :headers {}
-     :body (edges/plan-clj->api plan)}))
+     :body (plan-edges/clj->api plan)}))

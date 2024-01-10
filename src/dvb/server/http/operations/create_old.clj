@@ -1,7 +1,7 @@
 (ns dvb.server.http.operations.create-old
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.olds :as old-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.plans :as db.plans]
@@ -56,7 +56,7 @@
       (authorize-old-plan tx old-write authenticated-user)
       (let [{:as _created-old old-slug :slug}
             (create-old tx (-> old-write
-                               edges/old-api->clj
+                               old-edges/api->clj
                                (update :plan-id identity)
                                (assoc :created-by authenticated-user-id
                                       :updated-by authenticated-user-id)))]
@@ -68,7 +68,7 @@
              :updated-by authenticated-user-id})
         (let [response {:status 201
                         :headers {}
-                        :body (edges/old-clj->api
+                        :body (old-edges/clj->api
                                (db.olds/get-old-with-users tx old-slug))}]
           (log/info "Created an OLD." log-ctx)
           response)))))

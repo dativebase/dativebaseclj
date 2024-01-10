@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.activate-user
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.users :as user-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.common.utils :as utils]
             [dvb.server.db.users :as db.users]
@@ -30,4 +30,4 @@
       (let [activated-user (db.users/activate-user database user)]
         {:status 200
          :headers {}
-         :body (edges/user-clj->api activated-user)}))))
+         :body (user-edges/clj->api activated-user)}))))

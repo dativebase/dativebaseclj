@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.delete-old
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.olds :as old-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.http.authorize :as authorize]
@@ -27,7 +27,7 @@
       (authorize/authorize-mutate-old
        :delete-old existing-old authenticated-user)
       (try
-        (let [deleted-old (edges/old-clj->api (db.olds/delete-old
+        (let [deleted-old (old-edges/clj->api (db.olds/delete-old
                                                database
                                                {:slug old-slug
                                                 :updated-by authenticated-user-id}))]

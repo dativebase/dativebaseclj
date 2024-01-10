@@ -1,7 +1,7 @@
 (ns dvb.server.http.operations.delete-user
   "WARNING: this operation is currenlty not exposed by the API. We may want to
   keep it that way. User deletion is complicated."
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.users :as user-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
@@ -31,7 +31,7 @@
       (try
         {:status 200
          :headers {}
-         :body (edges/user-clj->api (db.users/delete-user
+         :body (user-edges/clj->api (db.users/delete-user
                                      database
                                      {:id (:id existing-user)
                                       :updated-by updated-by}))}

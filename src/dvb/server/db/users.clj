@@ -1,6 +1,6 @@
 (ns dvb.server.db.users
   (:require [clojure.java.jdbc :as jdbc]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.users :as user-edges]
             [dvb.server.db.events :as events]
             [dvb.server.db.utils :as utils]
             [dvb.server.encrypt :as encrypt]
@@ -22,16 +22,16 @@
 (hugsql/def-db-fns "sql/users.sql")
 
 (defn get-user [db-conn id]
-  (edges/user-pg->clj (get-user* db-conn {:id id})))
+  (user-edges/pg->clj (get-user* db-conn {:id id})))
 
 (defn get-user-by-email [db-conn email]
-  (edges/user-pg->clj (get-user-by-email* db-conn {:email email})))
+  (user-edges/pg->clj (get-user-by-email* db-conn {:email email})))
 
 (defn get-user-with-roles [db-conn id]
   (let [[user :as rows] (get-user-with-roles* db-conn {:id id})]
     (when user
       (-> user
-          edges/user-pg->clj
+          user-edges/pg->clj
           (dissoc :role :old-slug)
           (assoc :roles (->> rows
                              (filter :old-slug)
@@ -50,7 +50,7 @@
                                      :slug old-slug
                                      :name name
                                      :user-old-id user-old-id}))))
-          edges/user-pg->clj)
+          user-edges/pg->clj)
       (when-let [user (get-user db-conn id)]
         (assoc user :olds [])))))
 
@@ -65,7 +65,7 @@
                                       :tier tier
                                       :id plan-id
                                       :user-plan-id user-plan-id}))))
-          edges/user-pg->clj)
+          user-edges/pg->clj)
       (when-let [user (get-user db-conn id)]
         (assoc user :plans [])))))
 
@@ -87,7 +87,7 @@
                        :delete delete-user*
                        :activate activate-user*
                        :deactivate deactivate-user*) tconn user)
-            user (edges/user-pg->clj db-user)]
+            user (user-edges/pg->clj db-user)]
         (events/create-event tconn (utils/mutation user "users"))
         user))))
 
@@ -111,6 +111,6 @@
   ([db-conn] (get-users db-conn 10))
   ([db-conn limit] (get-users db-conn limit 0))
   ([db-conn limit offset]
-   (mapv edges/user-pg->clj
+   (mapv user-edges/pg->clj
          (get-users* db-conn {:limit limit
                               :offset offset}))))

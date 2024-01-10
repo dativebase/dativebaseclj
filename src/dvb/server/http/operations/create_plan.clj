@@ -2,7 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [dvb.common.openapi.errors :as errors]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.plans :as plan-edges]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.db.users :as db.users]
             [dvb.server.db.user-plans :as db.user-plans]
@@ -64,7 +64,7 @@
   [{:keys [database]} {:as ctx plan-write :request-body}]
   (log/info "Creating a plan.")
   (authorize/authorize ctx)
-  (let [plan-write (edges/plan-api->clj plan-write)
+  (let [plan-write (plan-edges/api->clj plan-write)
         authenticated-user-id (utils/security-user-id ctx)]
     (jdbc/with-db-transaction [tx database]
       (let [user-with-plans (db.users/get-user-with-plans
@@ -82,7 +82,7 @@
                :updated-by authenticated-user-id})
           (let [response {:status 201
                           :headers {}
-                          :body (edges/plan-clj->api (db.plans/get-plan-with-members
+                          :body (plan-edges/clj->api (db.plans/get-plan-with-members
                                                       tx (:id plan)))}]
             (log/info "Created a plan.")
             response))))))

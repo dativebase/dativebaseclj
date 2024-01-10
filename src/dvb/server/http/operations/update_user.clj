@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.update-user
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.users :as user-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.http.authorize :as authorize]
@@ -36,7 +36,7 @@
               {:as ctx user-update :request-body {user-id :user_id} :path}]
   (log/info "Updating a user.")
   (authorize/authorize ctx)
-  (let [user-update (edges/user-api->clj user-update)
+  (let [user-update (user-edges/api->clj user-update)
         existing-user (db.users/get-user database user-id)
         {:as authenticated-user authenticated-user-id :id}
         (utils/security-user ctx)]
@@ -45,7 +45,7 @@
     (try
       {:status 200
        :headers {}
-       :body (edges/user-clj->api
+       :body (user-edges/clj->api
               (db.users/update-user database
                                     (merge existing-user
                                            user-update

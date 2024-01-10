@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.show-old
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.olds :as old-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.http.authorize :as authorize]
@@ -23,4 +23,4 @@
         (throw (errors/error-code->ex-info :entity-not-found data))))
     {:status 200
      :headers {}
-     :body (edges/old-clj->api old)}))
+     :body (old-edges/clj->api old)}))

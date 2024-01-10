@@ -1,6 +1,6 @@
 (ns dvb.server.db.user-plans
   (:require [clojure.java.jdbc :as jdbc]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.user-plans :as user-plan-edges]
             [dvb.server.db.events :as events]
             [dvb.server.db.utils :as utils]
             [hugsql.core :as hugsql]))
@@ -14,7 +14,7 @@
 (hugsql/def-db-fns "sql/user_plans.sql")
 
 (defn get-user-plan [db-conn id]
-  (edges/user-plan-pg->clj (get-user-plan* db-conn {:id id})))
+  (user-plan-edges/pg->clj (get-user-plan* db-conn {:id id})))
 
 (defn- mutate [mutation db-conn user-plan]
   (jdbc/with-db-transaction [tconn db-conn]
@@ -23,8 +23,8 @@
                      :update update-user-plan*
                      :delete delete-user-plan*)
                    tconn
-                   (edges/user-plan-clj->pg user-plan))
-          user-plan (edges/user-plan-pg->clj db-user-plan)]
+                   (user-plan-edges/clj->pg user-plan))
+          user-plan (user-plan-edges/pg->clj db-user-plan)]
       (events/create-event tconn (utils/mutation user-plan "users_plans"))
       user-plan)))
 
@@ -41,6 +41,6 @@
   ([db-conn] (get-user-plans db-conn 10))
   ([db-conn limit] (get-user-plans db-conn limit 0))
   ([db-conn limit offset]
-   (mapv edges/user-plan-pg->clj
+   (mapv user-plan-edges/pg->clj
          (get-user-plans* db-conn {:limit limit
                               :offset offset}))))

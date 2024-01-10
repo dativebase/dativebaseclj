@@ -1,5 +1,6 @@
 (ns dvb.server.http.operations.login
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.users :as user-edges]
+            [dvb.common.edges.api-keys :as api-key-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.users :as db.users]
             [dvb.server.db.api-keys :as db.api-keys]
@@ -43,5 +44,5 @@
       (log/info "Login succeeded." {:email email :user-id (:id user)})
       {:status 200
        :headers {}
-       :body {:user (edges/user-clj->api user)
-              :api-key (edges/api-key-clj->api api-key)}})))
+       :body {:user (user-edges/clj->api user)
+              :api-key (api-key-edges/clj->api api-key)}})))

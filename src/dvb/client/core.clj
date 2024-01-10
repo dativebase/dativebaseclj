@@ -5,12 +5,16 @@
             [clj-http.client :as client]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [dvb.common.edges.olds :as old-edges]
+            [dvb.common.edges.plans :as plan-edges]
+            [dvb.common.edges.users :as user-edges]
+            [dvb.common.edges.user-olds :as user-old-edges]
+            [dvb.common.edges.user-plans :as user-plan-edges]
             [dvb.common.specs.olds :as old-specs]
             [dvb.common.specs.plans :as plan-specs]
             [dvb.common.specs.users :as user-specs]
             [dvb.common.specs.user-olds :as user-old-specs]
             [dvb.common.specs.user-plans :as user-plan-specs]
-            [dvb.common.edges :as edges]
             [dvb.common.openapi.serialize :as serialize]
             [dvb.common.openapi.spec :as spec]))
 
@@ -143,7 +147,7 @@
        (add-authentication-headers client)
        client/request
        simple-response
-       edges/fetch-user-api->clj)))
+       user-edges/fetch-api->clj)))
 
 (defn user-plans
   "GET /users/<ID>/plans"
@@ -153,7 +157,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-plans-api->clj))
+      user-plan-edges/fetch-api->clj))
 
 (defn edit-user
   "GET /users/<ID>/edit"
@@ -171,13 +175,13 @@
       (assoc :url (users-url (:base-url client))
              :method :post
              :body (json/encode
-                    (edges/user-write-clj->api
+                    (user-edges/write-clj->api
                      (merge (gen/generate (s/gen ::user-specs/user-write))
                             user-write))))
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/create-user-api->clj))
+      user-edges/create-api->clj))
 
 (defn new-user
   "GET /users/new"
@@ -198,7 +202,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-api->clj))
+      user-edges/fetch-api->clj))
 
 (defn activate-user
   "GET /users/<ID>/activate/<KEY>"
@@ -207,7 +211,7 @@
       (assoc :url (activate-user-url (:base-url client) user-id registration-key))
       client/request
       simple-response
-      edges/fetch-user-api->clj))
+      user-edges/fetch-api->clj))
 
 (defn deactivate-user
   "GET /users/<ID>/deactivate"
@@ -217,7 +221,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-api->clj))
+      user-edges/fetch-api->clj))
 
 (defn delete-user
   "DELETE /users/<ID>. Note: client fn is implemented but the endpoint is not,
@@ -229,7 +233,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-api->clj))
+      user-edges/fetch-api->clj))
 
 (defn index-users
   "GET /users"
@@ -242,7 +246,7 @@
        (add-authentication-headers client)
        client/request
        simple-response
-       edges/index-users-api->clj)))
+       user-edges/index-api->clj)))
 
 (defn create-old
   "POST /olds"
@@ -251,13 +255,13 @@
       (assoc :url (olds-url (:base-url client))
              :method :post
              :body (json/encode
-                    (edges/old-write-clj->api
+                    (old-edges/write-clj->api
                      (merge (gen/generate (s/gen ::old-specs/old-write))
                             old-write))))
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/create-old-api->clj))
+      old-edges/create-api->clj))
 
 (defn update-old
   "PUT /olds/<SLUG>"
@@ -269,7 +273,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-old-api->clj))
+      old-edges/fetch-api->clj))
 
 (defn delete-old
   "DELETE /olds/<SLUG>"
@@ -280,7 +284,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-old-api->clj))
+      old-edges/fetch-api->clj))
 
 (defn show-old
   "GET /olds/<SLUG>"
@@ -293,7 +297,7 @@
        (add-authentication-headers client)
        client/request
        simple-response
-       edges/fetch-old-api->clj)))
+       old-edges/fetch-api->clj)))
 
 (defn index-olds
   "GET /olds"
@@ -306,7 +310,7 @@
        (add-authentication-headers client)
        client/request
        simple-response
-       edges/index-olds-api->clj)))
+       old-edges/index-api->clj)))
 
 (defn create-plan
   "POST /plans"
@@ -315,13 +319,13 @@
       (assoc :url (plans-url (:base-url client))
              :method :post
              :body (json/encode
-                    (edges/plan-clj->api
+                    (plan-edges/clj->api
                      (merge (gen/generate (s/gen ::plan-specs/plan-write))
                             plan-write))))
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/create-plan-api->clj))
+      plan-edges/create-api->clj))
 
 (defn create-user-plan
   "POST /user-plans"
@@ -330,13 +334,13 @@
       (assoc :url (user-plans-url (:base-url client))
              :method :post
              :body (json/encode
-                    (edges/user-plan-clj->api
+                    (user-plan-edges/clj->api
                      (merge (gen/generate (s/gen ::user-plan-specs/user-plan-write))
                             user-plan-write))))
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/create-user-plan-api->clj))
+      user-plan-edges/create-api->clj))
 
 (defn update-user-plan
   "PUT /user-plans/<ID>"
@@ -348,7 +352,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-plan-api->clj))
+      user-plan-edges/fetch-api->clj))
 
 (defn delete-user-plan
   "DELETE /users-plan/<ID>"
@@ -359,7 +363,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-plan-api->clj))
+      user-plan-edges/fetch-api->clj))
 
 (defn delete-plan
   "DELETE /plans/<ID>"
@@ -370,7 +374,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-plan-api->clj))
+      plan-edges/fetch-api->clj))
 
 (defn show-plan
   "GET /plans/<ID>"
@@ -386,7 +390,7 @@
        (add-authentication-headers client)
        client/request
        simple-response
-       edges/fetch-plan-api->clj)))
+       plan-edges/fetch-api->clj)))
 
 (defn create-form
   "POST /forms"
@@ -454,13 +458,13 @@
       (assoc :url (user-olds-url (:base-url client))
              :method :post
              :body (json/encode
-                    (edges/user-old-clj->api
+                    (user-old-edges/clj->api
                      (merge (gen/generate (s/gen ::user-old-specs/user-old-write))
                             user-old-write))))
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/create-user-old-api->clj))
+      user-old-edges/create-api->clj))
 
 (defn update-user-old
   "PUT /user-olds/<ID>"
@@ -472,7 +476,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      edges/fetch-user-old-api->clj))
+      user-old-edges/fetch-api->clj))
 
 (comment
 

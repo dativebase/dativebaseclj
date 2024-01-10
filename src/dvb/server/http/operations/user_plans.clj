@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.user-plans
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.plans :as plan-edges]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.log :as log]))
@@ -10,5 +10,5 @@
   (authorize/authorize ctx)
   {:status 200
    :headers {}
-   :body (mapv edges/plan-clj->api
+   :body (mapv plan-edges/clj->api
                (db.plans/get-plans-for-user database user-id))})

@@ -1,6 +1,6 @@
 (ns dvb.server.db.plans
   (:require [clojure.java.jdbc :as jdbc]
-            [dvb.common.edges :as edges]
+            [dvb.common.edges.plans :as plan-edges]
             [dvb.server.db.events :as events]
             [dvb.server.db.utils :as utils]
             [hugsql.core :as hugsql]))
@@ -17,7 +17,7 @@
 (hugsql/def-db-fns "sql/plans.sql")
 
 (defn get-plan [db-conn id]
-  (edges/plan-pg->clj (get-plan* db-conn {:id id})))
+  (plan-edges/pg->clj (get-plan* db-conn {:id id})))
 
 (defn get-plan-with-members [db-conn id]
   (let [[plan :as rows] (get-plan-with-members* db-conn {:id id})]
@@ -29,7 +29,7 @@
                                    :id user-id
                                    :user-plan-id user-plan-id})
                                 rows))
-          edges/plan-pg->clj)
+          plan-edges/pg->clj)
       (when-let [plan (get-plan db-conn id)]
         (assoc plan :members [])))))
 
@@ -42,7 +42,7 @@
                             (map :old-slug)
                             (filter some?)
                             set sort vec))
-          edges/plan-pg->clj)
+          plan-edges/pg->clj)
       (when-let [plan (get-plan db-conn id)]
         (assoc plan :olds [])))))
 
@@ -57,8 +57,8 @@
                      :update update-plan*
                      :delete delete-plan*)
                    tconn
-                   (edges/plan-clj->pg plan))
-          plan (edges/plan-pg->clj db-plan)]
+                   (plan-edges/clj->pg plan))
+          plan (plan-edges/pg->clj db-plan)]
       (events/create-event tconn (utils/mutation plan "plans"))
       plan)))
 
@@ -75,7 +75,7 @@
   ([db-conn] (get-plans db-conn 10))
   ([db-conn limit] (get-plans db-conn limit 0))
   ([db-conn limit offset]
-   (mapv edges/plan-pg->clj
+   (mapv plan-edges/pg->clj
          (get-plans* db-conn {:limit limit
                               :offset offset}))))
 

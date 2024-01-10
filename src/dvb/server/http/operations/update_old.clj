@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.update-old
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.olds :as old-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.olds :as db.olds]
             [dvb.server.db.plans :as db.plans]
@@ -47,7 +47,7 @@
     (log/info "Updating an OLD." log-ctx)
     (authorize/authorize ctx)
     (authorize-old-plan database old-update authenticated-user)
-    (let [old-update (edges/old-api->clj old-update)
+    (let [old-update (old-edges/api->clj old-update)
           existing-old (db.olds/get-old-with-users database old-slug)
           update-fn (partial db.olds/update-old database)]
       (validate old-update existing-old old-slug)
@@ -59,7 +59,7 @@
                                      {:updated-by authenticated-user-id})
                               (update :plan-id identity)
                               update-fn
-                              edges/old-clj->api)]
+                              old-edges/clj->api)]
           (log/info "Updated an OLD." log-ctx)
           {:status 200
            :headers {}

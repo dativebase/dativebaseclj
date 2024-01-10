@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.delete-user-plan
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.user-plans :as user-plan-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.db.user-plans :as db.user-plans]
@@ -30,7 +30,7 @@
       (try
         {:status 200
          :headers {}
-         :body (edges/user-plan-clj->api (db.user-plans/delete-user-plan
+         :body (user-plan-edges/clj->api (db.user-plans/delete-user-plan
                                           database
                                           {:id (:id existing-user-plan)
                                            :updated-by authenticated-user-id}))}

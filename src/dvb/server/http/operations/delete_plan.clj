@@ -1,5 +1,5 @@
 (ns dvb.server.http.operations.delete-plan
-  (:require [dvb.common.edges :as edges]
+  (:require [dvb.common.edges.plans :as plan-edges]
             [dvb.common.openapi.errors :as errors]
             [dvb.server.db.plans :as db.plans]
             [dvb.server.db.users :as db.users]
@@ -39,7 +39,7 @@
       (validate existing-plan)
       (authorize/authorize-mutate-plan
        :delete-plan existing-plan authenticated-user)
-      (try (let [deleted-plan (edges/plan-clj->api
+      (try (let [deleted-plan (plan-edges/clj->api
                                (db.plans/delete-plan
                                 database
                                 {:id plan-id
