@@ -3,9 +3,13 @@
             dvb.server.db.core
             [dvb.common.openapi.spec :as spec]
             [dvb.server.http.server :as server]
+            [dvb.server.http.operations.access-requests-for-single-old :as
+             access-requests-for-single-old]
             [dvb.server.http.operations.activate-user :as activate-user]
+            [dvb.server.http.operations.approve-old-access-request :as approve-old-access-request]
             [dvb.server.http.operations.create-form :as create-form]
             [dvb.server.http.operations.create-old :as create-old]
+            [dvb.server.http.operations.create-old-access-request :as create-old-access-request]
             [dvb.server.http.operations.create-plan :as create-plan]
             [dvb.server.http.operations.create-user :as create-user]
             [dvb.server.http.operations.create-user-old :as create-user-old]
@@ -24,8 +28,11 @@
             [dvb.server.http.operations.login :as login]
             [dvb.server.http.operations.new-form :as new-form]
             [dvb.server.http.operations.new-user :as new-user]
+            [dvb.server.http.operations.reject-old-access-request :as reject-old-access-request]
+            [dvb.server.http.operations.retract-old-access-request :as retract-old-access-request]
             [dvb.server.http.operations.show-form :as show-form]
             [dvb.server.http.operations.show-old :as show-old]
+            [dvb.server.http.operations.show-old-access-request :as show-old-access-request]
             [dvb.server.http.operations.show-plan :as show-plan]
             [dvb.server.http.operations.show-user :as show-user]
             [dvb.server.http.operations.update-form :as update-form]
@@ -44,9 +51,12 @@
             [dvb.server.log :as log]))
 
 (def operations
-  {:activate-user activate-user/handle
+  {:access-requests-for-single-old access-requests-for-single-old/handle
+   :activate-user activate-user/handle
+   :approve-old-access-request approve-old-access-request/handle
    :create-form create-form/handle
    :create-old create-old/handle
+   :create-old-access-request create-old-access-request/handle
    :create-plan create-plan/handle
    :create-user create-user/handle
    :create-user-old create-user-old/handle
@@ -65,8 +75,11 @@
    :login login/handle
    :new-form new-form/handle
    :new-user new-user/handle
+   :reject-old-access-request reject-old-access-request/handle
+   :retract-old-access-request retract-old-access-request/handle
    :show-form show-form/handle
    :show-old show-old/handle
+   :show-old-access-request show-old-access-request/handle
    :show-plan show-plan/handle
    :show-user show-user/handle
    :update-form update-form/handle

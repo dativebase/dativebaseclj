@@ -6,11 +6,13 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [dvb.common.edges.olds :as old-edges]
+            [dvb.common.edges.old-access-requests :as old-access-request-edges]
             [dvb.common.edges.plans :as plan-edges]
             [dvb.common.edges.users :as user-edges]
             [dvb.common.edges.user-olds :as user-old-edges]
             [dvb.common.edges.user-plans :as user-plan-edges]
             [dvb.common.specs.olds :as old-specs]
+            [dvb.common.specs.old-access-requests :as old-access-request-specs]
             [dvb.common.specs.plans :as plan-specs]
             [dvb.common.specs.users :as user-specs]
             [dvb.common.specs.user-olds :as user-old-specs]
@@ -70,6 +72,15 @@
 
 (defn user-old-url [base-url user-old-id]
   (str base-url "/api/v1/user-olds/" user-old-id))
+
+(defn old-access-requests-url [base-url]
+  (str base-url "/api/v1/old-access-requests"))
+
+(defn old-access-request-url [base-url oar-id]
+  (str base-url "/api/v1/old-access-requests/" oar-id))
+
+(defn access-requests-for-old-url [base-url old-slug]
+  (str base-url "/api/v1/olds/" old-slug "/access-requests"))
 
 (defn new-user-url [base-url]
   (str base-url "/api/v1/users/new"))
@@ -311,6 +322,59 @@
        client/request
        simple-response
        old-edges/index-api->clj)))
+
+(defn create-old-access-request
+  "POST /old-access-requests"
+  [client old-access-request-write]
+  (-> default-request
+      (assoc :url (old-access-requests-url (:base-url client))
+             :method :post
+             :body (json/encode
+                    (old-access-request-edges/write-clj->api
+                     (merge (gen/generate (s/gen ::old-access-request-specs/old-access-request-write))
+                            old-access-request-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      old-access-request-edges/create-api->clj))
+
+(defn show-old-access-request
+  "GET /old-access-requests/<ID>"
+  [client old-access-request-id]
+  (-> default-request
+      (assoc :url (old-access-request-url (:base-url client)
+                                          old-access-request-id))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      old-access-request-edges/fetch-api->clj))
+
+(defn access-requests-for-old
+  "GET /olds/<SLUG>/access-requests"
+  [client old-slug]
+  (-> default-request
+      (assoc :url (access-requests-for-old-url (:base-url client) old-slug))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      old-access-request-edges/index-for-old-api->clj))
+
+(defn mutate-old-access-request
+  "PUT /old-access-requests/<ID>/<MUTATION>"
+  [mutation client old-access-request-id]
+  (-> default-request
+      (assoc :url (str (old-access-request-url (:base-url client)
+                                               old-access-request-id)
+                       "/" (name mutation))
+             :method :put)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      old-access-request-edges/fetch-api->clj))
+
+(def approve-old-access-request (partial mutate-old-access-request :approve))
+(def reject-old-access-request (partial mutate-old-access-request :reject))
+(def retract-old-access-request (partial mutate-old-access-request :retract))
 
 (defn create-plan
   "POST /plans"

@@ -11,8 +11,11 @@ storing, searching, sharing, and analyzing linguistic data.
 TODOs
 ================================================================================
 
-- TODO: Split up edges into sub-namespaces.
 - TODO: As a user of DativeBase, I should be able to request access to an OLD.
+- TODO: refactor and DRY-ify these things
+  - DVB Client (split out into separate namespaces and/or create helper
+    abstractions)
+  - E2E test ns is one single large file. Break it up
 - TODO: Support password reset
 - TODO: Consider introducing rate limiting on user creation to help prevent
   abuse, i.e., overloading the system with user creation requests from bots.
@@ -315,7 +318,7 @@ primarily JSON, .zip archives, and CSV files.
 DativeBase will include local-first functionality. This may be a fully-fledged
 Desktop application or it may be a progressive web app that stores data locally
 in the browser's local storage. Whatever the case, DativeBase will give users
-access to the data on their own machines. DativeBase will provide seemless
+access to the data on their own machines. DativeBase will provide seamless
 synchronization between local data and shared datasets on the server.
 
 

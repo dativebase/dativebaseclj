@@ -32,6 +32,7 @@
                       :schema {:type :string
                                :pattern "^[a-zA-Z0-9_-]+$"}}
    :planIDParam (id-param "plan")
+   :OLDAccessRequestIDParam (id-param "OLD_access_request")
    :userIDParam (id-param "user")
    :userPlanIDParam (id-param "user_plan")
    :userOLDIDParam (id-param "user_OLD")
