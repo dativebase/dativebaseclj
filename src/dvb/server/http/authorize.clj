@@ -9,7 +9,8 @@
   "Map from operation IDs to collections of roles that are authorized to execute
    the operation. If the roles collection is `[:*]`, then all roles are
    authorized for the operation."
-  {:index-forms [:*]
+  {:access-requests-for-single-old [:administrator :contributor]
+   :index-forms [:*]
    :create-form [:administrator :contributor]
    :delete-form [:administrator :contributor]
    :edit-form [:administrator :contributor]
@@ -18,7 +19,9 @@
    :update-form [:administrator :contributor]})
 
 (def old-independent-operations
-  #{:create-old
+  #{:approve-old-access-request
+    :create-old
+    :create-old-access-request
     :create-plan
     :create-user
     :create-user-old
@@ -32,7 +35,10 @@
     :index-olds
     :index-users
     :new-user
+    :reject-old-access-request
+    :retract-old-access-request
     :show-old
+    :show-old-access-request
     :show-plan
     :show-user
     :update-old

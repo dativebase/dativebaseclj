@@ -52,6 +52,14 @@ CREATE TABLE public.forms (
     updated_by uuid NOT NULL
 );
 
+CREATE TABLE public.old_access_requests (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    old_slug text NOT NULL,
+    user_id uuid NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE public.olds (
     slug text NOT NULL,
     name text NOT NULL,
@@ -140,6 +148,9 @@ ALTER TABLE ONLY public.events
 ALTER TABLE ONLY public.forms
     ADD CONSTRAINT forms_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY public.old_access_requests
+    ADD CONSTRAINT old_access_requests_pkey PRIMARY KEY (id);
+
 ALTER TABLE ONLY public.olds
     ADD CONSTRAINT olds_pkey PRIMARY KEY (slug);
 
@@ -190,6 +201,12 @@ ALTER TABLE ONLY public.forms
 
 ALTER TABLE ONLY public.forms
     ADD CONSTRAINT fk_forms_updated_by_user_id FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.old_access_requests
+    ADD CONSTRAINT fk_old_access_request_old_slug FOREIGN KEY (old_slug) REFERENCES public.olds(slug);
+
+ALTER TABLE ONLY public.old_access_requests
+    ADD CONSTRAINT fk_old_access_request_user_id FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 ALTER TABLE ONLY public.olds
     ADD CONSTRAINT fk_olds_created_by_user_id FOREIGN KEY (created_by) REFERENCES public.users(id);

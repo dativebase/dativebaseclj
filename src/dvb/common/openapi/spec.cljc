@@ -32,6 +32,7 @@
             [dvb.common.openapi.paths.login :as login-paths]
             [dvb.common.openapi.paths.old-users :as old-user-paths]
             [dvb.common.openapi.paths.olds :as old-paths]
+            [dvb.common.openapi.paths.old-access-requests :as old-access-request-paths]
             [dvb.common.openapi.paths.plans :as plan-paths]
             [dvb.common.openapi.paths.users :as user-paths]
             [dvb.common.openapi.paths.user-olds :as user-old-paths]
@@ -101,8 +102,14 @@
    "/api/v1/users/{user_id}/edit" user-paths/edit-user-path
    "/api/v1/users/{user_id}" user-paths/user-path
    "/api/v1/users" user-paths/users-path
+   "/api/v1/old-access-requests" old-access-request-paths/old-access-requests-path
+   "/api/v1/old-access-requests/{old_access_request_id}" old-access-request-paths/old-access-request-path
+   "/api/v1/old-access-requests/{old_access_request_id}/approve" old-access-request-paths/approve-old-access-request-path
+   "/api/v1/old-access-requests/{old_access_request_id}/reject" old-access-request-paths/reject-old-access-request-path
+   "/api/v1/old-access-requests/{old_access_request_id}/retract" old-access-request-paths/retract-old-access-request-path
    "/api/v1/olds" old-paths/olds-path
    "/api/v1/olds/{old_slug}" old-paths/old-path
+   "/api/v1/olds/{old_slug}/access-requests" old-access-request-paths/requests-for-single-old-path
    "/api/v1/plans/{plan_id}" plan-paths/plan-path
    "/api/v1/plans" plan-paths/plans-path
    "/api/v1/user-plans/{user_plan_id}" user-plan-paths/user-plan-path

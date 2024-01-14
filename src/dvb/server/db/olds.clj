@@ -70,3 +70,12 @@
 
 (defn old-admin-ids [old-with-users]
   (mapv :id (old-admins old-with-users)))
+
+(defn old-users [old-with-users]
+  (when-not (contains? old-with-users :users)
+    (throw (ex-info "Fn old-users only works on an OLD with a :users key"
+                    {:old-with-users old-with-users})))
+  (:users old-with-users))
+
+(defn old-user-ids [old-with-users]
+  (mapv :id (old-users old-with-users)))

@@ -45,6 +45,7 @@
    :plan-with-olds-not-delible [400 "The attempt to delete a plan was halted because the plan is supporting active OLDs. First transfer the OLDs to a different plan, then delete the plan."]
    :prohibited-plan-tier [400 "The provided plan tier is valid but using it in this context is prohibited."]
    :role-transition-violation [400 "The attempted update was prohibited because it is a role transition that would leave a managed entity without a user authorized to manage it."]
+   :redundant-request [400 "The request is redundant. This typically means that the action attempted by the request has already been performed by a previous request."]
    :required-parameter-absent [400 "A required parameter was not provided."]
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
    :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]

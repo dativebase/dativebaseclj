@@ -4,6 +4,7 @@
             [dvb.common.openapi.schemas.form :as form]
             [dvb.common.openapi.schemas.login :as login]
             [dvb.common.openapi.schemas.old :as old]
+            [dvb.common.openapi.schemas.old-access-request :as old-access-request]
             [dvb.common.openapi.schemas.plan :as plan]
             [dvb.common.openapi.schemas.user :as user]
             [dvb.common.openapi.schemas.user-old :as user-old]
@@ -44,6 +45,9 @@
    :NewFormData form/new-form-data
    :NewUserData user/new-user-data
    :OLD old/old
+   :OLDAccessRequest old-access-request/old-access-request
+   :OLDAccessRequests old-access-request/old-access-requests
+   :OLDAccessRequestWrite old-access-request/old-access-request-write
    :OLDOfUser old/old-of-user
    :OLDUpdate old/old-update
    :OLDWrite old/old-write
