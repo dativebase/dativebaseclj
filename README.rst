@@ -11,10 +11,6 @@ storing, searching, sharing, and analyzing linguistic data.
 TODOs
 ================================================================================
 
-- TODO: refactor and DRY-ify these things
-  - DVB Client (split out into separate namespaces and/or create helper
-    abstractions)
-  - E2E test ns is one single large file. Break it up
 - TODO: Support password reset
 - TODO: Consider introducing rate limiting on user creation to help prevent
   abuse, i.e., overloading the system with user creation requests from bots.
