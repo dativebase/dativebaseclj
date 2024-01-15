@@ -17,8 +17,8 @@ TODOs
 - TODO: In the client, consider creating a persistent & stateful client using
   core.async. Rationale: the client can indicate when its credentials are
   expired and prompt the user for re-authentication.
-- TODO: In the client, consider validating the payload (e.g., for PUT and POST
-  requests) client-side before making the request.
+- TODO: Allow log configuration to stdout and/or file and ensure that log
+  messages can be parsed consistently.
 
 
 Authorization

@@ -1,7 +1,9 @@
 (ns dvb.server.http.client-e2e-tests.bootstrap-test
   "Bootstrap AKA Sign-up tests. We can create a free account and get started
   with creating users and OLDs right away."
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
+            [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
             [dvb.client.core :as client]
             [dvb.common.specs.olds :as old-specs]
@@ -22,9 +24,11 @@
                 user-id :id
                 user-email :email
                 :keys [created-by is-superuser?]} :body}
-              (client/create-user unauthenticated-client
-                                  {:password user-password
-                                   :is-superuser? false})]
+              (client/create-user
+               unauthenticated-client
+               (merge (gen/generate (s/gen ::user-specs/user-write))
+                      {:password user-password
+                       :is-superuser? false}))]
           (is (= 201 status))
           (is (user-specs/user? created-user))
           (is (nil? created-by))
@@ -58,8 +62,11 @@
                   {plan-with-members :body} (client/show-plan client
                                                               plan-id
                                                               {:include-members? true})
-                  {{:as old old-slug :slug} :body} (client/create-old ;
-                                                    client {:plan-id plan-id})
+                  {{:as old old-slug :slug} :body}
+                  (client/create-old
+                   client
+                   (assoc (gen/generate (s/gen ::old-specs/old-write))
+                                                   :plan-id plan-id))
                   ;; Following is useful for pprinting
                   _summary {:user (-> user-with-plans
                                       (select-keys [:id :email :is-superuser? :plans])
@@ -81,9 +88,11 @@
                       {:keys [status]
                        {:as additional-user
                         additional-user-id :id} :body}
-                      (client/create-user client
-                                          {:password additional-user-password
-                                           :is-superuser? false})]
+                      (client/create-user
+                       client
+                       (assoc (gen/generate (s/gen ::user-specs/user-write))
+                              :password additional-user-password
+                              :is-superuser? false))]
                   (is (= 201 status))
                   (is (user-specs/user? additional-user))
                   (testing "We can make the new user a contributor in the new OLD."

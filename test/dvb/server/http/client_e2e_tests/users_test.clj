@@ -1,5 +1,7 @@
 (ns dvb.server.http.client-e2e-tests.users-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
+            [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
             [dvb.client.core :as client]
             [dvb.common.specs.users :as user-specs]
@@ -48,12 +50,22 @@
             (let [user-keys (->> body :data (mapcat keys) set)]
               (is (not (some #{:email} user-keys)))
               (is (not (some #{:is-superuser?} user-keys))))))
+        (testing "User creation fails in the client if the payload is invalid"
+          (let [ex (try (client/create-user
+                         superuser-client
+                         (assoc (gen/generate (s/gen ::user-specs/user-write))
+                                :is-superuser? 8))
+                        (catch Exception e (ex-data e)))]
+            (is (= :invalid-boolean (:error-code ex)))
+            (is (= [:is-superuser] (-> ex :data :path)))))
         (testing "The superuser-authenticated client can create a new user."
           (let [new-user-password "1234"
                 {:keys [status] created-user :body}
-                (client/create-user superuser-client
-                                    {:password new-user-password
-                                     :is-superuser? false})]
+                (client/create-user
+                 superuser-client
+                 (assoc (gen/generate (s/gen ::user-specs/user-write))
+                        :password new-user-password
+                        :is-superuser? false))]
             (is (= 201 status))
             (is (uuid? (:id created-user)))
             (is (jt/instant? (:created-at created-user)))
@@ -148,18 +160,22 @@
             (let [new-user-password "1234"
                   unauthenticated-client (client/make-client :local-test)
                   {:keys [status] created-user :body}
-                  (client/create-user unauthenticated-client
-                                      {:password new-user-password
-                                       :is-superuser? false})]
+                  (client/create-user
+                   unauthenticated-client
+                   (assoc (gen/generate (s/gen ::user-specs/user-write))
+                          :password new-user-password
+                          :is-superuser? false))]
               (is (= 201 status))
               (is (user-specs/user? created-user))))
           (testing "An unauthenticated client canNOT create a new SUPERuser."
             (let [new-user-password "1234"
                   unauthenticated-client (client/make-client :local-test)
                   {:keys [status] error :body}
-                  (client/create-user unauthenticated-client
-                                      {:password new-user-password
-                                       :is-superuser? true})]
+                  (client/create-user
+                   unauthenticated-client
+                   (assoc (gen/generate (s/gen ::user-specs/user-write))
+                          :password new-user-password
+                          :is-superuser? true))]
               (is (= 403 status))
               (is (= "unauthorized" (-> error :errors first :error-code)))))))
       (finally (component/stop system)))))

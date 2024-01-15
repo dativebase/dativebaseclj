@@ -45,7 +45,11 @@
       (set/rename-keys clj->api-rename-keys)
       (select-keys (-> common/schemas :UserWrite :properties keys))))
 
-(def update-clj->api write-clj->api)
+(defn update-clj->api [user-update]
+  (-> user-update
+      (common/perform-coercions clj->api-coercions)
+      (set/rename-keys clj->api-rename-keys)
+      (select-keys (-> common/schemas :UserUpdate :properties keys))))
 
 (defn api->clj [user]
   (-> user

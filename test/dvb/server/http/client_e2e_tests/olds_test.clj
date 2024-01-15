@@ -14,9 +14,16 @@
             client (client/authenticate-client
                     (client/make-client :local-test)
                     user-email user-password)]
+        (testing "OLD creation fails in the client if the payload is invalid"
+          (let [ex (try (client/create-old
+                         client (assoc (test-data/gen-old-write) :slug 4))
+                        (catch Exception e (ex-data e)))]
+            (is (= :invalid-string (:error-code ex)))
+            (is (= [:slug] (-> ex :data :path)))))
         (testing "We can create a new OLD."
           (let [{:keys [status] {:as created-old old-slug :slug} :body}
-                (client/create-old client (test-data/gen-old-write))]
+                (client/create-old
+                 client (test-data/gen-old-write))]
             (is (= 201 status))
             (is (nil? (:destroyed-at created-old)))
             (is (old-specs/old? created-old))

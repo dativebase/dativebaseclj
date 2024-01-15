@@ -21,6 +21,16 @@
 (defn api->clj [user-plan]
   (common/perform-coercions user-plan api->clj-coercions))
 
+(defn write-clj->api [user-plan-write]
+  (-> user-plan-write
+      (common/perform-coercions clj->api-coercions)
+      (select-keys (-> common/schemas :UserPlanWrite :properties keys))))
+
+(defn update-clj->api [user-plan-update]
+  (-> user-plan-update
+      (common/perform-coercions clj->api-coercions)
+      (select-keys (-> common/schemas :UserPlanUpdate :properties keys))))
+
 (defn clj->api [user-plan]
   (common/perform-coercions user-plan clj->api-coercions))
 
