@@ -26,6 +26,8 @@
       (common/perform-coercions clj->api-coercions)
       (select-keys (-> common/schemas :Plan :properties keys))))
 
+(def write-clj->api clj->api)
+
 (defn pg->clj [plan]
   (common/perform-coercions plan pg->clj-coercions))
 

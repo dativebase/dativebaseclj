@@ -1,10 +1,12 @@
 (ns dvb.client.core
+  "Functionality for making requests to a DativeBase instance."
   (:require [camel-snake-kebab.core :as csk]
             [camel-snake-kebab.extras :as csk-extras]
             [cheshire.core :as json]
             [clj-http.client :as client]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [dvb.client.urls :as urls]
             [dvb.common.edges.olds :as old-edges]
             [dvb.common.edges.old-access-requests :as old-access-request-edges]
             [dvb.common.edges.plans :as plan-edges]
@@ -19,92 +21,6 @@
             [dvb.common.specs.user-plans :as user-plan-specs]
             [dvb.common.openapi.serialize :as serialize]
             [dvb.common.openapi.spec :as spec]))
-
-(def local-base-url
-  (-> (for [server spec/servers :when (= :local (:id server))]
-        server) first :url))
-
-(def local-test-base-url
-  (-> (for [server spec/servers :when (= :local-test (:id server))]
-        server) first :url))
-
-(def prod-base-url
-  (-> (for [server spec/servers :when (= :prod (:id server))]
-        server) first :url))
-
-(defn forms-url [base-url old]
-  (str base-url "/api/v1/" old "/forms"))
-
-(defn new-form-url [base-url old]
-  (str base-url "/api/v1/" old "/forms/new"))
-
-(defn form-url [base-url old form-id]
-  (str base-url "/api/v1/" old "/forms/" form-id))
-
-(defn edit-form-url [base-url old form-id]
-  (str base-url "/api/v1/" old "/forms/" form-id "/edit"))
-
-(defn login-url [base-url] (str base-url "/api/v1/login"))
-
-(defn user-url [base-url user-id]
-  (str base-url "/api/v1/users/" user-id))
-
-(defn plans-for-user-url [base-url user-id]
-  (str base-url "/api/v1/users/" user-id "/plans"))
-
-(defn activate-user-url [base-url user-id registration-key]
-  (str base-url "/api/v1/users/" user-id "/activate/" registration-key))
-
-(defn deactivate-user-url [base-url user-id]
-  (str base-url "/api/v1/users/" user-id "/deactivate"))
-
-(defn edit-user-url [base-url user-id]
-  (str base-url "/api/v1/users/" user-id "/edit"))
-
-(defn users-url [base-url] (str base-url "/api/v1/users"))
-
-(defn user-plans-url [base-url] (str base-url "/api/v1/user-plans"))
-
-(defn user-plan-url [base-url user-plan-id]
-  (str base-url "/api/v1/user-plans/" user-plan-id))
-
-(defn user-olds-url [base-url] (str base-url "/api/v1/user-olds"))
-
-(defn user-old-url [base-url user-old-id]
-  (str base-url "/api/v1/user-olds/" user-old-id))
-
-(defn old-access-requests-url [base-url]
-  (str base-url "/api/v1/old-access-requests"))
-
-(defn old-access-request-url [base-url oar-id]
-  (str base-url "/api/v1/old-access-requests/" oar-id))
-
-(defn access-requests-for-old-url [base-url old-slug]
-  (str base-url "/api/v1/olds/" old-slug "/access-requests"))
-
-(defn new-user-url [base-url]
-  (str base-url "/api/v1/users/new"))
-
-(defn plans-url [base-url] (str base-url "/api/v1/plans"))
-
-(defn plan-url [base-url plan-id]
-  (str base-url "/api/v1/plans/" plan-id))
-
-(defn olds-url [base-url] (str base-url "/api/v1/olds"))
-
-(defn old-url [base-url old-slug] (str base-url "/api/v1/olds/" old-slug))
-
-(defn make-client
-  ([] (make-client :local))
-  ([type]
-   (assert (some #{type} [:prod :local :local-test])
-           "Type must be :prod, :local, or :local-test")
-   (let [spec (serialize/denormalize spec/api)]
-     {:spec spec
-      :base-url (case type
-                  :prod prod-base-url
-                  :local local-base-url
-                  :local-test local-test-base-url)})))
 
 (def default-request
   {:method :get
@@ -121,17 +37,226 @@
       (select-keys [:status :body])
       ->kebab))
 
+(defn- add-authentication-headers
+  "Given a request map and a client map, if the client contains the api-key key,
+  then add it to the headers of the request such that the request will be
+  authenticated."
+  [request {:as _client :keys [api-key]}]
+  (if api-key
+    (update request :headers merge {"X-APP-ID" (:id api-key)
+                                    "X-API-KEY" (:key api-key)})
+    request))
+
+;; Request Builders
+;;
+;; These are functions used to build public API functions, such as show-form or
+;; create-user.
+
+(defn- construct-query-params [opts boolean-query-params]
+  (when boolean-query-params
+    (->> boolean-query-params
+         (reduce
+          (fn [acc [external-key api-key]]
+            (let [option-value (get opts external-key false)]
+              (assoc acc api-key option-value)))
+          {}))))
+
+(defn- show-resource
+  "GET /<RESOURCES>/<ID>"
+  ([config client id] (show-resource config client id {}))
+  ([{:keys [method url-fn boolean-query-params api->clj-fn]
+     :or {api->clj-fn identity}}
+    {:as client :keys [base-url]} id opts]
+   (-> (if method (assoc default-request :method method) default-request)
+       (assoc :url (url-fn base-url id)
+              :query-params (construct-query-params opts boolean-query-params))
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       api->clj-fn)))
+
+(defn- show-old-specific-resource
+  "GET /<OLD_SLUG>/<RESOURCES>/<ID>"
+  ([config client old-slug id]
+   (show-old-specific-resource config client old-slug id {}))
+  ([{:keys [method url-fn boolean-query-params api->clj-fn]
+     :or {api->clj-fn identity}}
+    {:as client :keys [base-url]} old-slug id opts]
+   (-> (if method (assoc default-request :method method) default-request)
+       (assoc :url (url-fn base-url old-slug id)
+              :query-params (construct-query-params opts boolean-query-params))
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       api->clj-fn)))
+
+(defn- index-resources
+  "GET /<RESOURCES>"
+  ([config client] (index-resources config client {}))
+  ([{:keys [url-fn api->clj-fn] :or {api->clj-fn identity}}
+    {:as client :keys [base-url]}
+    {:keys [page items-per-page] :or {page 0 items-per-page 10}}]
+   (-> default-request
+       (assoc :url (url-fn base-url)
+              :query-params {:page page :items-per-page items-per-page})
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       api->clj-fn)))
+
+(defn- index-old-specific-resources
+  "GET /<OLD_SLUG>/<RESOURCES>"
+  ([config client old] (index-old-specific-resources config client old {}))
+  ([{:keys [url-fn api->clj-fn] :or {api->clj-fn identity}}
+    {:as client :keys [base-url]}
+    old
+    {:keys [page items-per-page] :or {page 0 items-per-page 10}}]
+   (-> default-request
+       (assoc :url (url-fn base-url old)
+              :query-params {:page page :items-per-page items-per-page})
+       (add-authentication-headers client)
+       client/request
+       simple-response
+       api->clj-fn)))
+
+(defn- new-resource
+  "GET /<RESOURCES>/new"
+  [{:keys [url-fn api->clj-fn] :or {api->clj-fn identity}}
+   {:as client :keys [base-url]}]
+  (-> default-request
+      (assoc :url (url-fn base-url))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      api->clj-fn))
+
+(defn- new-old-specific-resource
+  "GET /<OLD_SLUG>/<RESOURCES>/new"
+  [{:keys [url-fn api->clj-fn] :or {api->clj-fn identity}}
+   {:as client :keys [base-url]} old]
+  (-> default-request
+      (assoc :url (url-fn base-url old))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      api->clj-fn))
+
+(defn- delete-resource
+  "DELETE /<RESOURCES>/<ID>"
+  ([config client id] (delete-resource config client id {}))
+  ([config client id opts]
+   (show-resource (assoc config :method :delete) client id opts)))
+
+(defn- delete-old-specific-resource
+  "DELETE /<OLD_SLUG>/<RESOURCES>/<ID>"
+  ([config client old-slug id]
+   (delete-old-specific-resource config client old-slug id {}))
+  ([config client old-slug id opts]
+   (show-old-specific-resource
+    (assoc config :method :delete) client old-slug id opts)))
+
+(defn- create-resource
+  "POST /<RESOURCES>"
+  [{:keys [url-fn create-api->clj-fn write-clj->api-fn resource-write-spec]
+    :or {create-api->clj-fn identity
+         write-clj->api-fn identity}}
+   {:as client :keys [base-url]} resource-write]
+  (-> default-request
+      (assoc :url (url-fn base-url)
+             :method :post
+             :body (json/encode
+                    (write-clj->api-fn
+                     (merge (when resource-write-spec
+                              (gen/generate (s/gen resource-write-spec)))
+                            resource-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      create-api->clj-fn))
+
+(defn- create-old-specific-resource
+  "POST /<OLD_SLUG>/<RESOURCES>"
+  [{:keys [url-fn create-api->clj-fn write-clj->api-fn resource-write-spec]
+    :or {create-api->clj-fn identity
+         write-clj->api-fn identity}}
+   {:as client :keys [base-url]} old-slug resource-write]
+  (-> default-request
+      (assoc :url (url-fn base-url old-slug)
+             :method :post
+             :body (json/encode
+                    (write-clj->api-fn
+                     (merge (when resource-write-spec
+                              (gen/generate (s/gen resource-write-spec)))
+                            resource-write))))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      create-api->clj-fn))
+
+(defn- update-resource
+  "PUT /<RESOURCES>/<ID>"
+  [{:keys [url-fn fetch-api->clj-fn write-clj->api-fn]
+    :or {fetch-api->clj-fn identity
+         write-clj->api-fn identity}}
+   {:as client :keys [base-url]} id resource-update]
+  (-> default-request
+      (assoc :url (url-fn base-url id)
+             :method :put
+             :body (json/encode (write-clj->api-fn resource-update)))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      fetch-api->clj-fn))
+
+(defn- update-old-specific-resource
+  "PUT /<OLD_SLUG>/<RESOURCES>/<ID>"
+  [{:keys [url-fn fetch-api->clj-fn write-clj->api-fn]
+    :or {fetch-api->clj-fn identity
+         write-clj->api-fn identity}}
+   {:as client :keys [base-url]} old id resource-update]
+  (-> default-request
+      (assoc :url (url-fn base-url old id)
+             :method :put
+             :body (json/encode (write-clj->api-fn resource-update)))
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      fetch-api->clj-fn))
+
+(defn- mutate-old-access-request
+  "PUT /old-access-requests/<ID>/<MUTATION>"
+  [mutation client old-access-request-id]
+  (-> default-request
+      (assoc :url (str (urls/old-access-request-url (:base-url client)
+                                                    old-access-request-id)
+                       "/" (name mutation))
+             :method :put)
+      (add-authentication-headers client)
+      client/request
+      simple-response
+      old-access-request-edges/fetch-api->clj))
+
+;; Public API
+
+(defn make-client
+  ([] (make-client :local))
+  ([type]
+   (assert (some #{type} [:prod :local :local-test])
+           "Type must be :prod, :local, or :local-test")
+   (let [spec (serialize/denormalize spec/api)]
+     {:spec spec
+      :base-url (case type
+                  :prod urls/prod-base-url
+                  :local urls/local-base-url
+                  :local-test urls/local-test-base-url)})))
+
 (defn login [client email password]
   (-> default-request
-      (assoc :url (login-url (:base-url client))
+      (assoc :url (urls/login-url (:base-url client))
              :method :post
              :body (json/encode {:email email :password password}))
       client/request
       simple-response))
-
-;; TODO: create a persistent & stateful client using core.async. Rationale: the
-;; client can indicate when its credentials are expired and prompt the user for
-;; re-authentication.
 
 (defn authenticate-client [client email password]
   (let [{:keys [status body]} (login client email password)]
@@ -141,406 +266,200 @@
           (assoc :authenticated? true))
       (assoc client :authenticated? false))))
 
-(defn add-authentication-headers [request {:as _client :keys [api-key]}]
-  (if api-key
-    (update request :headers merge {"X-APP-ID" (:id api-key)
-                                    "X-API-KEY" (:key api-key)})
-    request))
+;; Show Resource: GET /<RESOURCES>/<ID>
 
-(defn show-user
-  "GET /users/<ID>"
-  ([client user-id] (show-user client user-id {}))
-  ([client user-id {:keys [include-plans?]
-                    :or {include-plans? false}}]
-   (-> default-request
-       (assoc :url (user-url (:base-url client) user-id)
-              :query-params {:include-plans include-plans?})
-       (add-authentication-headers client)
-       client/request
-       simple-response
-       user-edges/fetch-api->clj)))
+(def show-user
+  (partial show-resource
+           {:url-fn urls/user-url
+            :api->clj-fn user-edges/fetch-api->clj
+            :boolean-query-params {:include-plans? :include-plans}}))
 
-(defn user-plans
-  "GET /users/<ID>/plans"
-  [client user-id]
-  (-> default-request
-      (assoc :url (plans-for-user-url (:base-url client) user-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-plan-edges/fetch-api->clj))
+(def show-old
+  (partial show-resource
+           {:url-fn urls/old-url
+            :api->clj-fn old-edges/fetch-api->clj
+            :boolean-query-params {:include-users? :include-users}}))
 
-(defn edit-user
-  "GET /users/<ID>/edit"
-  [client user-id]
-  (-> default-request
-      (assoc :url (edit-user-url (:base-url client) user-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
+(def show-plan
+  (partial show-resource
+           {:url-fn urls/plan-url
+            :api->clj-fn plan-edges/fetch-api->clj
+            :boolean-query-params {:include-members? :include-members
+                                   :include-olds? :include-olds}}))
 
-(defn create-user
-  "POST /users"
-  [client user-write]
-  (-> default-request
-      (assoc :url (users-url (:base-url client))
-             :method :post
-             :body (json/encode
-                    (user-edges/write-clj->api
-                     (merge (gen/generate (s/gen ::user-specs/user-write))
-                            user-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-edges/create-api->clj))
+(def show-old-access-request
+  (partial show-resource
+           {:url-fn urls/old-access-request-url
+            :api->clj-fn old-access-request-edges/fetch-api->clj}))
 
-(defn new-user
-  "GET /users/new"
-  [client]
-  (-> default-request
-      (assoc :url (new-user-url (:base-url client)))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
+(def show-form
+  (partial show-old-specific-resource
+           {:url-fn urls/form-url}))
 
-(defn update-user
-  "PUT /users/<ID>"
-  [client user-id user-update]
-  (-> default-request
-      (assoc :url (user-url (:base-url client) user-id)
-             :method :put
-             :body (json/encode user-update))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-edges/fetch-api->clj))
+;; Delete Resource: DELETE /<RESOURCES>/<ID>
+;;
+;; We can reuse the show-resource and show-old-specific-resource helpers for
+;; these requests.
+
+(def delete-user
+  (partial delete-resource
+           {:url-fn urls/user-url
+            :api->clj-fn user-edges/fetch-api->clj}))
+
+(def delete-old
+  (partial delete-resource
+           {:url-fn urls/old-url
+            :api->clj-fn old-edges/fetch-api->clj}))
+
+(def delete-plan
+  (partial delete-resource
+           {:url-fn urls/plan-url
+            :api->clj-fn plan-edges/fetch-api->clj}))
+
+(def delete-user-plan
+  (partial delete-resource
+           {:url-fn urls/user-plan-url
+            :api->clj-fn user-plan-edges/fetch-api->clj}))
+
+(def delete-form
+  (partial delete-old-specific-resource
+           {:url-fn urls/form-url}))
+
+;; Edit Resources: GET /<RESOURCES>/<ID>/edit
+;;
+;; We can reuse the show-resource and show-old-specific-resource helpers for
+;; these GET /<RESOURCES>/<ID>/edit requests.
+
+(def edit-user (partial show-resource {:url-fn urls/edit-user-url}))
+
+(def edit-form (partial show-old-specific-resource {:url-fn urls/edit-form-url}))
+
+;; New Resource: GET /<RESOURCES>/new
+
+(def new-user (partial new-resource {:url-fn urls/new-user-url}))
+
+(def new-form (partial new-old-specific-resource {:url-fn urls/new-form-url}))
+
+;; Create Resources
+
+(def create-user
+  (partial create-resource
+           {:url-fn urls/users-url
+            :create-api->clj-fn user-edges/create-api->clj
+            :write-clj->api-fn user-edges/write-clj->api
+            :resource-write-spec ::user-specs/user-write}))
+
+(def create-plan
+  (partial create-resource
+           {:url-fn urls/plans-url
+            :create-api->clj-fn plan-edges/create-api->clj
+            :write-clj->api-fn plan-edges/write-clj->api
+            :resource-write-spec ::plan-specs/plan-write}))
+
+(def create-old
+  (partial create-resource
+           {:url-fn urls/olds-url
+            :create-api->clj-fn old-edges/create-api->clj
+            :write-clj->api-fn old-edges/write-clj->api
+            :resource-write-spec ::old-specs/old-write}))
+
+(def create-user-plan
+  (partial create-resource
+           {:url-fn urls/user-plans-url
+            :create-api->clj-fn user-plan-edges/create-api->clj
+            :write-clj->api-fn user-plan-edges/clj->api
+            :resource-write-spec ::user-plan-specs/user-plan-write}))
+
+(def create-user-old
+  (partial create-resource
+           {:url-fn urls/user-olds-url
+            :create-api->clj-fn user-old-edges/create-api->clj
+            :write-clj->api-fn user-old-edges/clj->api
+            :resource-write-spec ::user-old-specs/user-old-write}))
+
+(def create-old-access-request
+  (partial create-resource
+           {:url-fn urls/old-access-requests-url
+            :create-api->clj-fn old-access-request-edges/create-api->clj
+            :write-clj->api-fn old-access-request-edges/write-clj->api
+            :resource-write-spec ::old-access-request-specs/old-access-request-write}))
+
+(def create-form
+  (partial create-old-specific-resource
+           {:url-fn urls/forms-url}))
+
+;; Update Resource: PUT /<RESOURCES>/<ID>
+
+(def update-user
+  (partial update-resource {:url-fn urls/user-url
+                            :fetch-api->clj-fn user-edges/fetch-api->clj}))
+
+(def update-old
+  (partial update-resource {:url-fn urls/old-url
+                            :fetch-api->clj-fn old-edges/fetch-api->clj}))
+
+(def update-user-plan
+  (partial update-resource {:url-fn urls/user-plan-url
+                            :fetch-api->clj-fn user-plan-edges/fetch-api->clj}))
+
+(def update-user-old
+  (partial update-resource {:url-fn urls/user-old-url
+                            :fetch-api->clj-fn user-old-edges/fetch-api->clj}))
+
+(def update-form
+  (partial update-old-specific-resource {:url-fn urls/form-url}))
+
+;; Bespoke / Custom Operations
+
+(def deactivate-user
+  "GET /users/<ID>/deactivate"
+  (partial show-resource
+           {:url-fn urls/deactivate-user-url
+            :api->clj-fn user-edges/fetch-api->clj}))
 
 (defn activate-user
   "GET /users/<ID>/activate/<KEY>"
-  [client user-id registration-key]
+  [{:as _client :keys [base-url]} user-id registration-key]
   (-> default-request
-      (assoc :url (activate-user-url (:base-url client) user-id registration-key))
+      (assoc :url (urls/activate-user-url base-url user-id registration-key))
       client/request
       simple-response
       user-edges/fetch-api->clj))
 
-(defn deactivate-user
-  "GET /users/<ID>/deactivate"
-  [client user-id]
-  (-> default-request
-      (assoc :url (deactivate-user-url (:base-url client) user-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-edges/fetch-api->clj))
+;; Index Resources: GET /<RESOURCES
 
-(defn delete-user
-  "DELETE /users/<ID>. Note: client fn is implemented but the endpoint is not,
-  so this will return 404."
-  [client user-id]
-  (-> default-request
-      (assoc :url (user-url (:base-url client) user-id)
-             :method :delete)
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-edges/fetch-api->clj))
+(def index-users
+  (partial index-resources {:url-fn urls/users-url
+                            :api->clj-fn user-edges/index-api->clj}))
 
-(defn index-users
-  "GET /users"
-  ([client] (index-users client {}))
-  ([client {:keys [page items-per-page]
-            :or {page 0 items-per-page 10}}]
-   (-> default-request
-       (assoc :url (users-url (:base-url client))
-              :query-params {:page page :items-per-page items-per-page})
-       (add-authentication-headers client)
-       client/request
-       simple-response
-       user-edges/index-api->clj)))
+(def index-olds
+  (partial index-resources {:url-fn urls/olds-url
+                            :api->clj-fn old-edges/index-api->clj}))
 
-(defn create-old
-  "POST /olds"
-  [client old-write]
-  (-> default-request
-      (assoc :url (olds-url (:base-url client))
-             :method :post
-             :body (json/encode
-                    (old-edges/write-clj->api
-                     (merge (gen/generate (s/gen ::old-specs/old-write))
-                            old-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-edges/create-api->clj))
+(def index-forms
+  (partial index-old-specific-resources
+           {:url-fn urls/forms-url}))
 
-(defn update-old
-  "PUT /olds/<SLUG>"
-  [client old-slug old-update]
-  (-> default-request
-      (assoc :url (old-url (:base-url client) old-slug)
-             :method :put
-             :body (json/encode old-update))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-edges/fetch-api->clj))
+;; Miscellaneious Operations
 
-(defn delete-old
-  "DELETE /olds/<SLUG>"
-  [client old-slug]
-  (-> default-request
-      (assoc :url (old-url (:base-url client) old-slug)
-             :method :delete)
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-edges/fetch-api->clj))
-
-(defn show-old
-  "GET /olds/<SLUG>"
-  ([client old-slug] (show-old client old-slug {}))
-  ([client old-slug {:keys [include-users?]
-                     :or {include-users? false}}]
-   (-> default-request
-       (assoc :url (old-url (:base-url client) old-slug)
-              :query-params {:include-users include-users?})
-       (add-authentication-headers client)
-       client/request
-       simple-response
-       old-edges/fetch-api->clj)))
-
-(defn index-olds
-  "GET /olds"
-  ([client] (index-olds client {}))
-  ([client {:keys [page items-per-page]
-            :or {page 0 items-per-page 10}}]
-   (-> default-request
-       (assoc :url (olds-url (:base-url client))
-              :query-params {:page page :items-per-page items-per-page})
-       (add-authentication-headers client)
-       client/request
-       simple-response
-       old-edges/index-api->clj)))
-
-(defn create-old-access-request
-  "POST /old-access-requests"
-  [client old-access-request-write]
-  (-> default-request
-      (assoc :url (old-access-requests-url (:base-url client))
-             :method :post
-             :body (json/encode
-                    (old-access-request-edges/write-clj->api
-                     (merge (gen/generate (s/gen ::old-access-request-specs/old-access-request-write))
-                            old-access-request-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-access-request-edges/create-api->clj))
-
-(defn show-old-access-request
-  "GET /old-access-requests/<ID>"
-  [client old-access-request-id]
-  (-> default-request
-      (assoc :url (old-access-request-url (:base-url client)
-                                          old-access-request-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-access-request-edges/fetch-api->clj))
-
-(defn access-requests-for-old
-  "GET /olds/<SLUG>/access-requests"
-  [client old-slug]
-  (-> default-request
-      (assoc :url (access-requests-for-old-url (:base-url client) old-slug))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-access-request-edges/index-for-old-api->clj))
-
-(defn mutate-old-access-request
-  "PUT /old-access-requests/<ID>/<MUTATION>"
-  [mutation client old-access-request-id]
-  (-> default-request
-      (assoc :url (str (old-access-request-url (:base-url client)
-                                               old-access-request-id)
-                       "/" (name mutation))
-             :method :put)
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      old-access-request-edges/fetch-api->clj))
+(def access-requests-for-old
+  (partial show-resource
+           {:url-fn urls/access-requests-for-old-url
+            :api->clj-fn old-access-request-edges/index-for-old-api->clj}))
 
 (def approve-old-access-request (partial mutate-old-access-request :approve))
 (def reject-old-access-request (partial mutate-old-access-request :reject))
 (def retract-old-access-request (partial mutate-old-access-request :retract))
 
-(defn create-plan
-  "POST /plans"
-  [client plan-write]
+(defn user-plans
+  "GET /users/<ID>/plans"
+  [client user-id]
   (-> default-request
-      (assoc :url (plans-url (:base-url client))
-             :method :post
-             :body (json/encode
-                    (plan-edges/clj->api
-                     (merge (gen/generate (s/gen ::plan-specs/plan-write))
-                            plan-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      plan-edges/create-api->clj))
-
-(defn create-user-plan
-  "POST /user-plans"
-  [client user-plan-write]
-  (-> default-request
-      (assoc :url (user-plans-url (:base-url client))
-             :method :post
-             :body (json/encode
-                    (user-plan-edges/clj->api
-                     (merge (gen/generate (s/gen ::user-plan-specs/user-plan-write))
-                            user-plan-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-plan-edges/create-api->clj))
-
-(defn update-user-plan
-  "PUT /user-plans/<ID>"
-  [client user-plan-id user-plan-update]
-  (-> default-request
-      (assoc :url (user-plan-url (:base-url client) user-plan-id)
-             :method :put
-             :body (json/encode user-plan-update))
+      (assoc :url (urls/plans-for-user-url (:base-url client) user-id))
       (add-authentication-headers client)
       client/request
       simple-response
       user-plan-edges/fetch-api->clj))
-
-(defn delete-user-plan
-  "DELETE /users-plan/<ID>"
-  [client user-plan-id]
-  (-> default-request
-      (assoc :url (user-plan-url (:base-url client) user-plan-id)
-             :method :delete)
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-plan-edges/fetch-api->clj))
-
-(defn delete-plan
-  "DELETE /plans/<ID>"
-  [client plan-id]
-  (-> default-request
-      (assoc :url (plan-url (:base-url client) plan-id)
-             :method :delete)
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      plan-edges/fetch-api->clj))
-
-(defn show-plan
-  "GET /plans/<ID>"
-  ([client plan-id] (show-plan client plan-id {}))
-  ([client plan-id {:keys [include-members?
-                           include-olds?]
-                    :or {include-members? false
-                         include-olds? false}}]
-   (-> default-request
-       (assoc :url (plan-url (:base-url client) plan-id)
-              :query-params {:include-members include-members?
-                             :include-olds include-olds?})
-       (add-authentication-headers client)
-       client/request
-       simple-response
-       plan-edges/fetch-api->clj)))
-
-(defn create-form
-  "POST /forms"
-  [client old form-write]
-  (-> default-request
-      (assoc :url (forms-url (:base-url client) old)
-             :method :post
-             :body (json/encode form-write))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
-
-(defn new-form
-  "GET /forms/new"
-  [client old]
-  (-> default-request
-      (assoc :url (new-form-url (:base-url client) old))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
-
-(defn edit-form
-  "GET /forms/<ID>/edit"
-  [client old form-id]
-  (-> default-request
-      (assoc :url (edit-form-url (:base-url client) old form-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
-
-(defn show-form
-  "GET /forms/<ID>"
-  [client old form-id]
-  (-> default-request
-      (assoc :url (form-url (:base-url client) old form-id))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
-
-(defn delete-form
-  "DELETE /forms/<ID>"
-  [client old form-id]
-  (-> default-request
-      (assoc :url (form-url (:base-url client) old form-id)
-             :method :delete)
-      (add-authentication-headers client)
-      client/request
-      simple-response))
-
-(defn update-form
-  "PUT /forms/<ID>"
-  [client old form-id form-write]
-  (-> default-request
-      (assoc :url (form-url (:base-url client) old form-id)
-             :method :put
-             :body (json/encode form-write))
-      (add-authentication-headers client)
-      client/request
-      simple-response))
-
-(defn create-user-old
-  "POST /user-olds"
-  [client user-old-write]
-  (-> default-request
-      (assoc :url (user-olds-url (:base-url client))
-             :method :post
-             :body (json/encode
-                    (user-old-edges/clj->api
-                     (merge (gen/generate (s/gen ::user-old-specs/user-old-write))
-                            user-old-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-old-edges/create-api->clj))
-
-(defn update-user-old
-  "PUT /user-olds/<ID>"
-  [client user-old-id user-old-update]
-  (-> default-request
-      (assoc :url (user-old-url (:base-url client) user-old-id)
-             :method :put
-             :body (json/encode user-old-update))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      user-old-edges/fetch-api->clj))
 
 (comment
 

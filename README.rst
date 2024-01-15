@@ -11,7 +11,6 @@ storing, searching, sharing, and analyzing linguistic data.
 TODOs
 ================================================================================
 
-- TODO: As a user of DativeBase, I should be able to request access to an OLD.
 - TODO: refactor and DRY-ify these things
   - DVB Client (split out into separate namespaces and/or create helper
     abstractions)
@@ -19,6 +18,11 @@ TODOs
 - TODO: Support password reset
 - TODO: Consider introducing rate limiting on user creation to help prevent
   abuse, i.e., overloading the system with user creation requests from bots.
+- TODO: In the client, consider creating a persistent & stateful client using
+  core.async. Rationale: the client can indicate when its credentials are
+  expired and prompt the user for re-authentication.
+- TODO: In the client, consider validating the payload (e.g., for PUT and POST
+  requests) client-side before making the request.
 
 
 Authorization
