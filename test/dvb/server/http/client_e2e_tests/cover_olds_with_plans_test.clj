@@ -1,7 +1,9 @@
 (ns dvb.server.http.client-e2e-tests.cover-olds-with-plans-test
   "Tests that verify that, starting with just a user, we can use the API to
   ensure the user has a free plan and an OLD running under it."
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
+            [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
             [dvb.client.core :as client]
             [dvb.common.specs.olds :as old-specs]
@@ -37,8 +39,10 @@
                 {plan-with-members :body} (client/show-plan client
                                                             plan-id
                                                             {:include-members? true})
-                {{:as old old-slug :slug} :body} (client/create-old
-                                                  client {:plan-id plan-id})
+                {{:as old old-slug :slug} :body}
+                (client/create-old
+                 client (merge (gen/generate (s/gen ::old-specs/old-write))
+                               {:plan-id plan-id}))
                 summary {:user
                          (-> user-with-plans
                              (select-keys [:id :email :is-superuser? :plans])
@@ -57,11 +61,16 @@
                      (-> summary :old (dissoc :name)))))
             (testing "Sad-ish path: a second user cannot pay for their OLD under
                       a plan not managed by that user."
-              (let [{:keys [status] error :body} (client/create-old
-                                                  client-2 {:plan-id plan-id})]
+              (let [{:keys [status] error :body}
+                    (client/create-old
+                     client-2
+                     (assoc (gen/generate (s/gen ::old-specs/old-write))
+                            :plan-id plan-id))]
                 (is (= 403 status))
                 (is (= "unauthorized" (-> error :errors first :error-code))))
-              (let [{old-2 :body} (client/create-old client-2 {})]
+              (let [{old-2 :body} (client/create-old
+                                   client-2
+                                   (gen/generate (s/gen ::old-specs/old-write)))]
                 (is (old-specs/old? old-2))
                 (is (nil? (:plan-id old-2)))
                 (testing "If a manager of the plan makes user 2 a manager too,
@@ -71,10 +80,11 @@
                            :plan-id plan-id
                            :role :manager})
                   (let [{old-2-slug :slug} old-2
-                        {old-2-updated :body} (client/update-old
-                                               client-2
-                                               old-2-slug
-                                               {:plan-id plan-id})]
+                        {old-2-updated :body}
+                        (client/update-old
+                         client-2
+                         old-2-slug
+                         (assoc old-2 :plan-id plan-id))]
                     (is (old-specs/old? old-2-updated))
                     (is (= plan-id (:plan-id old-2-updated))))))))))
       (finally (component/stop system)))))

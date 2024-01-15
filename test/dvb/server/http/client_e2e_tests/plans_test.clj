@@ -30,6 +30,11 @@
             client-2 (client/authenticate-client
                       (client/make-client :local-test)
                       (:email user-2) u2-pwd)]
+        (testing "Plan creation fails in the client if the payload is invalid"
+          (let [ex (try (client/create-plan client {:tier :gorgonzola-tier})
+                        (catch Exception e (ex-data e)))]
+            (is (= :invalid-given-enum (:error-code ex)))
+            (is (= [:tier] (-> ex :data :path)))))
         (testing "We can create a new plan."
           (let [{:keys [status] {:as created-plan plan-id :id} :body}
                 (client/create-plan client {:tier :free})]
@@ -87,7 +92,7 @@
                         (client/update-user-plan
                          client-2
                          (:id created-user-plan-2)
-                         {:role :manager})]
+                         (assoc created-user-plan-2 :role :manager))]
                     (is (= 403 status))
                     (is (= "unauthorized" (-> error :errors first :error-code)))))
                 (testing "The original user can upgrade the second user from member to manager of the plan that the original user created (and manages)."
@@ -95,7 +100,7 @@
                         (client/update-user-plan
                          client
                          (:id created-user-plan-2)
-                         {:role :manager})]
+                         (assoc created-user-plan-2 :role :manager))]
                     (is (= 200 status))
                     (is (user-plan-specs/user-plan? updated-user-plan-2))))
                 (testing "We can fetch our user with its plans."
@@ -157,7 +162,9 @@
                                          (:members plan-with-members))))))))))
               (testing "We can create an OLD running under our plan."
                 (let [{{:as old old-slug :slug} :body}
-                      (client/create-old client {:plan-id plan-id})]
+                      (client/create-old client
+                                         (assoc (test-data/gen-old-write)
+                                                :plan-id plan-id))]
                   (is (old-specs/old? old))
                   (testing "We can view our plan with its members and its OLDs"
                     (let [{:keys [status] plan-with-members-and-olds :body}

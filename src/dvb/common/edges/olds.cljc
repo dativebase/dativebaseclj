@@ -26,7 +26,10 @@
       (common/perform-coercions clj->api-coercions)
       (select-keys (-> common/schemas :OLDWrite :properties keys))))
 
-(def update-clj->api write-clj->api)
+(defn update-clj->api [old-update]
+  (-> old-update
+      (common/perform-coercions clj->api-coercions)
+      (select-keys (-> common/schemas :OLDUpdate :properties keys))))
 
 (defn api->clj [old]
   (-> old

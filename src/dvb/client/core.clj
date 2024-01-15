@@ -4,8 +4,6 @@
             [camel-snake-kebab.extras :as csk-extras]
             [cheshire.core :as json]
             [clj-http.client :as client]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]
             [dvb.client.urls :as urls]
             [dvb.common.edges.olds :as old-edges]
             [dvb.common.edges.old-access-requests :as old-access-request-edges]
@@ -13,12 +11,7 @@
             [dvb.common.edges.users :as user-edges]
             [dvb.common.edges.user-olds :as user-old-edges]
             [dvb.common.edges.user-plans :as user-plan-edges]
-            [dvb.common.specs.olds :as old-specs]
-            [dvb.common.specs.old-access-requests :as old-access-request-specs]
-            [dvb.common.specs.plans :as plan-specs]
-            [dvb.common.specs.users :as user-specs]
-            [dvb.common.specs.user-olds :as user-old-specs]
-            [dvb.common.specs.user-plans :as user-plan-specs]
+            [dvb.common.openapi.validate :as validate]
             [dvb.common.openapi.serialize :as serialize]
             [dvb.common.openapi.spec :as spec]))
 
@@ -155,73 +148,95 @@
    (show-old-specific-resource
     (assoc config :method :delete) client old-slug id opts)))
 
+(defn- write-payload
+  "Construct the write payload to be sent as the JSON body of a POST request.
+  Validate the payload here if `openapi-schema` is not nil.
+  - `resource-write`: the payload (map, with Clojure conventions) provided by
+    the caller.
+  - `clj->api-fn`: a function that can transform the payload from Clojure
+    conventions to API conventions.
+  - `openapi-schema`: (nillable map) the OpenAPI schema for validating the
+    resulting payload before sending it to the server."
+  [resource-write clj->api-fn openapi-schema]
+  (cond-> resource-write
+    :always clj->api-fn
+    openapi-schema (validate/validate openapi-schema [])))
+
 (defn- create-resource
   "POST /<RESOURCES>"
-  [{:keys [url-fn create-api->clj-fn write-clj->api-fn resource-write-spec]
+  [{:keys [url-fn create-api->clj-fn write-clj->api-fn openapi-schema]
     :or {create-api->clj-fn identity
          write-clj->api-fn identity}}
-   {:as client :keys [base-url]} resource-write]
-  (-> default-request
-      (assoc :url (url-fn base-url)
-             :method :post
-             :body (json/encode
-                    (write-clj->api-fn
-                     (merge (when resource-write-spec
-                              (gen/generate (s/gen resource-write-spec)))
-                            resource-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      create-api->clj-fn))
+   {:as client :keys [base-url spec]} resource-write]
+  (let [payload (write-payload resource-write write-clj->api-fn
+                               (and openapi-schema
+                                    (-> spec :components :schemas
+                                        openapi-schema)))]
+    (-> default-request
+        (assoc :url (url-fn base-url)
+               :method :post
+               :body (json/encode payload))
+        (add-authentication-headers client)
+        client/request
+        simple-response
+        create-api->clj-fn)))
 
 (defn- create-old-specific-resource
   "POST /<OLD_SLUG>/<RESOURCES>"
-  [{:keys [url-fn create-api->clj-fn write-clj->api-fn resource-write-spec]
+  [{:keys [url-fn create-api->clj-fn write-clj->api-fn openapi-schema]
     :or {create-api->clj-fn identity
          write-clj->api-fn identity}}
-   {:as client :keys [base-url]} old-slug resource-write]
-  (-> default-request
-      (assoc :url (url-fn base-url old-slug)
-             :method :post
-             :body (json/encode
-                    (write-clj->api-fn
-                     (merge (when resource-write-spec
-                              (gen/generate (s/gen resource-write-spec)))
-                            resource-write))))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      create-api->clj-fn))
+   {:as client :keys [base-url spec]} old-slug resource-write]
+  (let [payload (write-payload resource-write write-clj->api-fn
+                               (and openapi-schema
+                                    (-> spec :components :schemas
+                                        openapi-schema)))]
+    (-> default-request
+        (assoc :url (url-fn base-url old-slug)
+               :method :post
+               :body (json/encode payload))
+        (add-authentication-headers client)
+        client/request
+        simple-response
+        create-api->clj-fn)))
 
 (defn- update-resource
   "PUT /<RESOURCES>/<ID>"
-  [{:keys [url-fn fetch-api->clj-fn write-clj->api-fn]
+  [{:keys [url-fn fetch-api->clj-fn update-clj->api-fn openapi-schema]
     :or {fetch-api->clj-fn identity
-         write-clj->api-fn identity}}
-   {:as client :keys [base-url]} id resource-update]
-  (-> default-request
-      (assoc :url (url-fn base-url id)
-             :method :put
-             :body (json/encode (write-clj->api-fn resource-update)))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      fetch-api->clj-fn))
+         update-clj->api-fn identity}}
+   {:as client :keys [base-url spec]} id resource-update]
+  (let [payload (write-payload resource-update update-clj->api-fn
+                               (and openapi-schema
+                                    (-> spec :components :schemas
+                                        openapi-schema)))]
+    (-> default-request
+        (assoc :url (url-fn base-url id)
+               :method :put
+               :body (json/encode payload))
+        (add-authentication-headers client)
+        client/request
+        simple-response
+        fetch-api->clj-fn)))
 
 (defn- update-old-specific-resource
   "PUT /<OLD_SLUG>/<RESOURCES>/<ID>"
-  [{:keys [url-fn fetch-api->clj-fn write-clj->api-fn]
+  [{:keys [url-fn fetch-api->clj-fn update-clj->api-fn openapi-schema]
     :or {fetch-api->clj-fn identity
-         write-clj->api-fn identity}}
-   {:as client :keys [base-url]} old id resource-update]
-  (-> default-request
-      (assoc :url (url-fn base-url old id)
-             :method :put
-             :body (json/encode (write-clj->api-fn resource-update)))
-      (add-authentication-headers client)
-      client/request
-      simple-response
-      fetch-api->clj-fn))
+         update-clj->api-fn identity}}
+   {:as client :keys [base-url spec]} old id resource-update]
+  (let [payload (write-payload resource-update update-clj->api-fn
+                               (and openapi-schema
+                                    (-> spec :components :schemas
+                                        openapi-schema)))]
+    (-> default-request
+        (assoc :url (url-fn base-url old id)
+               :method :put
+               :body (json/encode payload))
+        (add-authentication-headers client)
+        client/request
+        simple-response
+        fetch-api->clj-fn)))
 
 (defn- mutate-old-access-request
   "PUT /old-access-requests/<ID>/<MUTATION>"
@@ -347,67 +362,81 @@
            {:url-fn urls/users-url
             :create-api->clj-fn user-edges/create-api->clj
             :write-clj->api-fn user-edges/write-clj->api
-            :resource-write-spec ::user-specs/user-write}))
+            :openapi-schema :UserWrite}))
 
 (def create-plan
   (partial create-resource
            {:url-fn urls/plans-url
             :create-api->clj-fn plan-edges/create-api->clj
             :write-clj->api-fn plan-edges/write-clj->api
-            :resource-write-spec ::plan-specs/plan-write}))
+            :openapi-schema :PlanWrite}))
 
 (def create-old
   (partial create-resource
            {:url-fn urls/olds-url
             :create-api->clj-fn old-edges/create-api->clj
             :write-clj->api-fn old-edges/write-clj->api
-            :resource-write-spec ::old-specs/old-write}))
+            :openapi-schema :OLDWrite}))
 
 (def create-user-plan
   (partial create-resource
            {:url-fn urls/user-plans-url
             :create-api->clj-fn user-plan-edges/create-api->clj
             :write-clj->api-fn user-plan-edges/clj->api
-            :resource-write-spec ::user-plan-specs/user-plan-write}))
+            :openapi-schema :UserPlanWrite}))
 
 (def create-user-old
   (partial create-resource
            {:url-fn urls/user-olds-url
             :create-api->clj-fn user-old-edges/create-api->clj
             :write-clj->api-fn user-old-edges/clj->api
-            :resource-write-spec ::user-old-specs/user-old-write}))
+            :openapi-schema :UserOLDWrite}))
 
 (def create-old-access-request
   (partial create-resource
            {:url-fn urls/old-access-requests-url
             :create-api->clj-fn old-access-request-edges/create-api->clj
             :write-clj->api-fn old-access-request-edges/write-clj->api
-            :resource-write-spec ::old-access-request-specs/old-access-request-write}))
+            :openapi-schema :OLDAccessRequestWrite}))
 
 (def create-form
   (partial create-old-specific-resource
-           {:url-fn urls/forms-url}))
+           {:url-fn urls/forms-url
+            :openapi-schema :FormWrite}))
 
 ;; Update Resource: PUT /<RESOURCES>/<ID>
 
 (def update-user
-  (partial update-resource {:url-fn urls/user-url
-                            :fetch-api->clj-fn user-edges/fetch-api->clj}))
+  (partial update-resource
+           {:url-fn urls/user-url
+            :update-clj->api-fn user-edges/update-clj->api
+            :fetch-api->clj-fn user-edges/fetch-api->clj
+            :openapi-schema :UserUpdate}))
 
 (def update-old
-  (partial update-resource {:url-fn urls/old-url
-                            :fetch-api->clj-fn old-edges/fetch-api->clj}))
+  (partial update-resource
+           {:url-fn urls/old-url
+            :update-clj->api-fn old-edges/update-clj->api
+            :fetch-api->clj-fn old-edges/fetch-api->clj
+            :openapi-schema :OLDUpdate}))
 
 (def update-user-plan
-  (partial update-resource {:url-fn urls/user-plan-url
-                            :fetch-api->clj-fn user-plan-edges/fetch-api->clj}))
+  (partial update-resource
+           {:url-fn urls/user-plan-url
+            :update-clj->api-fn user-plan-edges/update-clj->api
+            :fetch-api->clj-fn user-plan-edges/fetch-api->clj
+            :openapi-schema :UserPlanUpdate}))
 
 (def update-user-old
-  (partial update-resource {:url-fn urls/user-old-url
-                            :fetch-api->clj-fn user-old-edges/fetch-api->clj}))
+  (partial update-resource
+           {:url-fn urls/user-old-url
+            :update-clj->api-fn user-old-edges/update-clj->api
+            :fetch-api->clj-fn user-old-edges/fetch-api->clj
+            :openapi-schema :UserOLDUpdate}))
 
 (def update-form
-  (partial update-old-specific-resource {:url-fn urls/form-url}))
+  (partial update-old-specific-resource
+           {:url-fn urls/form-url}))
 
 ;; Bespoke / Custom Operations
 

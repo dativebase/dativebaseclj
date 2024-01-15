@@ -22,6 +22,16 @@
 (defn clj->api [user-old]
   (common/perform-coercions user-old clj->api-coercions))
 
+(defn write-clj->api [user-old-write]
+  (-> user-old-write
+      (common/perform-coercions clj->api-coercions)
+      (select-keys (-> common/schemas :UserOLDWrite :properties keys))))
+
+(defn update-clj->api [user-old-update]
+  (-> user-old-update
+      (common/perform-coercions clj->api-coercions)
+      (select-keys (-> common/schemas :UserOLDUpdate :properties keys))))
+
 (defn pg->clj [user-old]
   (common/perform-coercions user-old pg->clj-coercions))
 
