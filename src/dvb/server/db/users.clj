@@ -17,6 +17,9 @@
          get-user-with-olds*
          get-user-with-plans*
          get-user-with-roles*
+         most-recent-user-created-by-ip-address*
+         refresh-registration-key*
+         reset-password*
          update-user*)
 
 (hugsql/def-db-fns "sql/users.sql")
@@ -26,6 +29,11 @@
 
 (defn get-user-by-email [db-conn email]
   (user-edges/pg->clj (get-user-by-email* db-conn {:email email})))
+
+(defn most-recent-user-created-by-ip-address [db-conn ip-address]
+  (user-edges/pg->clj (most-recent-user-created-by-ip-address*
+                       db-conn
+                       {:created-by-ip-address ip-address})))
 
 (defn get-user-with-roles [db-conn id]
   (let [[user :as rows] (get-user-with-roles* db-conn {:id id})]
@@ -91,7 +99,11 @@
         (events/create-event tconn (utils/mutation user "users"))
         user))))
 
-(def create-user (partial mutate :create))
+(defn create-user [db-conn user]
+  (mutate :create db-conn
+          (update user
+                  :created-by-ip-address
+                  (fnil identity "unknown"))))
 
 (def update-user (partial mutate :update))
 
@@ -114,3 +126,14 @@
    (mapv user-edges/pg->clj
          (get-users* db-conn {:limit limit
                               :offset offset}))))
+
+(defn refresh-registration-key [db-conn id]
+  (refresh-registration-key*
+   db-conn
+   {:id id
+    :registration-key (random-uuid)}))
+
+(defn reset-password [db-conn id new-password]
+  (reset-password*
+   db-conn {:id id
+            :new-password (encrypt/hashpw new-password)}))

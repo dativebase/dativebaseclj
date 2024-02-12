@@ -156,3 +156,46 @@
                   :content {:application-json {:schema {:$ref "#/components/schemas/Plans"}}}}
            "400" {:description "The request for the plans of a user was invalid."
                   :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def initiate-password-reset-path
+  {:get
+   {:operation-id :initiate-password-reset
+    :summary "Initiate the resetting of the user's password."
+    :description "Initiate the resetting of the user's password. This works only if the user is active. It will refresh the user's registration key and email that key to the user. Only with that key can the user make a successful password reset request."
+    :tags [:Authentication]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    ;; security is optional on purpose; password reset is typically needed by a
+    ;; user who cannot authenticate.
+    :security [{}
+               {:x-api-key []
+                :x-app-id []}]
+    :responses
+    (assoc common/common-path-responses
+           "204" {:description "Successful request to initiate the reset of the user's password. The user's registration key has been refreshed and this secret key has been emailed to the email address of the user. The user must now use this key in order to make a successful password reset request."}
+           "400" {:description "The request to initiate the resetting of the user's password was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})
+
+(def reset-password-path
+  {:put
+   {:operation-id :reset-password
+    :summary "Reset the user's password to the specified value in the payload."
+    :description "Reset the user's password to the specified value in the payload. The request payload must contain the valid password reset secret key."
+    :tags [:Authentication]
+    :parameters [{:$ref "#/components/parameters/acceptJSONHeaderParam"}
+                 {:$ref "#/components/parameters/userIDParam"}]
+    ;; security is optional on purpose; password reset is typically needed by a
+    ;; user who cannot authenticate.
+    :security [{}
+               {:x-api-key []
+                :x-app-id []}]
+    :request-body
+    {:description "The payload containing the new user password as well as the valid password reset secret key. This payload must conform to schema UserPasswordReset."
+     :required true
+     :content {:application-json {:schema {:$ref "#/components/schemas/UserPasswordReset"}}}}
+    :responses
+    (assoc common/common-path-responses
+           "200" {:description "Successful request to reset of the user's password."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/User"}}}}
+           "400" {:description "The request to reset the user's password was invalid."
+                  :content {:application-json {:schema {:$ref "#/components/schemas/ErrorBadRequest400"}}}})}})

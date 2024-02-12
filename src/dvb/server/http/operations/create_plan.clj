@@ -8,7 +8,9 @@
             [dvb.server.db.user-plans :as db.user-plans]
             [dvb.server.http.authorize :as authorize]
             [dvb.server.http.operations.utils :as utils]
-            [dvb.server.log :as log])
+            [dvb.server.log :as log]
+            [dvb.server.system.clock :as clock]
+            [java-time.api :as jt])
   (:import (org.postgresql.util PSQLException)))
 
 (defn- create-plan-in-db
@@ -58,22 +60,56 @@
       (log/warn message data)
       (throw (errors/error-code->ex-info :prohibited-plan-tier)))))
 
+;; 24h between plan creations for a single IP
+(def minimum-seconds-between-plan-creation (* 24 60 60))
+
+(defn- rate-limit [database clock remote-addr]
+  (when-let [other-plan (db.plans/most-recent-plan-created-by-ip-address
+                         database remote-addr)]
+    (let [now (clock/now clock)
+          other-plan-created-at (:created-at other-plan)
+          seconds-since-last-creation
+          (jt/as (jt/duration other-plan-created-at now) :seconds)]
+      (when (< seconds-since-last-creation minimum-seconds-between-plan-creation)
+        (let [message "Plan creation blocked by rate limiting."
+              data {:message message
+                    :ip-address remote-addr
+                    :last-plan-id-created-by-this-ip (:id other-plan)
+                    :last-plan-ip-created-by-this-ip (:created-by-ip-address other-plan)
+                    :last-plan-created-at (:created-at other-plan)
+                    :seconds-since-last-creation seconds-since-last-creation
+                    :retry-after minimum-seconds-between-plan-creation
+                    :minimum-seconds-between-plan-creation minimum-seconds-between-plan-creation
+                    :operation-id :create-plan}]
+          (log/warn message data)
+          (let [error-code :too-many-requests
+                response-429 (assoc-in
+                              (errors/error-code->response error-code)
+                              [:body :errors 0 :retry-after]
+                              (* minimum-seconds-between-plan-creation 60 60))]
+            (throw (ex-info (errors/error-code->message error-code)
+                            response-429))))))))
+
 (defn handle
   "Create a new plan. Plan creation entails making the creating user a manager
   of the plan by creating a row in the users_plans table."
-  [{:keys [database]} {:as ctx plan-write :request-body}]
+  [{:keys [database clock]} {:as ctx plan-write :request-body :keys [request]}]
   (log/info "Creating a plan.")
   (authorize/authorize ctx)
   (let [plan-write (plan-edges/api->clj plan-write)
         authenticated-user-id (utils/security-user-id ctx)]
     (jdbc/with-db-transaction [tx database]
       (let [user-with-plans (db.users/get-user-with-plans
-                             tx authenticated-user-id)]
+                             tx authenticated-user-id)
+            remote-addr (utils/remote-addr request)]
         (authorize user-with-plans)
         (validate plan-write authenticated-user-id)
-        (let [plan (create-plan-in-db tx (assoc plan-write
-                                                :created-by authenticated-user-id
-                                                :updated-by authenticated-user-id))]
+        (rate-limit database clock remote-addr)
+        (let [plan (create-plan-in-db
+                    tx (assoc plan-write
+                              :created-by authenticated-user-id
+                              :updated-by authenticated-user-id
+                              :created-by-ip-address (or remote-addr "unknown")))]
           (db.user-plans/create-user-plan
            tx {:user-id authenticated-user-id
                :plan-id (:id plan)

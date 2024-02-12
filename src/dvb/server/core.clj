@@ -22,6 +22,8 @@
             [dvb.server.http.operations.delete-user-plan :as delete-user-plan]
             [dvb.server.http.operations.edit-form :as edit-form]
             [dvb.server.http.operations.edit-user :as edit-user]
+            [dvb.server.http.operations.initiate-password-reset :as
+             initiate-password-reset]
             [dvb.server.http.operations.index-forms :as index-forms]
             [dvb.server.http.operations.index-olds :as index-olds]
             [dvb.server.http.operations.index-users :as index-users]
@@ -29,6 +31,7 @@
             [dvb.server.http.operations.new-form :as new-form]
             [dvb.server.http.operations.new-user :as new-user]
             [dvb.server.http.operations.reject-old-access-request :as reject-old-access-request]
+            [dvb.server.http.operations.reset-password :as reset-password]
             [dvb.server.http.operations.retract-old-access-request :as retract-old-access-request]
             [dvb.server.http.operations.show-form :as show-form]
             [dvb.server.http.operations.show-old :as show-old]
@@ -45,6 +48,7 @@
             [dvb.server.system.config :as config]
             [dvb.server.system.clock :as clock]
             [dvb.server.system.db :as db]
+            [dvb.server.system.email :as email]
             [dvb.server.system.log :as system.log]
             dvb.server.time
             [dvb.server.utils :as utils]
@@ -69,6 +73,7 @@
    :delete-user-plan delete-user-plan/handle
    :edit-form edit-form/handle
    :edit-user edit-user/handle
+   :initiate-password-reset initiate-password-reset/handle
    :index-forms index-forms/handle
    :index-olds index-olds/handle
    :index-users index-users/handle
@@ -76,6 +81,7 @@
    :new-form new-form/handle
    :new-user new-user/handle
    :reject-old-access-request reject-old-access-request/handle
+   :reset-password reset-password/handle
    :retract-old-access-request retract-old-access-request/handle
    :show-form show-form/handle
    :show-old show-old/handle
@@ -93,13 +99,15 @@
   (component/system-map
    :database (db/make-db (:db config))
    :clock (clock/make-clock)
+   :email (email/make-email)
    :application (component/using
                  (server/make-application
                   {:spec spec/api
                    :operations operations
                    :security-handlers {:api-key api-key/handle}})
                  [:clock
-                  :database])
+                  :database
+                  :email])
    :web-server (component/using
                 (server/make-web-server {:port (:server-port config)})
                 [:application])))

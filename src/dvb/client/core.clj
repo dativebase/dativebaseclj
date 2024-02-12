@@ -413,6 +413,13 @@
             :fetch-api->clj-fn user-edges/fetch-api->clj
             :openapi-schema :UserUpdate}))
 
+(def reset-password
+  (partial update-resource
+           {:url-fn urls/reset-password-url
+            :update-clj->api-fn user-edges/user-password-reset-clj->api
+            :fetch-api->clj-fn user-edges/fetch-api->clj
+            :openapi-schema :UserPasswordReset}))
+
 (def update-old
   (partial update-resource
            {:url-fn urls/old-url
@@ -444,6 +451,12 @@
   "GET /users/<ID>/deactivate"
   (partial show-resource
            {:url-fn urls/deactivate-user-url
+            :api->clj-fn user-edges/fetch-api->clj}))
+
+(def initiate-password-reset
+  "GET /users/<ID>/initiate-password-reset"
+  (partial show-resource
+           {:url-fn urls/initiate-password-reset-url
             :api->clj-fn user-edges/fetch-api->clj}))
 
 (defn activate-user

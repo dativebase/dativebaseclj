@@ -1,6 +1,6 @@
 -- :name create-plan* :returning-execute :one-kebab
-INSERT INTO plans (tier, created_by, updated_by)
-  VALUES (:tier, :created-by, :updated-by)
+INSERT INTO plans (tier, created_by, updated_by, created_by_ip_address)
+  VALUES (:tier, :created-by, :updated-by, :created-by-ip-address)
   RETURNING *
 
 -- :name update-plan* :returning-execute :one-kebab
@@ -75,3 +75,11 @@ SELECT p.*
   WHERE p.destroyed_at IS NULL
     AND up.user_id = :user-id::uuid
   ORDER BY p.inserted_at, p.id
+
+-- :name most-recent-plan-created-by-ip-address* :query :one-kebab
+-- :doc Get the most recently created plan with the supplied :created-by-ip-address value. Useful for rate-limiting to discourage fraudulent plan creation.
+SELECT *
+   FROM plans
+   WHERE created_by_ip_address = :created-by-ip-address
+     AND destroyed_at IS NULL
+   ORDER BY created_at DESC

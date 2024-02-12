@@ -8,19 +8,6 @@ anybody who needs to manage language-focused data. DativeBase facilitates
 storing, searching, sharing, and analyzing linguistic data.
 
 
-TODOs
-================================================================================
-
-- TODO: Support password reset
-- TODO: Consider introducing rate limiting on user creation to help prevent
-  abuse, i.e., overloading the system with user creation requests from bots.
-- TODO: In the client, consider creating a persistent & stateful client using
-  core.async. Rationale: the client can indicate when its credentials are
-  expired and prompt the user for re-authentication.
-- TODO: Allow log configuration to stdout and/or file and ensure that log
-  messages can be parsed consistently.
-
-
 Authorization
 ================================================================================
 
@@ -92,6 +79,16 @@ It would probably be wise to support user deactivation (as a minimal user
 deletion strategy) in the short term. It should be noted that a user could still
 exist in the system while having access to no OLDs and no plans, which in itself
 is a form of deactivation.
+
+In order to reset the password of a user, the following steps must be taken.
+
+1. The user makes a ``GET /users/<ID>/initiate-password-reset`` call.
+2. DativeBase refreshes the user's registration key and emails this key to the
+   email address of the user.
+3. The user makes a ``PUT /users/<ID>/reset-password`` call. The JSON payload
+   contains the new ``password`` and the ``secret-key``, whose value is the
+   registration key that we emailed to the user. If successful, the password of
+   the user will be set to the password supplied in this PUT request.
 
 
 User Read

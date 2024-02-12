@@ -50,7 +50,7 @@
     ;; This will return nil if valid and throw if invalid
     (sh/lint-openapi openapi-path)
 
-    )
+    ) ;; if this returns nil without throwing, that means success
 
 )
 

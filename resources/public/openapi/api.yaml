@@ -320,6 +320,13 @@ components:
           example: free
       required: [tier]
       example: {tier: free}
+    UserPasswordReset:
+      type: object
+      properties:
+        password: {type: string, description: The new password for the user. This can never again be fetched from the API., example: '8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF'}
+        secret_key: {type: string, description: The password reset secret key. This will have been emailed to the user as a result of an initiate-password-reset request., example: 0d8b0d0b-4a06-4f7d-9bb9-f0e34bd96ff6}
+      required: [password, secret_key]
+      example: {password: '8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF', secret_key: 0d8b0d0b-4a06-4f7d-9bb9-f0e34bd96ff6}
     UserOLD:
       type: object
       properties:
@@ -469,24 +476,11 @@ components:
     UserUpdate:
       type: object
       properties:
-        email: {type: string, format: email, description: The email address of the user., example: ab@gmail.com}
-        created_by: {type: string, format: uuid, example: 9328472d-c4d4-4d02-b444-1dd0de3479d3, description: The ID (UUID) of the user who created the user., nullable: true}
-        is_superuser: {type: boolean, description: Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users., example: false, default: false}
-        last_name: {type: string, description: The last name of the user., example: Boleyn}
         first_name: {type: string, description: The first name of the user., example: Anne}
-        registration_status:
-          type: string
-          enum: [pending, registered, deactivated]
-          description: The registration status of the user. All users start out as pending. Successful activation transitions the user to registered. If the user is deactivated, its registration status becomes deactivated.
-          example: registered
-        password: {type: string, description: The password for the to-be-created user. This can never again be fetched from the API., example: '8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF'}
-        plans:
-          type: array
-          description: The plans to which this user has access.
-          items: {$ref: '#/components/schemas/PlanOfUser'}
-          example: []
-        updated_by: {type: string, format: uuid, example: 9328472d-c4d4-4d02-b444-1dd0de3479d3, description: The ID (UUID) of the user who last updated the user., nullable: true}
-      example: {first_name: Anne, last_name: Boleyn, email: ab@gmail.com, password: long-arbitrary-lots-of-entropy, is_superuser: false}
+        last_name: {type: string, description: The last name of the user., example: Boleyn}
+        email: {type: string, format: email, description: The email address of the user., example: ab@gmail.com}
+        is_superuser: {type: boolean, description: Boolean indicating whether the user is a superuser. Only superusers can do things like create new OLDs and new users., example: false, default: false}
+      example: {first_name: Anne, last_name: Boleyn, email: ab@gmail.com, is_superuser: false}
     ErrorNotFound404:
       type: object
       description: An error object for indicating that the endpoint or operation was not found.
@@ -1786,6 +1780,66 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/users/{user_id}/initiate-password-reset:
+    get:
+      operationId: initiate_password_reset
+      summary: Initiate the resetting of the user's password.
+      description: Initiate the resetting of the user's password. This works only if the user is active. It will refresh the user's registration key and email that key to the user. Only with that key can the user make a successful password reset request.
+      tags: [Authentication]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/userIDParam'}
+      security:
+      - {}
+      - x_api_key: []
+        x_app_id: []
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request to initiate the resetting of the user's password was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+        '204': {description: Successful request to initiate the reset of the user's password. The user's registration key has been refreshed and this secret key has been emailed to the email address of the user. The user must now use this key in order to make a successful password reset request.}
   /api/v1/user-olds/{user_old_id}:
     put:
       operationId: update_user_old
@@ -3061,6 +3115,76 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/UserPlan'}
+        '403':
+          description: The client is not authorized to perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized403'}
+        '406':
+          description: Either no `Accept` header was provided or the provided header is not recognized. The only currently recognized accept header is `application/json`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnrecognizedAcceptHeader406'}
+        '500':
+          description: There was an error in DativeBase while attempting to respond to the request. The operators of this service will be alerted to the issue and will address it in a timely manner.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorServer500'}
+  /api/v1/users/{user_id}/reset-password:
+    put:
+      operationId: reset_password
+      summary: Reset the user's password to the specified value in the payload.
+      description: Reset the user's password to the specified value in the payload. The request payload must contain the valid password reset secret key.
+      tags: [Authentication]
+      parameters:
+      - {$ref: '#/components/parameters/acceptJSONHeaderParam'}
+      - {$ref: '#/components/parameters/userIDParam'}
+      security:
+      - {}
+      - x_api_key: []
+        x_app_id: []
+      requestBody:
+        description: The payload containing the new user password as well as the valid password reset secret key. This payload must conform to schema UserPasswordReset.
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserPasswordReset'}
+      responses:
+        '429':
+          description: Too many requests. This client has exceeded this API's request rate limit. The client may retry after the period specified in the response and the X header.
+          headers:
+            Retry_After:
+              description: The number of seconds that the client must wait before making further requests to this API.
+              schema: {type: integer, minimum: 0}
+              example: 60
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorTooManyRequests429'}
+        '404':
+          description: The operation or endpoint of the request was not found. The server does not recognize the path of the requests or the path is recognized but the method is not.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorNotFound404'}
+        '401':
+          description: The client is not authenticated and therefore cannot perform this operation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnauthorized401'}
+        '503':
+          description: The DativeBase is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorUnavailable503'}
+        '400':
+          description: The request to reset the user's password was invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ErrorBadRequest400'}
+        '200':
+          description: Successful request to reset of the user's password.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
         '403':
           description: The client is not authorized to perform this operation.
           content:

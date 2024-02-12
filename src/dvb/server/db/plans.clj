@@ -12,6 +12,7 @@
          get-plan-with-olds*
          get-plans*
          get-plans-for-user*
+         most-recent-plan-created-by-ip-address*
          delete-plan*)
 
 (hugsql/def-db-fns "sql/plans.sql")
@@ -50,6 +51,11 @@
   (assoc (get-plan-with-olds db-conn id)
          :members (:members (get-plan-with-members db-conn id))))
 
+(defn most-recent-plan-created-by-ip-address [db-conn ip-address]
+  (plan-edges/pg->clj (most-recent-plan-created-by-ip-address*
+                       db-conn
+                       {:created-by-ip-address ip-address})))
+
 (defn- mutate [mutation db-conn plan]
   (jdbc/with-db-transaction [tconn db-conn]
     (let [db-plan ((case mutation
@@ -62,7 +68,12 @@
       (events/create-event tconn (utils/mutation plan "plans"))
       plan)))
 
-(def create-plan (partial mutate :create))
+(defn create-plan [db-conn plan]
+  (mutate :create
+          db-conn
+          (update plan
+                  :created-by-ip-address
+                  (fnil identity "unknown"))))
 
 (def update-plan (partial mutate :update))
 

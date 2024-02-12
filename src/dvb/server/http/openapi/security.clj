@@ -67,21 +67,34 @@
 
 (defn run-security
   "Run each security option entailed by the supplied OpenAPI spec under
-   `:security`. As soon as one security option is successful, return the
-   supplied `ctx` with a new `:security` key, whose value is the map returned by
-   the first successful security handler; this map will have an
-   `:authenticated?` key whose value is `true`.
+  `:security`. If the current operation specifies a security configuration, use
+  it; otherwise, use the global OpenAPI security configuration. NOTE: If any
+  one security option is successful, then the entire security check has
+  passed. This accords with the OpenAPI 3.0 spec.
 
-   If no security options succeed, throw an exception that will result in a 401
-   response.
+  Return the supplied `ctx` with a new `:security` key, whose value is a map
+  with an `:authenticated?` key and any other keys present in the map(s)
+  returned by the successful security handler(s). The value of `:authenticated?`
+  will always be `true`. The rest of the map will be comprised of the
+  merger of all maps of all successful authentication challenges.
 
-   NOTES:
+  If no security options succeed, throw an exception that will result in a 401
+  response.
 
-   - Only the `:api-key` security `:type` is supported currently.
+  NOTES:
 
-   The `http-component` must contain a `:security-handlers` key whose value is a
-   map from security types to handler functions that implement the appropriate
-   security check. At present, the only security type recognized is `:api-key`."
+  - The only security scheme type that currently supported is `:api-key`.
+  - To disable security checks on an endpoint, set `:security` to `[]`.
+  - To make security checks on an endpoint optional, set `:security` to a
+    vector containing an empty map (representing no security) and a
+    security-specifying map (representing the optional authentication
+    credentials), e.g., `[{} {:x-api-key [] :x-app-id []}]`.
+
+  The `http-component` must contain at path `[:spec :security]` a vector
+  specifying the security to be run. Under `:security-handlers` must be a map
+  from handler keywords to the trinary fns that implement the security check,
+  e.g., `{:api-key fn [system context api-key-data] ...)}`. At present, the only
+  security type recognized is `:api-key`."
   [{:as http-component
     {:as _spec :keys [components] global-security :security} :spec}
    {:as ctx {operation-security :security} :operation}]
@@ -98,7 +111,10 @@
                                  (catch Exception e {:authenticated? false
                                                      :exc e}))]
                  (if (:authenticated? result)
-                   (reduced result)
+                   ;; Note: we continue to reduce even after we know
+                   ;; authentication has succeeded. This allows us to accumulate
+                   ;; all of the successful authentication results.
+                   (merge agg result)
                    (update agg :results conj result))))
              {:authenticated? false
               :results []}

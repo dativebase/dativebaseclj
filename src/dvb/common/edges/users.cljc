@@ -39,6 +39,16 @@
       (set/rename-keys clj->api-rename-keys)
       (select-keys (-> common/schemas :User :properties keys))))
 
+(defn user-password-reset-api->clj [user-password-reset]
+  (-> user-password-reset
+      (common/perform-coercions {:secret-key utils/str->uuid})
+      (select-keys (-> common/schemas :UserPasswordReset :properties keys))))
+
+(defn user-password-reset-clj->api [user-password-reset]
+  (-> user-password-reset
+      (common/perform-coercions {:secret-key utils/uuid->str})
+      (select-keys (-> common/schemas :UserPasswordReset :properties keys))))
+
 (defn write-clj->api [user-write]
   (-> user-write
       (common/perform-coercions clj->api-coercions)

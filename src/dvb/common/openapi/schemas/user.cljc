@@ -95,7 +95,33 @@
                        :is-superuser false})))
 
 ;; `UserUpdate`
-(def user-update (dissoc user-write :required))
+(def user-update
+  (let [ks [:first-name
+            :last-name
+            :email
+            :is-superuser]]
+    (-> user-write
+        (dissoc :required)
+        (update :properties select-keys ks)
+        (update :example select-keys ks))))
+
+;; `UserPasswordReset`
+(def user-password-reset
+  (let [password
+        {:type :string
+         :description "The new password for the user. This can never again be fetched from the API."
+         :example "8#$(6)496!8@{}sadfoiuqwerjasdfjlASDFASDFASDF"}
+        secret-key
+        {:type :string
+         :description "The password reset secret key. This will have been emailed to the user as a result of an initiate-password-reset request."
+         :example "0d8b0d0b-4a06-4f7d-9bb9-f0e34bd96ff6"}]
+    {:type :object
+     :properties {:password password
+                  :secret-key secret-key}
+     :required [:password
+                :secret-key]
+     :example {:password (:example password)
+               :secret-key (:example secret-key)}}))
 
 ;; `PageOfUsers`
 (def page-of-users

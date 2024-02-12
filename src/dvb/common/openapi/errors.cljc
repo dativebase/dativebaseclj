@@ -19,6 +19,7 @@
    :deletion-request-for-current-user [400 "The deletion request is prohibited because the authenticated user cannot delete itself."]
    :duplicate-items [400 "The provided array contains duplicate items. All items must be unique."]
    :inconsistent-pagination-inputs [400 "The provided pagination inputs are not consistent with the state of this API and the resource targeted."]
+   :initiate-password-reset-failed [400 "Failed to initiate a password reset."]
    :invalid-array [400 "The provided value is not a valid array."]
    :invalid-boolean [400 "The provided value is not a valid boolean."]
    :invalid-date [400 "The provided value is not a valid date string as per RFC 3339, section 5.6."]
@@ -48,6 +49,7 @@
    :redundant-request [400 "The request is redundant. This typically means that the action attempted by the request has already been performed by a previous request."]
    :required-parameter-absent [400 "A required parameter was not provided."]
    :required-json-request-body-absent [400 "A JSON request body is required for this operation."]
+   :secret-key-invalid [400 "The provided secret key is invalid. Password reset prohibited."]
    :unique-email-constraint-violated [400 "There is already an entity in the system with the supplied email address."]
    :unique-slug-constraint-violated [400 "There is already an OLD in the system with the supplied slug."]
    :user-activation-failed [400 "The supplied user registration key was incorrect. The user could not be activated."]
@@ -65,6 +67,8 @@
    :unrecognized-operation [404 "The requested URL path and HTTP method combination is not recognized by this API."]
    :unrecognized-request-path [404 "The requested URL path is not recognized by this API."]
    :unrecognized-request-url [404 "The requested URL is not recognized by this API."]
+   ;; 429
+   :too-many-requests [429 "Too many requests have been made against this endpoint in recent time"]
    ;; 500
    :error-recognizing-request-url [500 "Error when attempting to validate the request URL."]
    :error-response-should-be-empty [500 "Error: the response should have an empty response body; however, the server was attempting to return a non-empty body."]
@@ -92,9 +96,9 @@
      {:status status
       :headers {"Content-Type" "application/json"}
       :body {:errors [(cond-> {:message message
-                                 :error-code (name error-code)}
-                          data
-                          (assoc :data data))]}})))
+                               :error-code (name error-code)}
+                        data
+                        (assoc :data data))]}})))
 
 (defn error-code->ex-info
   ([error-code] (error-code->ex-info error-code nil))
