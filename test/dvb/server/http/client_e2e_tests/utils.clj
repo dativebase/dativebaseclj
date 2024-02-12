@@ -46,3 +46,6 @@
      :superuser superuser
      :superuser-password su-pwd
      :old old}))
+
+(defn gen-ip []
+  (str (rand-int 256) "." (rand-int 256) "." (rand-int 256) "." (rand-int 256)))

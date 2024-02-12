@@ -175,10 +175,12 @@
                      :error-unrecognized-response-status
                      {:operation-id operation-id
                       :unrecognized-status status}))
-             (and (not content) response)
+             (and (not content) body)
              (throw (errors/error-code->ex-info
                      :error-response-should-be-empty
                      {:operation-id operation-id}))
+             (and (not content) (not body))
+             response ;; No body expected by spec, no body returned by handler; do nothing.
              :else
              (assoc response :body (validate/validate body schema)))))))
 

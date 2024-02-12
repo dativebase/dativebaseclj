@@ -80,6 +80,8 @@
 (def new-user-url (partial new-resource-url :users))
 (def plans-for-user-url (partial suffixed-resource-url :users :plans))
 (def deactivate-user-url (partial suffixed-resource-url :users :deactivate))
+(def initiate-password-reset-url (partial suffixed-resource-url :users :initiate-password-reset))
+(def reset-password-url (partial suffixed-resource-url :users :reset-password))
 (def activate-user-url (partial suffixed-paramed-resource-url :users :activate))
 
 ;; Plans

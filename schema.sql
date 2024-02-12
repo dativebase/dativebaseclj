@@ -80,7 +80,8 @@ CREATE TABLE public.plans (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     destroyed_at timestamp with time zone,
     created_by uuid NOT NULL,
-    updated_by uuid NOT NULL
+    updated_by uuid NOT NULL,
+    created_by_ip_address text DEFAULT 'unknown'::text NOT NULL
 );
 
 CREATE TABLE public.schema_version (
@@ -110,7 +111,8 @@ CREATE TABLE public.users (
     updated_by uuid,
     inserted_at timestamp with time zone DEFAULT now() NOT NULL,
     registration_status text DEFAULT 'pending'::text NOT NULL,
-    registration_key uuid DEFAULT public.uuid_generate_v4() NOT NULL
+    registration_key uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    created_by_ip_address text DEFAULT 'unknown'::text NOT NULL
 );
 
 CREATE TABLE public.users_olds (
@@ -178,6 +180,8 @@ ALTER TABLE ONLY public.users_plans
 ALTER TABLE ONLY public.users_plans
     ADD CONSTRAINT users_plans_unique UNIQUE NULLS NOT DISTINCT (user_id, plan_id, destroyed_at);
 
+CREATE INDEX created_by_ip_address_created_at_idx ON public.users USING btree (created_by_ip_address, created_at);
+
 CREATE INDEX events_history_idx ON public.events USING btree (old_slug, table_name, row_id);
 
 CREATE INDEX forms_inserted_at_id_idx ON public.forms USING btree (inserted_at, id);
@@ -185,6 +189,8 @@ CREATE INDEX forms_inserted_at_id_idx ON public.forms USING btree (inserted_at, 
 CREATE INDEX forms_old_slug_idx ON public.forms USING btree (old_slug);
 
 CREATE INDEX forms_transcription_trgm_idx ON public.forms USING gin (transcription public.gin_trgm_ops);
+
+CREATE INDEX plans_created_by_ip_address_created_at_idx ON public.plans USING btree (created_by_ip_address, created_at);
 
 CREATE INDEX schema_version_s_idx ON public.schema_version USING btree (success);
 

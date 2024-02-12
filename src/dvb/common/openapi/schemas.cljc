@@ -64,6 +64,7 @@
    :UserOLD user-old/user-old
    :UserOLDWrite user-old/user-old-write
    :UserOLDUpdate user-old/user-old-update
+   :UserPasswordReset user/user-password-reset
    :UserPlan user-plan/user-plan
    :UserPlanWrite user-plan/user-plan-write
    :UserPlanUpdate user-plan/user-plan-update

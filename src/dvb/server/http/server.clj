@@ -27,7 +27,7 @@
          (resource-mid/wrap-resource "public"))
      req)))
 
-(defrecord Application [spec operations security-handlers database]
+(defrecord Application [spec operations security-handlers database clock email]
   component/Lifecycle
   (start [this] (update this :spec serialize/denormalize))
   (stop [this] this))

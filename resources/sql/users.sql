@@ -6,14 +6,16 @@ INSERT INTO users (first_name,
                    password,
                    is_superuser,
                    created_by,
-                   updated_by)
+                   updated_by,
+                   created_by_ip_address)
   VALUES (:first-name,
           :last-name,
           :email,
           :password,
           :is-superuser?,
           :created-by,
-          :updated-by)
+          :updated-by,
+          :created-by-ip-address)
   RETURNING *
 
 -- :name update-user* :returning-execute :one-kebab
@@ -25,6 +27,13 @@ UPDATE users
       is_superuser = :is-superuser?,
       updated_at = now(),
       updated_by = :updated-by
+  WHERE id = :id::uuid
+  RETURNING *
+
+-- :name reset-password* :returning-execute :one-kebab
+-- :doc Set the password of the user with id :id to :new-password.
+UPDATE users
+  SET password = :new-password
   WHERE id = :id::uuid
   RETURNING *
 
@@ -44,6 +53,13 @@ UPDATE users
   WHERE id = :id::uuid
   RETURNING *
 
+-- :name refresh-registration-key* :returning-execute :one-kebab
+-- :doc Refresh the user's registration key by setting it to the supplied registration-key.
+UPDATE users
+  SET registration_key = :registration-key::uuid
+  WHERE id = :id::uuid
+  RETURNING *
+
 -- :name get-user* :query :one-kebab
 -- :doc Get a user by its id.
 SELECT *
@@ -57,6 +73,15 @@ SELECT *
   FROM users
   WHERE email = :email
     AND destroyed_at IS NULL
+
+-- :name most-recent-user-created-by-ip-address* :query :one-kebab
+-- :doc Get the most recently created user with the supplied :created-by-ip-address value and which was created anonymously. Useful for rate-limiting authentication-less user signup.
+SELECT *
+  FROM users
+  WHERE created_by_ip_address = :created-by-ip-address
+    AND destroyed_at IS NULL
+    AND created_by IS NULL
+  ORDER BY created_at DESC
 
 -- :name get-user-with-roles* :query :many-kebab
 -- :doc Get a user by its id, including all the roles on all the OLDs for that user.

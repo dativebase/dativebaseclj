@@ -103,3 +103,8 @@
                   :error-code :no-managerless-plans}]
         (log/warn message data)
         (throw (errors/error-code->ex-info :role-transition-violation data))))))
+
+(defn remote-addr
+  "This function exists solely for the purpose of having something we can stub out in tests."
+  [request]
+  (:remote-addr request))
