@@ -19,7 +19,10 @@
   (when maybe-u (str maybe-u)))
 
 (defn maybe-str->uuid [maybe-s]
-  (when maybe-s (str->uuid maybe-s)))
+  (when maybe-s
+    (if (uuid? maybe-s)
+      maybe-s
+      (str->uuid maybe-s))))
 
 (defn str->instant [s] (jt/instant s))
 

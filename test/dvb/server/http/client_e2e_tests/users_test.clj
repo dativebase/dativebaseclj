@@ -266,11 +266,10 @@
         ip-2 (u/gen-ip)
         unauthenticated-client (client/make-client :local-test)]
     (testing "Rate limiting works"
-      (let [{:keys [database clock] :as system} (component/start (u/new-system))]
+      (let [{:keys [database] :as system} (component/start (u/new-system))]
         (bond/with-stub [[utils/remote-addr (constantly ip-1)]]
           (try
-            (let [{:keys [user user-password superuser superuser-password]}
-                  (u/setup database)]
+            (let [_unused (u/setup database)]
               (testing "An unauthenticated client can create a new user."
                 (let [new-user-password "1234"
                       {:keys [status] created-user :body}
@@ -304,8 +303,7 @@
                     (is (user-specs/user? created-user))))))
             (finally (component/stop system))))))
     (testing "Rate limiting does not apply after enough time has passed"
-      (let [{:keys [database clock] :as system}
-            (component/start (assoc (u/new-system) :clock test-clock))]
+      (let [system (component/start (assoc (u/new-system) :clock test-clock))]
         (bond/with-stub [[utils/remote-addr (constantly ip-1)]]
           (try
             (testing "An unauthenticated client can create a new user."

@@ -39,9 +39,9 @@
                  {:$ref "#/components/parameters/oldSlugPathParam"}
                  {:$ref "#/components/parameters/formIDParam"}]
     :request-body
-    {:description "The payload representing the desired new state of the form. This payload must conform to the schema FormWrite."
+    {:description "The payload representing the desired new state of the form. This payload must conform to the schema FormUpdate."
      :required true
-     :content {:application-json {:schema {:$ref "#/components/schemas/FormWrite"}}}}
+     :content {:application-json {:schema {:$ref "#/components/schemas/FormUpdate"}}}}
     :responses
     (assoc common/common-path-responses
            "200" {:description "The updated form."
