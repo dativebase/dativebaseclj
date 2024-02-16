@@ -61,6 +61,14 @@
    :required [:transcription]
    :example {:transcription "Les chiens mangeaient."}})
 
+;; `FormUpdate`
+(def form-update
+  (let [ks [:transcription]]
+    (-> form-write
+        (dissoc :required)
+        (update :properties select-keys ks)
+        (update :example select-keys ks))))
+
 ;; `PageOfForms`
 (def page-of-forms
   {:type :object

@@ -141,7 +141,7 @@
                         (is (= "too-many-requests" (u/first-error-code error)))
                         (testing "Rate limiting no longer applies if the requester has an unseen IP address."
                           (bond/with-stub [[utils/remote-addr (constantly ip-2)]]
-                            (let [{:keys [status] new-plan :body}
+                            (let [{:keys [status]}
                                   (client/create-plan additional-user-client
                                                       {:tier :free})]
                               (is (= 201 status)))))))))))))

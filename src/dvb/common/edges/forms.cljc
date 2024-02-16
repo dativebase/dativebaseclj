@@ -18,6 +18,10 @@
       (common/perform-coercions clj->api-coercions)
       (select-keys (-> common/schemas :Form :properties keys))))
 
+(defn clj->pg [form]
+  (-> form
+      (common/perform-coercions clj->pg-coercions)))
+
 (defn write-clj->api [form-write]
   (-> form-write
       (common/perform-coercions clj->api-coercions)
@@ -41,4 +45,9 @@
 (defn fetch-api->clj [{:as response :keys [status]}]
   (if (= 200 status)
     (update response :body api->clj)
+    response))
+
+(defn index-api->clj [{:as response :keys [status]}]
+  (if (= 200 status)
+    (update-in response [:body :data] (partial mapv api->clj))
     response))

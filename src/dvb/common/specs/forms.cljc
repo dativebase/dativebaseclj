@@ -4,7 +4,7 @@
             [dvb.common.specs.common :as common]))
 
 (s/def ::id uuid?)
-(s/def ::old-slug string?)
+(s/def ::old-slug keyword?)
 (s/def ::transcription ::common/non-empty-string)
 (s/def ::created-at ::common/created-at)
 (s/def ::inserted-at ::common/inserted-at)
@@ -18,16 +18,27 @@
                    ::old-slug
                    ::transcription
                    ::created-at
-                   ::inserted-at
                    ::updated-at
                    ::destroyed-at
                    ::created-by
-                   ::updated-by]))
+                   ::updated-by]
+          :opt-un [::inserted-at]))
+
+(s/def ::forms (s/coll-of ::form))
+
+(s/def ::form-write
+  (s/keys :req-un [::transcription]))
 
 (s/def ::create-form
   (s/keys :req-un [::old-slug
                    ::transcription
                    ::created-by]))
+
+(defn form? [x] (s/valid? ::form x))
+
+(defn forms? [x] (s/valid? ::forms x))
+
+(defn form-write? [x] (s/valid? ::form-write x))
 
 (comment
 

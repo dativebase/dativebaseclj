@@ -39,6 +39,7 @@
    :ErrorUnavailable error/error-unavailable
    :ErrorUnavailable503 error/error-unavailable-503
    :Form form/form
+   :FormUpdate form/form-update
    :FormWrite form/form-write
    :Login login/login
    :MemberOfPlan user/member-of-plan

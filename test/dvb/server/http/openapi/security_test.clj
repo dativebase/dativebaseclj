@@ -1,8 +1,6 @@
 (ns dvb.server.http.openapi.security-test
   (:require [clojure.test :refer [deftest testing is]]
-            [dvb.server.http.openapi.security :as sut]
-            [dvb.common.openapi.spec :as spec]
-            [dvb.common.openapi.serialize :as serialize]))
+            [dvb.server.http.openapi.security :as sut]))
 
 ;; The tricky thing about security in OpenAPI is that the :security key (whether
 ;; it be at the root of the spec or top-level in an operation object) is a

@@ -13,7 +13,7 @@
                                   :entity-creation-internal-error
                                   data e)))]
     (try
-      (db.forms/create-form database form-to-create)
+      (db.forms/create-form database (form-edges/clj->pg form-to-create))
       (catch Exception e (throw-500 e)))))
 
 (defn handle [{:keys [database]}

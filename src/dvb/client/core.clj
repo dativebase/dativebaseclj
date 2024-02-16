@@ -5,6 +5,7 @@
             [cheshire.core :as json]
             [clj-http.client :as client]
             [dvb.client.urls :as urls]
+            [dvb.common.edges.forms :as form-edges]
             [dvb.common.edges.olds :as old-edges]
             [dvb.common.edges.old-access-requests :as old-access-request-edges]
             [dvb.common.edges.plans :as plan-edges]
@@ -186,7 +187,9 @@
   [{:keys [url-fn create-api->clj-fn write-clj->api-fn openapi-schema]
     :or {create-api->clj-fn identity
          write-clj->api-fn identity}}
-   {:as client :keys [base-url spec]} old-slug resource-write]
+   {:as client :keys [base-url spec]}
+   old-slug
+   resource-write]
   (let [payload (write-payload resource-write write-clj->api-fn
                                (and openapi-schema
                                     (-> spec :components :schemas
@@ -224,7 +227,10 @@
   [{:keys [url-fn fetch-api->clj-fn update-clj->api-fn openapi-schema]
     :or {fetch-api->clj-fn identity
          update-clj->api-fn identity}}
-   {:as client :keys [base-url spec]} old id resource-update]
+   {:as client :keys [base-url spec]}
+   old
+   id
+   resource-update]
   (let [payload (write-payload resource-update update-clj->api-fn
                                (and openapi-schema
                                     (-> spec :components :schemas
@@ -309,7 +315,8 @@
 
 (def show-form
   (partial show-old-specific-resource
-           {:url-fn urls/form-url}))
+           {:url-fn urls/form-url
+            :api->clj-fn form-edges/fetch-api->clj}))
 
 ;; Delete Resource: DELETE /<RESOURCES>/<ID>
 ;;
@@ -338,7 +345,8 @@
 
 (def delete-form
   (partial delete-old-specific-resource
-           {:url-fn urls/form-url}))
+           {:url-fn urls/form-url
+            :api->clj-fn form-edges/fetch-api->clj}))
 
 ;; Edit Resources: GET /<RESOURCES>/<ID>/edit
 ;;
@@ -402,6 +410,8 @@
 (def create-form
   (partial create-old-specific-resource
            {:url-fn urls/forms-url
+            :create-api->clj-fn form-edges/create-api->clj
+            :write-clj->api-fn form-edges/write-clj->api
             :openapi-schema :FormWrite}))
 
 ;; Update Resource: PUT /<RESOURCES>/<ID>
@@ -443,7 +453,10 @@
 
 (def update-form
   (partial update-old-specific-resource
-           {:url-fn urls/form-url}))
+           {:url-fn urls/form-url
+            :update-clj->api-fn form-edges/update-clj->api
+            :fetch-api->clj-fn form-edges/fetch-api->clj
+            :openapi-schema :FormUpdate}))
 
 ;; Bespoke / Custom Operations
 
@@ -480,9 +493,10 @@
 
 (def index-forms
   (partial index-old-specific-resources
-           {:url-fn urls/forms-url}))
+           {:url-fn urls/forms-url
+            :api->clj-fn form-edges/index-api->clj}))
 
-;; Miscellaneious Operations
+;; Miscellaneous Operations
 
 (def access-requests-for-old
   (partial show-resource
