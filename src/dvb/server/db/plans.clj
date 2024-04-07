@@ -1,6 +1,6 @@
 (ns dvb.server.db.plans
   (:require [clojure.java.jdbc :as jdbc]
-            [dvb.common.edges.plans :as plan-edges]
+            [dvb.common.edges.plans :as edges]
             [dvb.server.db.events :as events]
             [dvb.server.db.utils :as utils]
             [hugsql.core :as hugsql]))
@@ -18,7 +18,7 @@
 (hugsql/def-db-fns "sql/plans.sql")
 
 (defn get-plan [db-conn id]
-  (plan-edges/pg->clj (get-plan* db-conn {:id id})))
+  (edges/pg->clj (get-plan* db-conn {:id id})))
 
 (defn get-plan-with-members [db-conn id]
   (let [[plan :as rows] (get-plan-with-members* db-conn {:id id})]
@@ -30,7 +30,7 @@
                                    :id user-id
                                    :user-plan-id user-plan-id})
                                 rows))
-          plan-edges/pg->clj)
+          edges/pg->clj)
       (when-let [plan (get-plan db-conn id)]
         (assoc plan :members [])))))
 
@@ -43,7 +43,7 @@
                             (map :old-slug)
                             (filter some?)
                             set sort vec))
-          plan-edges/pg->clj)
+          edges/pg->clj)
       (when-let [plan (get-plan db-conn id)]
         (assoc plan :olds [])))))
 
@@ -52,7 +52,7 @@
          :members (:members (get-plan-with-members db-conn id))))
 
 (defn most-recent-plan-created-by-ip-address [db-conn ip-address]
-  (plan-edges/pg->clj (most-recent-plan-created-by-ip-address*
+  (edges/pg->clj (most-recent-plan-created-by-ip-address*
                        db-conn
                        {:created-by-ip-address ip-address})))
 
@@ -63,8 +63,8 @@
                      :update update-plan*
                      :delete delete-plan*)
                    tconn
-                   (plan-edges/clj->pg plan))
-          plan (plan-edges/pg->clj db-plan)]
+                   (edges/clj->pg plan))
+          plan (edges/pg->clj db-plan)]
       (events/create-event tconn (utils/mutation plan "plans"))
       plan)))
 
@@ -86,7 +86,7 @@
   ([db-conn] (get-plans db-conn 10))
   ([db-conn limit] (get-plans db-conn limit 0))
   ([db-conn limit offset]
-   (mapv plan-edges/pg->clj
+   (mapv edges/pg->clj
          (get-plans* db-conn {:limit limit
                               :offset offset}))))
 

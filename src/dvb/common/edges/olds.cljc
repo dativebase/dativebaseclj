@@ -4,7 +4,11 @@
             [dvb.common.utils :as utils]))
 
 (def pg->clj-coercions
-  {:users users-of-old/pgs->cljs})
+  {:users users-of-old/pgs->cljs
+   :slug keyword})
+
+(def clj->pg-coercions
+  {:slug name})
 
 (def api->clj-coercions
   (merge common/api->clj-coercions
@@ -35,7 +39,11 @@
   (-> old
       (common/perform-coercions api->clj-coercions)))
 
-(defn pg->clj [old] old)
+(defn pg->clj [old]
+  (common/perform-coercions old pg->clj-coercions))
+
+(defn clj->pg [old]
+  (common/perform-coercions old clj->pg-coercions))
 
 (defn create-api->clj [{:as response :keys [status]}]
   (if (= 201 status)

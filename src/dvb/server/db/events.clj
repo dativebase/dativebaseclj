@@ -23,7 +23,7 @@
                          old-slug get-history-of-old*
                          :else get-history-of-global*)
          events (getter-fn db-conn
-                           {:old-slug old-slug
+                           {:old-slug (name old-slug)
                             :table-name table-name
                             :row-id row-id
                             :limit limit})]
