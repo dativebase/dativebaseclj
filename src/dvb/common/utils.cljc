@@ -33,3 +33,6 @@
 
 (defn maybe-instant->str [maybe-i]
   (when maybe-i (str maybe-i)))
+
+(defn name-keyword-or-identity [thing]
+  (if (keyword? thing) (name thing) thing))

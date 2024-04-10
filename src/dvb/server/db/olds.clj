@@ -1,5 +1,6 @@
 (ns dvb.server.db.olds
   (:require [clojure.java.jdbc :as jdbc]
+            [dvb.common.edges.olds :as edges]
             [dvb.server.db.events :as events]
             [hugsql.core :as hugsql]))
 
@@ -13,10 +14,11 @@
 
 (hugsql/def-db-fns "sql/olds.sql")
 
-(defn get-old [db-conn slug] (get-old* db-conn {:slug slug}))
+(defn get-old [db-conn slug]
+  (edges/pg->clj (get-old* db-conn {:slug (name slug)})))
 
 (defn get-old-with-users [db-conn slug]
-  (let [[old :as rows] (get-old-with-users* db-conn {:slug slug})]
+  (let [[old :as rows] (get-old-with-users* db-conn {:slug (name slug)})]
     (if old
       (-> old
           (dissoc :role :user-id :user-old-id)
@@ -24,18 +26,22 @@
                                 {:role (keyword role)
                                  :id user-id
                                  :user-old-id user-old-id})
-                              rows)))
+                              rows))
+          edges/pg->clj)
       (when-let [old (get-old db-conn slug)]
         (assoc old :users [])))))
 
 (defn- mutate [mutation db-conn old]
   (jdbc/with-db-transaction [tconn db-conn]
-    (let [old ((case mutation
-                 :create create-old*
-                 :update update-old*
-                 :delete delete-old*) tconn old)]
+    (let [db-old ((case mutation
+                    :create create-old*
+                    :update update-old*
+                    :delete delete-old*)
+                  tconn
+                  (edges/clj->pg old))
+          old (edges/pg->clj db-old)]
       (events/create-event tconn
-                           {:old-slug (:slug old)
+                           {:old-slug (:slug db-old)
                             :table-name "olds"
                             :row-id nil
                             :row-data old})

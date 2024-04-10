@@ -9,7 +9,8 @@
 (defn handle [{:keys [database]}
               {:as ctx form-update :request-body
                {old-slug :old_slug form-id :form_id} :path}]
-  (let [authenticated-user-id (utils/security-user-id ctx)
+  (let [old-slug (keyword old-slug) ;; TODO in edges somehow
+        authenticated-user-id (utils/security-user-id ctx)
         log-ctx {:authenticated-user-id authenticated-user-id
                  :old-slug old-slug}]
     (log/info "Updating a form." log-ctx)

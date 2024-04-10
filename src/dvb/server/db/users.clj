@@ -43,7 +43,8 @@
           (dissoc :role :old-slug)
           (assoc :roles (->> rows
                              (filter :old-slug)
-                             (map (juxt :old-slug (comp keyword :role)))
+                             (map (juxt (comp keyword :old-slug)
+                                        (comp keyword :role)))
                              (into {})))))))
 
 (defn get-user-with-olds [db-conn id]

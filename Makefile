@@ -6,6 +6,9 @@ db:  ## Connect to DativeBase db via psql
 .spectral.yaml:  ## Generate .spectral.yaml (the spectral OpenAPI ruleset) and write it to ./.spectral.yaml.
 	@echo 'extends: ["spectral:oas"]' > .spectral.yaml
 
+lint:  ## Lint the Clojure source code
+	@clj-kondo --lint src test
+
 lint-openapi: .spectral.yaml  ## Lint the OpenAPI API specification file at resources/public/openapi/api.yaml
 	@spectral lint resources/public/openapi/api.yaml
 

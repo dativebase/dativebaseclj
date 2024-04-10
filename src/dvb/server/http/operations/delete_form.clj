@@ -10,8 +10,9 @@
               {:as ctx {old-slug :old_slug form-id :form_id} :path}]
   (log/info "Deleting a form.")
   (authorize/authorize ctx)
-  (let [existing-form (db.forms/get-form database form-id)
-        updated-by (utils/security-user-id ctx)]
+  (let [old-slug (keyword old-slug) ;; TODO in edges somehow
+        existing-form (db.forms/get-form database form-id)
+        authenticated-user-id (utils/security-user-id ctx)]
     (utils/validate-entity-operation
      {:existing-entity existing-form
       :entity-type :form
@@ -24,7 +25,7 @@
        :body (form-edges/clj->api (db.forms/delete-form
                                    database
                                    {:id (:id existing-form)
-                                    :updated-by updated-by}))}
+                                    :updated-by authenticated-user-id}))}
       (catch Exception e
         (throw (errors/error-code->ex-info
                 :entity-deletion-internal-error

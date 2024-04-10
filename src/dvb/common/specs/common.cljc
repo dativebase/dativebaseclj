@@ -24,8 +24,8 @@
 
 (s/def :old/slug
   (s/with-gen
-    ::non-empty-string
-    #(gen/fmap (fn [slug] (str/replace slug "-" ""))
+    keyword?
+    #(gen/fmap (fn [slug] (keyword (str/replace slug "-" "")))
                (s/gen uuid?))))
 
 (defn uuid-string? [x]

@@ -379,12 +379,16 @@
             :write-clj->api-fn plan-edges/write-clj->api
             :openapi-schema :PlanWrite}))
 
-(def create-old
-  (partial create-resource
-           {:url-fn urls/olds-url
-            :create-api->clj-fn old-edges/create-api->clj
-            :write-clj->api-fn old-edges/write-clj->api
-            :openapi-schema :OLDWrite}))
+(defn create-old
+  [client old-write]
+  (create-resource
+   {:url-fn urls/olds-url
+    ;:show-api->clj-fn old-edges/show-api->clj
+    :create-api->clj-fn old-edges/show-api->clj
+    :write-clj->api-fn old-edges/write-clj->api
+    :openapi-schema :OLDWrite}
+   client
+   old-write))
 
 (def create-user-plan
   (partial create-resource

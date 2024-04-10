@@ -2,9 +2,11 @@
   (:require [dvb.common.edges.common :as common]
             [dvb.common.utils :as utils]))
 
-(def pg->clj-coercions {:role keyword})
+(def pg->clj-coercions {:role keyword
+                        :old-slug keyword})
 
-(def clj->pg-coercions {:role name})
+(def clj->pg-coercions {:role name
+                        :old-slug name})
 
 (def api->clj-coercions
   (merge common/api->clj-coercions
