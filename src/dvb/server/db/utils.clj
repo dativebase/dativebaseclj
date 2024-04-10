@@ -2,7 +2,7 @@
 
 (defn mutation
   [entity table-name]
-  {:old-slug (:old-slug entity)
+  {:old-slug (when-let [slug (:old-slug entity)] (name slug))
    :table-name table-name
    :row-id (:id entity)
    :row-data entity})

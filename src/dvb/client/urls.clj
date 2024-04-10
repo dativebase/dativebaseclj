@@ -1,6 +1,7 @@
 (ns dvb.client.urls
   "For building URLs for the requests issued by the DativeBase client."
-  (:require [dvb.common.openapi.spec :as spec]))
+  (:require [dvb.common.openapi.spec :as spec]
+            [dvb.common.utils :as utils]))
 
 (def local-base-url
   (-> (for [server spec/servers :when (= :local (:id server))]
@@ -20,7 +21,7 @@
 
 (defn resources-url [resources-kw base-url]
   (format "%s/api/v%s/%s"
-          base-url api-version (name resources-kw)))
+          base-url api-version (utils/name-keyword-or-identity resources-kw)))
 
 (defn resource-url [resources-kw base-url id]
   (str (resources-url resources-kw base-url)
@@ -35,8 +36,11 @@
        "/edit"))
 
 (defn suffixed-resource-url [resources-kw suffix base-url id]
-  (str (resource-url resources-kw base-url id)
-       "/" (name suffix)))
+  (str (resource-url resources-kw
+                     base-url
+                     (utils/name-keyword-or-identity id))
+       "/"
+       (utils/name-keyword-or-identity suffix)))
 
 (defn suffixed-paramed-resource-url [resources-kw suffix base-url id param]
   (str (suffixed-resource-url resources-kw suffix base-url id)
@@ -46,7 +50,9 @@
 
 (defn old-specific-resources-url [resources-kw base-url old]
   (format "%s/api/v%s/%s/%s"
-          base-url api-version old (name resources-kw)))
+          base-url api-version
+          (utils/name-keyword-or-identity old)
+          (utils/name-keyword-or-identity resources-kw)))
 
 (defn old-specific-resource-url [resources-kw base-url old id]
   (str (old-specific-resources-url resources-kw base-url old)
@@ -89,7 +95,8 @@
 (def plans-url (partial resources-url :plans))
 
 ;; OLDs
-(def old-url (partial resource-url :olds))
+(defn old-url [base-url slug]
+  (resource-url :olds base-url (utils/name-keyword-or-identity slug)))
 (def olds-url (partial resources-url :olds))
 (def access-requests-for-old-url (partial suffixed-resource-url :olds :access-requests))
 

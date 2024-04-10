@@ -52,7 +52,7 @@
 
 (defn authorize [ctx]
   (let [{:keys [roles is-superuser?] user-id :id} (u/security-user ctx)
-        old-slug (-> ctx :path :old_slug)
+        old-slug (-> ctx :path :old_slug keyword)
         operation-id (-> ctx :operation :operation-id)
         old-independent-operation? (boolean (operation-id old-independent-operations))
         role-for-old (get roles old-slug)]

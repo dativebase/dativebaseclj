@@ -42,6 +42,8 @@
 
 (defn old? [x] (s/valid? ::old x))
 
+(defn old-explain-data [x] (s/explain-data ::old x))
+
 (defn olds? [x] (s/valid? ::olds x))
 
 (defn old-write? [x] (s/valid? ::old-write x))

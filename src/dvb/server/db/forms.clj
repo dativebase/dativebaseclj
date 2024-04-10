@@ -1,6 +1,7 @@
 (ns dvb.server.db.forms
   (:require [clojure.java.jdbc :as jdbc]
             [hugsql.core :as hugsql]
+            [dvb.common.edges.forms :as edges]
             [dvb.server.db.events :as events]
             [dvb.server.db.utils :as utils]))
 
@@ -13,14 +14,18 @@
 
 (hugsql/def-db-fns "sql/forms.sql")
 
-(defn get-form [db-conn id] (get-form* db-conn {:id id}))
+(defn get-form [db-conn id]
+  (edges/pg->clj (get-form* db-conn {:id id})))
 
 (defn- mutate [mutation db-conn form]
   (jdbc/with-db-transaction [tconn db-conn]
-    (let [form ((case mutation
-                  :create create-form*
-                  :update update-form*
-                  :delete delete-form*) tconn form)]
+    (let [db-form ((case mutation
+                     :create create-form*
+                     :update update-form*
+                     :delete delete-form*)
+                   tconn
+                   (edges/clj->pg form))
+          form (edges/pg->clj db-form)]
       (events/create-event tconn (utils/mutation form "forms"))
       form)))
 
@@ -37,7 +42,7 @@
   ([db-conn old-slug] (get-forms db-conn old-slug 10))
   ([db-conn old-slug limit] (get-forms db-conn old-slug limit 0))
   ([db-conn old-slug limit offset]
-   (vec (get-forms* db-conn {:old-slug old-slug
+   (vec (get-forms* db-conn {:old-slug (name old-slug)
                              :limit limit
                              :offset offset}))))
 

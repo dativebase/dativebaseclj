@@ -11,11 +11,13 @@
 (def api->clj-coercions
   (merge common/api->clj-coercions
          pg->clj-coercions
-         {:members members-of-plan/apis->cljs}))
+         {:members members-of-plan/apis->cljs
+          :olds (fn [olds] (mapv keyword olds))}))
 
 (def clj->api-coercions
   (merge (assoc common/clj->api-coercions
-                :members members-of-plan/cljs->apis)
+                :members members-of-plan/cljs->apis
+                :olds (fn [olds] (mapv name olds)))
          clj->pg-coercions))
 
 (defn api->clj [plan]
