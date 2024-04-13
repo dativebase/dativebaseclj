@@ -29,11 +29,7 @@
    single key: the name of the OpenAPI security scheme as a Clojure keyword."
   [request {:as _security-scheme :keys [name in]}]
   (let [val (locate-api-key-value name in request)]
-    (when-not val
-      (log/warn "A required API key value was not provided in the request."
-                {:name name
-                 :in in})
-      (throw (errors/error-code->ex-info :unauthenticated)))
+    (when-not val (throw (errors/error-code->ex-info :unauthenticated)))
     {(keyword (str/lower-case name)) val}))
 
 (defn- get-security-scheme-data
@@ -53,8 +49,7 @@
    of maps, each with a `:type` key."
   [http-component ctx security-option]
   (if (empty? security-option)
-    (do (log/warn "Empty security option. Alowing unauthenticated access to API endpoint.")
-        {:authenticated? true})
+    {:authenticated? true}
     (let [security-option-type (-> security-option first :type)
           security-handler (-> http-component :security-handlers
                                security-option-type)

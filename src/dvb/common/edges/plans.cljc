@@ -8,40 +8,23 @@
 
 (def clj->pg-coercions {:tier name})
 
-(def api->clj-coercions
-  (merge common/api->clj-coercions
-         pg->clj-coercions
-         {:members members-of-plan/apis->cljs
-          :olds (fn [olds] (mapv keyword olds))}))
+(def config
+  {:pg->clj-coercions pg->clj-coercions
+   :clj->pg-coercions clj->pg-coercions
+   :fe-db->api-coercions {}
+   :api->clj-coercions (merge common/api->clj-coercions
+                              pg->clj-coercions
+                              {:members members-of-plan/apis->cljs
+                               :olds (fn [olds] (mapv keyword olds))})
+   :clj->api-coercions (merge (assoc common/clj->api-coercions
+                                     :members members-of-plan/cljs->apis
+                                     :olds (fn [olds] (mapv name olds)))
+                              clj->pg-coercions)
+   :resource-schema :Plan})
 
-(def clj->api-coercions
-  (merge (assoc common/clj->api-coercions
-                :members members-of-plan/cljs->apis
-                :olds (fn [olds] (mapv name olds)))
-         clj->pg-coercions))
-
-(defn api->clj [plan]
-  (common/perform-coercions plan api->clj-coercions))
-
-(defn clj->api [plan]
-  (-> plan
-      (common/perform-coercions clj->api-coercions)
-      (select-keys (-> common/schemas :Plan :properties keys))))
-
+(def api->clj (partial common/api->clj config))
+(def clj->api (partial common/clj->api config))
 (def write-clj->api clj->api)
-
-(defn pg->clj [plan]
-  (common/perform-coercions plan pg->clj-coercions))
-
-(defn clj->pg [plan]
-  (common/perform-coercions plan clj->pg-coercions))
-
-(defn create-api->clj [{:as response :keys [status]}]
-  (if (= 201 status)
-    (update response :body api->clj)
-    response))
-
-(defn fetch-api->clj [{:as response :keys [status]}]
-  (if (= 200 status)
-    (update response :body api->clj)
-    response))
+(def pg->clj (partial common/pg->clj config))
+(def clj->pg (partial common/clj->pg config))
+(def show-api->clj (partial common/show-api->clj api->clj))
