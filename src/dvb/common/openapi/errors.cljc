@@ -11,7 +11,9 @@
 (def errors-map
   {;; 400
    :account-already-exists [400 "There is already an account in DativeBase with the supplied email."]
+   :cancel-payment-bad-state [400 "Refusing to cancel the payment. A payment may only be canceled if it is in the initiated state."]
    :coercion-error [400 "Failed to coerce a value."]
+   :value-is-not-null [400 "Nullable object is not null."]
    :coercion-to-boolean-error [400 "The provided string value cannot be coerced to a boolean."]
    :coercion-to-integer-error [400 "The provided string value cannot be coerced to a integer."]
    :coercion-to-number-error [400 "The provided string value cannot be coerced to a number."]
@@ -43,6 +45,9 @@
    :object-missing-required-properties [400 "The provided object is missing at least one required key."]
    :old-slug-mismatch [400 "The OLD slug in the path and the OLD slug in the referenced entity do not match."]
    :one-of-validator-matches-multiple [400 "The input matches more than one oneOf validators."]
+   :file-too-large [400 "The file in the request is too large."]
+   :non-accepted-file-type [400 "The file in the request is not one of the allowed types."]
+   :payment-already-in-progress [400 "There is already a payment in progress. Refusing to create a new payment. We don't want you to pay twice!"]
    :plan-with-olds-not-delible [400 "The attempt to delete a plan was halted because the plan is supporting active OLDs. First transfer the OLDs to a different plan, then delete the plan."]
    :prohibited-plan-tier [400 "The provided plan tier is valid but using it in this context is prohibited."]
    :role-transition-violation [400 "The attempted update was prohibited because it is a role transition that would leave a managed entity without a user authorized to manage it."]
@@ -54,7 +59,7 @@
    :unique-slug-constraint-violated [400 "There is already an OLD in the system with the supplied slug."]
    :user-activation-failed [400 "The supplied user registration key was incorrect. The user could not be activated."]
    :user-deactivation-failed [400 "The attempt to deactivate the user failed."]
-   :users-olds-unique-constraint-violated [400 "There is already a user OLD relationship in the system linking the specified user and OLD. Update that one instead of creating a new one."]
+   :users-olds-unique-constraint-violated [400 "There is already a user-OLD relationship in the system linking the specified user and OLD. Update that one instead of creating a new one."]
    :users-plans-unique-constraint-violated [400 "There is already a user plan relationship in the system linking the specified user and plan. Update that one instead of creating a new one."]
    ;; 401
    :unauthenticated [401 "The supplied credentials were not valid. Authentication failed."]
@@ -70,12 +75,15 @@
    ;; 429
    :too-many-requests [429 "Too many requests have been made against this endpoint in recent time"]
    ;; 500
+   :payment-failed-during-billing-provider-part [500 "DativeBase failed to register a payment because it was unable to initiate payment in the billing provider."]
+   :failed-to-persist-file-bytes [500 "DativeBase failed to store the to-be-uploaded file."]
    :error-recognizing-request-url [500 "Error when attempting to validate the request URL."]
    :error-response-should-be-empty [500 "Error: the response should have an empty response body; however, the server was attempting to return a non-empty body."]
    :error-unimplemented-operation [500 "Error: server lacks an implementation for the requested operation."]
    :error-unimplemented-security-handler [500 "Error: server lacks an implementation for a required component of the request."]
    :error-unsupported-security-scheme [500 "Error: server lacks an implementation for a security scheme required in order to process the request."]
    :error-unrecognized-response-status [500 "Error: server attempted to return a response status that is inconsistent with this API."]
+   :cancel-payment-internal-error [500 "An unexpected exception occurred when attempting to cancel a payment."]
    :entity-creation-internal-error [500 "An unexpected exception occurred when attempting to create an entity."]
    :entity-deletion-internal-error [500 "An unexpected exception occurred when attempting to delete an entity."]
    :entity-update-internal-error [500 "An unexpected exception occurred when attempting to update an entity."]

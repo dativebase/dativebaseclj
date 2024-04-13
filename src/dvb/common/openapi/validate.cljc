@@ -69,7 +69,8 @@
    :integer int?
    :boolean boolean?
    :array coll-but-not-map?
-   :object map?})
+   :object map?
+   :nil nil?})
 
 (defn- parse-int [string]
   #?(:clj (Integer/valueOf string)
@@ -163,15 +164,23 @@
           [coerced nil]))
       [nil error])))
 
-(defn- validate-type-and-coerce [value path {value-type :type}]
-  (coerce (validate-by-type {:value value
-                             :path path
-                             :value-type value-type})))
+(defn schema-type [{:as _schema value-type :type :keys [enum]}]
+  (cond
+    value-type value-type
+    (= [nil] enum) :nil))
 
-(defn- validate-type [value path {value-type :type}]
-  (let [{:keys [error validated]} (validate-by-type {:value value
-                                                     :path path
-                                                     :value-type value-type})]
+(defn- validate-type-and-coerce [value path schema]
+  (coerce (validate-by-type
+           {:value value
+            :path path
+            :value-type (schema-type schema)})))
+
+(defn- validate-type [value path schema]
+  (let [{:keys [error validated]}
+        (validate-by-type
+         {:value value
+          :path path
+          :value-type (schema-type schema)})]
     (if error
       [nil error]
       [validated nil])))
@@ -214,6 +223,15 @@
                  :path path
                  :prescription prescription
                  :message (u/format "The items in the array at path %s must be unique."
+                                    path)}}]))
+
+(defn- validate-is-null [value path _schema]
+  (if (nil? value)
+    [value nil]
+    [nil {:error-code :value-is-not-null
+          :data {:value value
+                 :path path
+                 :message (u/format "The entity at path %s is not null"
                                     path)}}]))
 
 (defn- validate-has-all-required-properties [value path {:keys [required]}]
@@ -443,7 +461,11 @@
        (filter (fn [[predicate _]] (predicate schema)))
        (map second)))
 
-(defmulti get-validators :type)
+(defmulti get-validators
+  (fn [{:keys [type enum]}]
+    (cond
+      type type
+      (= [nil] enum) :nil)))
 
 (defmethod get-validators :integer [schema]
   (get-validators-by-predicates schema number-validators))
@@ -466,6 +488,9 @@
     [validate-additional-properties]
     [validate-has-all-required-properties
      validate-properties]))
+
+(defmethod get-validators :nil [_schema]
+  [validate-is-null])
 
 (defmethod get-validators :default [schema]
   (throw (ex-info "Unrecognized data type in OpenAPI schema"
