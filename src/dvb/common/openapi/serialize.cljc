@@ -7,6 +7,8 @@
 
 (def openapi-reserved-keywords
   #{:additional-properties
+    :all-of
+    :any-of
     :api-key
     :authorization-code
     :authorization-url

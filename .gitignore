@@ -19,6 +19,9 @@ dev-config.env
 **/.clj-kondo/.cache/
 .lsp
 resources/public/swagger-ui/
+resources/public/js/
 .spectral.yaml
 README-PRIVATE.rst
 .cpcache/
+.shadow-cljs/
+node_modules/

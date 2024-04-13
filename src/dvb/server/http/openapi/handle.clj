@@ -16,13 +16,15 @@
 ;; Helper functions
 
 (defn- get-request-url
-  "Reconstruct the requested URL from the parts of the Ring request map."
-  [{:keys [scheme server-name server-port uri]}]
-  (str (name scheme)
-       "://"
-       server-name
-       (when server-port (str ":" server-port))
-       uri))
+  "Reconstruct the requested URL from the parts of the Ring request map. If the
+  request headers indicate that an upstream server is proxying this request to
+  the app, then reconstruct the request URL from those headers. Otherwise, use
+  the top-level attributes of the request."
+  [{:keys [headers scheme server-name server-port uri]}]
+  (let [{:strs [host x-forwarded-proto]} headers]
+    (if (and host x-forwarded-proto)
+      (str x-forwarded-proto "://" host uri)
+      (str (name scheme) "://" server-name (when server-port (str ":" server-port)) uri))))
 
 (defn- get-spec-server
   "Return the first server in the OpenAPI `spec` that is a prefix of
@@ -50,7 +52,7 @@
 
 (defn- recognize-request-url
   "Validate that the request URL is recognized by the OpenAPI spec. If it
-   is, set `request-path`, `spec-server` and `request-url` on the context."
+  is, set `request-path`, `spec-server` and `request-url` on the context."
   [{:keys [request spec] :as ctx}]
   (try (let [request-url (get-request-url request)
              spec-server (get-spec-server request-url spec)]
@@ -144,7 +146,7 @@
     ctx
     (and required (not actual-request-body))
     (throw (errors/error-code->ex-info :required-json-request-body-absent))
-    :else ;; FOX
+    :else
     (assoc ctx :request-body (validate/validate actual-request-body schema))))
 
 (defn- run-operation
