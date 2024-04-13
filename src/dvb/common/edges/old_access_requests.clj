@@ -1,6 +1,6 @@
 (ns dvb.common.edges.old-access-requests
   (:require [dvb.common.edges.common :as common]
-            [dvb.common.utils :as utils]))
+            [dvb.common.utils :as u]))
 
 (def pg->clj-coercions {:status keyword
                         :old-slug keyword})
@@ -8,44 +8,25 @@
 (def clj->pg-coercions {:status name
                         :old-slug name})
 
-(def api->clj-coercions
-  (merge common/api->clj-coercions
-         {:user-id utils/str->uuid}
-         pg->clj-coercions))
+(def config
+  {:pg->clj-coercions pg->clj-coercions
+   :clj->pg-coercions clj->pg-coercions
+   :api->clj-coercions (merge common/api->clj-coercions
+                              {:user-id u/str->uuid}
+                              pg->clj-coercions)
+   :clj->api-coercions (merge common/clj->api-coercions
+                              {:user-id u/uuid->str}
+                              clj->pg-coercions)
+   :resource-schema :OLDAccessRequest
+   :resource-write-schema :OLDAccessRequestWrite})
 
-(def clj->api-coercions
-  (merge common/clj->api-coercions
-         {:user-id utils/uuid->str}
-         clj->pg-coercions))
-
-(defn api->clj [old-access-request]
-  (common/perform-coercions old-access-request api->clj-coercions))
-
-(defn clj->api [old-access-request]
-  (-> old-access-request
-      (common/perform-coercions clj->api-coercions)
-      (select-keys (-> common/schemas :OLDAccessRequest :properties keys))))
-
-(defn pg->clj [old-access-request]
-  (common/perform-coercions old-access-request pg->clj-coercions))
-
-(defn clj->pg [old-access-request]
-  (common/perform-coercions old-access-request clj->pg-coercions))
-
-(defn create-api->clj [{:as response :keys [status]}]
-  (if (= 201 status)
-    (update response :body api->clj)
-    response))
-
-(defn write-clj->api [old-access-request-write]
-  (-> old-access-request-write
-      (common/perform-coercions clj->api-coercions)
-      (select-keys (-> common/schemas :OLDAccessRequestWrite :properties keys))))
-
-(defn fetch-api->clj [{:as response :keys [status]}]
-  (if (= 200 status)
-    (update response :body api->clj)
-    response))
+(def api->clj (partial common/api->clj config))
+(def clj->api (partial common/clj->api config))
+(def pg->clj (partial common/pg->clj config))
+(def clj->pg (partial common/clj->pg config))
+(def write-clj->api (partial common/write-clj->api config))
+(def show-api->clj (partial common/show-api->clj api->clj))
+(def index-api->clj (partial common/index-api->clj api->clj))
 
 (defn index-for-old-api->clj [{:as response :keys [status]}]
   (if (= 200 status)

@@ -3,85 +3,52 @@
             [dvb.common.edges.common :as common]
             [dvb.common.edges.olds-of-user :as olds-of-user]
             [dvb.common.edges.plans-of-user :as plans-of-user]
-            [dvb.common.utils :as utils]))
+            [dvb.common.utils :as u]))
 
 (def clj->api-rename-keys {:is-superuser? :is-superuser})
-
 (def api->clj-rename-keys (set/map-invert clj->api-rename-keys))
-
 (def clj->pg-rename-keys clj->api-rename-keys)
-
 (def pg->clj-rename-keys api->clj-rename-keys)
+(def pg->clj-coercions {:registration-status keyword
+                        :plans plans-of-user/pgs->cljs
+                        :olds olds-of-user/pgs->cljs})
+(def clj->pg-coercions {:registration-status name})
 
-(def pg->clj-coercions
-  {:registration-status keyword
-   :plans plans-of-user/pgs->cljs
-   :olds olds-of-user/pgs->cljs})
+(def config
+  {:clj->api-rename-keys clj->api-rename-keys
+   :api->clj-rename-keys api->clj-rename-keys
+   :clj->pg-rename-keys clj->pg-rename-keys
+   :pg->clj-rename-keys pg->clj-rename-keys
+   :pg->clj-coercions pg->clj-coercions
+   :clj->pg-coercions clj->pg-coercions
+   :api->clj-coercions (merge (assoc common/api->clj-coercions
+                                     :registration-key u/str->uuid)
+                              pg->clj-coercions
+                              {:plans plans-of-user/apis->cljs})
 
-(def clj->pg-coercions
-  {:registration-status name})
+   :clj->api-coercions (merge (assoc common/clj->api-coercions
+                                     :registration-key u/uuid->str
+                                     :plans plans-of-user/cljs->apis)
+                              clj->pg-coercions)
+   :resource-schema :User
+   :resource-write-schema :UserWrite
+   :resource-update-schema :UserUpdate})
 
-(def api->clj-coercions
-  (merge (assoc common/api->clj-coercions
-                :registration-key utils/str->uuid)
-         pg->clj-coercions
-         {:plans plans-of-user/apis->cljs}))
-
-(def clj->api-coercions
-  (merge (assoc common/clj->api-coercions
-                :registration-key utils/uuid->str
-                :plans plans-of-user/cljs->apis)
-         clj->pg-coercions))
-
-(defn clj->api [user]
-  (-> user
-      (common/perform-coercions clj->api-coercions)
-      (set/rename-keys clj->api-rename-keys)
-      (select-keys (-> common/schemas :User :properties keys))))
+(def clj->api (partial common/clj->api config))
+(def write-clj->api (partial common/write-clj->api config))
+(def update-clj->api (partial common/update-clj->api config))
+(def api->clj (partial common/api->clj config))
+(def pg->clj (partial common/pg->clj config))
+(def clj->pg (partial common/clj->pg config))
+(def show-api->clj (partial common/show-api->clj api->clj))
+(def index-api->clj (partial common/index-api->clj api->clj))
 
 (defn user-password-reset-api->clj [user-password-reset]
   (-> user-password-reset
-      (common/perform-coercions {:secret-key utils/str->uuid})
+      (common/perform-coercions {:secret-key u/str->uuid})
       (select-keys (-> common/schemas :UserPasswordReset :properties keys))))
 
 (defn user-password-reset-clj->api [user-password-reset]
   (-> user-password-reset
-      (common/perform-coercions {:secret-key utils/uuid->str})
+      (common/perform-coercions {:secret-key u/uuid->str})
       (select-keys (-> common/schemas :UserPasswordReset :properties keys))))
-
-(defn write-clj->api [user-write]
-  (-> user-write
-      (common/perform-coercions clj->api-coercions)
-      (set/rename-keys clj->api-rename-keys)
-      (select-keys (-> common/schemas :UserWrite :properties keys))))
-
-(defn update-clj->api [user-update]
-  (-> user-update
-      (common/perform-coercions clj->api-coercions)
-      (set/rename-keys clj->api-rename-keys)
-      (select-keys (-> common/schemas :UserUpdate :properties keys))))
-
-(defn api->clj [user]
-  (-> user
-      (set/rename-keys api->clj-rename-keys)
-      (common/perform-coercions api->clj-coercions)))
-
-(defn pg->clj [user]
-  (-> user
-      (set/rename-keys pg->clj-rename-keys)
-      (common/perform-coercions pg->clj-coercions)))
-
-(defn create-api->clj [{:as response :keys [status]}]
-  (if (= 201 status)
-    (update response :body api->clj)
-    response))
-
-(defn fetch-api->clj [{:as response :keys [status]}]
-  (if (= 200 status)
-    (update response :body api->clj)
-    response))
-
-(defn index-api->clj [{:as response :keys [status]}]
-  (if (= 200 status)
-    (update-in response [:body :data] (partial mapv api->clj))
-    response))
