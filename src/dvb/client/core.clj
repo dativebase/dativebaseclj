@@ -165,8 +165,8 @@
 
 (defn- create-resource
   "POST /<RESOURCES>"
-  [{:keys [url-fn create-api->clj-fn write-clj->api-fn openapi-schema]
-    :or {create-api->clj-fn identity
+  [{:keys [url-fn show-api->clj-fn write-clj->api-fn openapi-schema]
+    :or {show-api->clj-fn identity
          write-clj->api-fn identity}}
    {:as client :keys [base-url spec]} resource-write]
   (let [payload (write-payload resource-write write-clj->api-fn
@@ -180,12 +180,12 @@
         (add-authentication-headers client)
         client/request
         simple-response
-        create-api->clj-fn)))
+        show-api->clj-fn)))
 
 (defn- create-old-specific-resource
   "POST /<OLD_SLUG>/<RESOURCES>"
-  [{:keys [url-fn create-api->clj-fn write-clj->api-fn openapi-schema]
-    :or {create-api->clj-fn identity
+  [{:keys [url-fn show-api->clj-fn write-clj->api-fn openapi-schema]
+    :or {show-api->clj-fn identity
          write-clj->api-fn identity}}
    {:as client :keys [base-url spec]}
    old-slug
@@ -201,12 +201,12 @@
         (add-authentication-headers client)
         client/request
         simple-response
-        create-api->clj-fn)))
+        show-api->clj-fn)))
 
 (defn- update-resource
   "PUT /<RESOURCES>/<ID>"
-  [{:keys [url-fn fetch-api->clj-fn update-clj->api-fn openapi-schema]
-    :or {fetch-api->clj-fn identity
+  [{:keys [url-fn show-api->clj-fn update-clj->api-fn openapi-schema]
+    :or {show-api->clj-fn identity
          update-clj->api-fn identity}}
    {:as client :keys [base-url spec]} id resource-update]
   (let [payload (write-payload resource-update update-clj->api-fn
@@ -220,12 +220,12 @@
         (add-authentication-headers client)
         client/request
         simple-response
-        fetch-api->clj-fn)))
+        show-api->clj-fn)))
 
 (defn- update-old-specific-resource
   "PUT /<OLD_SLUG>/<RESOURCES>/<ID>"
-  [{:keys [url-fn fetch-api->clj-fn update-clj->api-fn openapi-schema]
-    :or {fetch-api->clj-fn identity
+  [{:keys [url-fn show-api->clj-fn update-clj->api-fn openapi-schema]
+    :or {show-api->clj-fn identity
          update-clj->api-fn identity}}
    {:as client :keys [base-url spec]}
    old
@@ -242,7 +242,7 @@
         (add-authentication-headers client)
         client/request
         simple-response
-        fetch-api->clj-fn)))
+        show-api->clj-fn)))
 
 (defn- mutate-old-access-request
   "PUT /old-access-requests/<ID>/<MUTATION>"
@@ -255,7 +255,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      old-access-request-edges/fetch-api->clj))
+      old-access-request-edges/show-api->clj))
 
 ;; Public API
 
@@ -292,31 +292,31 @@
 (def show-user
   (partial show-resource
            {:url-fn urls/user-url
-            :api->clj-fn user-edges/fetch-api->clj
+            :api->clj-fn user-edges/show-api->clj
             :boolean-query-params {:include-plans? :include-plans}}))
 
 (def show-old
   (partial show-resource
            {:url-fn urls/old-url
-            :api->clj-fn old-edges/fetch-api->clj
+            :api->clj-fn old-edges/show-api->clj
             :boolean-query-params {:include-users? :include-users}}))
 
 (def show-plan
   (partial show-resource
            {:url-fn urls/plan-url
-            :api->clj-fn plan-edges/fetch-api->clj
+            :api->clj-fn plan-edges/show-api->clj
             :boolean-query-params {:include-members? :include-members
                                    :include-olds? :include-olds}}))
 
 (def show-old-access-request
   (partial show-resource
            {:url-fn urls/old-access-request-url
-            :api->clj-fn old-access-request-edges/fetch-api->clj}))
+            :api->clj-fn old-access-request-edges/show-api->clj}))
 
 (def show-form
   (partial show-old-specific-resource
            {:url-fn urls/form-url
-            :api->clj-fn form-edges/fetch-api->clj}))
+            :api->clj-fn form-edges/show-api->clj}))
 
 ;; Delete Resource: DELETE /<RESOURCES>/<ID>
 ;;
@@ -326,27 +326,27 @@
 (def delete-user
   (partial delete-resource
            {:url-fn urls/user-url
-            :api->clj-fn user-edges/fetch-api->clj}))
+            :api->clj-fn user-edges/show-api->clj}))
 
 (def delete-old
   (partial delete-resource
            {:url-fn urls/old-url
-            :api->clj-fn old-edges/fetch-api->clj}))
+            :api->clj-fn old-edges/show-api->clj}))
 
 (def delete-plan
   (partial delete-resource
            {:url-fn urls/plan-url
-            :api->clj-fn plan-edges/fetch-api->clj}))
+            :api->clj-fn plan-edges/show-api->clj}))
 
 (def delete-user-plan
   (partial delete-resource
            {:url-fn urls/user-plan-url
-            :api->clj-fn user-plan-edges/fetch-api->clj}))
+            :api->clj-fn user-plan-edges/show-api->clj}))
 
 (def delete-form
   (partial delete-old-specific-resource
            {:url-fn urls/form-url
-            :api->clj-fn form-edges/fetch-api->clj}))
+            :api->clj-fn form-edges/show-api->clj}))
 
 ;; Edit Resources: GET /<RESOURCES>/<ID>/edit
 ;;
@@ -368,14 +368,14 @@
 (def create-user
   (partial create-resource
            {:url-fn urls/users-url
-            :create-api->clj-fn user-edges/create-api->clj
+            :show-api->clj-fn user-edges/show-api->clj
             :write-clj->api-fn user-edges/write-clj->api
             :openapi-schema :UserWrite}))
 
 (def create-plan
   (partial create-resource
            {:url-fn urls/plans-url
-            :create-api->clj-fn plan-edges/create-api->clj
+            :show-api->clj-fn plan-edges/show-api->clj
             :write-clj->api-fn plan-edges/write-clj->api
             :openapi-schema :PlanWrite}))
 
@@ -384,7 +384,7 @@
   (create-resource
    {:url-fn urls/olds-url
     ;:show-api->clj-fn old-edges/show-api->clj
-    :create-api->clj-fn old-edges/show-api->clj
+    :show-api->clj-fn old-edges/show-api->clj
     :write-clj->api-fn old-edges/write-clj->api
     :openapi-schema :OLDWrite}
    client
@@ -393,28 +393,28 @@
 (def create-user-plan
   (partial create-resource
            {:url-fn urls/user-plans-url
-            :create-api->clj-fn user-plan-edges/create-api->clj
+            :show-api->clj-fn user-plan-edges/show-api->clj
             :write-clj->api-fn user-plan-edges/clj->api
             :openapi-schema :UserPlanWrite}))
 
 (def create-user-old
   (partial create-resource
            {:url-fn urls/user-olds-url
-            :create-api->clj-fn user-old-edges/create-api->clj
+            :show-api->clj-fn user-old-edges/show-api->clj
             :write-clj->api-fn user-old-edges/clj->api
             :openapi-schema :UserOLDWrite}))
 
 (def create-old-access-request
   (partial create-resource
            {:url-fn urls/old-access-requests-url
-            :create-api->clj-fn old-access-request-edges/create-api->clj
+            :show-api->clj-fn old-access-request-edges/show-api->clj
             :write-clj->api-fn old-access-request-edges/write-clj->api
             :openapi-schema :OLDAccessRequestWrite}))
 
 (def create-form
   (partial create-old-specific-resource
            {:url-fn urls/forms-url
-            :create-api->clj-fn form-edges/create-api->clj
+            :show-api->clj-fn form-edges/show-api->clj
             :write-clj->api-fn form-edges/write-clj->api
             :openapi-schema :FormWrite}))
 
@@ -424,42 +424,42 @@
   (partial update-resource
            {:url-fn urls/user-url
             :update-clj->api-fn user-edges/update-clj->api
-            :fetch-api->clj-fn user-edges/fetch-api->clj
+            :show-api->clj-fn user-edges/show-api->clj
             :openapi-schema :UserUpdate}))
 
 (def reset-password
   (partial update-resource
            {:url-fn urls/reset-password-url
             :update-clj->api-fn user-edges/user-password-reset-clj->api
-            :fetch-api->clj-fn user-edges/fetch-api->clj
+            :show-api->clj-fn user-edges/show-api->clj
             :openapi-schema :UserPasswordReset}))
 
 (def update-old
   (partial update-resource
            {:url-fn urls/old-url
             :update-clj->api-fn old-edges/update-clj->api
-            :fetch-api->clj-fn old-edges/fetch-api->clj
+            :show-api->clj-fn old-edges/show-api->clj
             :openapi-schema :OLDUpdate}))
 
 (def update-user-plan
   (partial update-resource
            {:url-fn urls/user-plan-url
             :update-clj->api-fn user-plan-edges/update-clj->api
-            :fetch-api->clj-fn user-plan-edges/fetch-api->clj
+            :show-api->clj-fn user-plan-edges/show-api->clj
             :openapi-schema :UserPlanUpdate}))
 
 (def update-user-old
   (partial update-resource
            {:url-fn urls/user-old-url
             :update-clj->api-fn user-old-edges/update-clj->api
-            :fetch-api->clj-fn user-old-edges/fetch-api->clj
+            :show-api->clj-fn user-old-edges/show-api->clj
             :openapi-schema :UserOLDUpdate}))
 
 (def update-form
   (partial update-old-specific-resource
            {:url-fn urls/form-url
             :update-clj->api-fn form-edges/update-clj->api
-            :fetch-api->clj-fn form-edges/fetch-api->clj
+            :show-api->clj-fn form-edges/show-api->clj
             :openapi-schema :FormUpdate}))
 
 ;; Bespoke / Custom Operations
@@ -468,13 +468,13 @@
   "GET /users/<ID>/deactivate"
   (partial show-resource
            {:url-fn urls/deactivate-user-url
-            :api->clj-fn user-edges/fetch-api->clj}))
+            :api->clj-fn user-edges/show-api->clj}))
 
 (def initiate-password-reset
   "GET /users/<ID>/initiate-password-reset"
   (partial show-resource
            {:url-fn urls/initiate-password-reset-url
-            :api->clj-fn user-edges/fetch-api->clj}))
+            :api->clj-fn user-edges/show-api->clj}))
 
 (defn activate-user
   "GET /users/<ID>/activate/<KEY>"
@@ -483,7 +483,7 @@
       (assoc :url (urls/activate-user-url base-url user-id registration-key))
       client/request
       simple-response
-      user-edges/fetch-api->clj))
+      user-edges/show-api->clj))
 
 ;; Index Resources: GET /<RESOURCES
 
@@ -519,7 +519,7 @@
       (add-authentication-headers client)
       client/request
       simple-response
-      user-plan-edges/fetch-api->clj))
+      user-plan-edges/show-api->clj))
 
 (comment
 
