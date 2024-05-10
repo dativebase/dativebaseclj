@@ -2,4 +2,9 @@
  :log-file-path "logs/dativebase.log"
  :db {:name "dativebase"
       :user "postgres"
-      :password ""}}
+      :password ""}
+ :stripe-api-key "not-realz"
+ :stripe-webhook-signing-secret "not-realz"
+ :ui-url "http://localhost:63000"
+ :user-files-path "resources/files"
+ :images-path "resources/public/images"}

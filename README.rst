@@ -2,10 +2,15 @@
   DativeBase in Clojure
 ================================================================================
 
+For local development documentation, see ``docs/local-development.rst``.
+
 DativeBase is an application for linguistic data management. It is designed to
 be useful for linguists, language revitalizers, teachers, linguaphiles, and
 anybody who needs to manage language-focused data. DativeBase facilitates
 storing, searching, sharing, and analyzing linguistic data.
+
+
+TODO: Add something here before jumping straight into authorization!
 
 
 Authorization

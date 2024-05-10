@@ -19,3 +19,15 @@ services:
       DATABASE_URL: 'jdbc:postgresql://postgres:5432/dativebase'
       DATABASE_USER: 'postgres'
       DATABASE_PASSWORD: ''
+  nginx:
+    image: "nginx:stable-alpine"
+    volumes:
+      - "./etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "./etc/nginx/conf.d/dativebase.conf:/etc/nginx/conf.d/dativebase.conf:ro"
+      - "./etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro"
+    expose:
+      - "80"
+      - "8000"
+    ports:
+      - "63000:80"
+      - "63001:8000"
