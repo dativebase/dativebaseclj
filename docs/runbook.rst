@@ -3,7 +3,7 @@
 ================================================================================
 
 Created: 2024-06-05.
-Last updated: 2024-06-08.
+Last updated: 2024-06-15.
 
 This document describes how to maintain the production DativeBase deployment on
 the INT server with IP 132.229.188.226.
@@ -12,10 +12,10 @@ By "DativeBase", I mean (as of 2024) the Dative frontend UI app, the OLD REST
 API service, the Dative and OLD web sites, all supporting services (Nginx,
 MySQL, and docker), external domain name servers (DNSs), and logging
 functionality. This term here also covers other apps and services (i.e.,
-rewrites) that may arise in the DativeBase ecosystem.
+rewrites) that may yet arise in the DativeBase ecosystem.
 
-This document should be the point of entry for all those who need to figure out
-"Why isn't Dative working?"
+This document should be the point of entry for all those who need to answer
+questions like "How is Dative served?" or "Why isn't Dative working?"
 
 
 Table of Contents
@@ -31,6 +31,11 @@ Table of Contents
 - `IP Address`_
 - `Domain Name Configuration`_
 - `Firewall`_
+- `Mounted Drives`_
+- `Serving the Dative Website`_
+- `Serving the OLD Website`_
+- `Attempt to Clone DativeBaseCLJ to INT Server`_
+- `Plan to Complete the Migration of the OLDs from DO to INT`_
 
 
 Production Deployment Summary
@@ -44,33 +49,49 @@ International Permanent des Linguistes.
 - IP Address: 132.229.188.226
 - URL: https://dative.test.ivdnt.org
 
-  - 2024-06-07: this is serving the Dative SPA at path /
-  - 2024-06-08: this is serving the OLDs under path /olds
+  - 2024-06-07: This is serving the Dative SPA at path /.
+  - 2024-06-08: This is serving the OLDs under path /olds/.
+  - 2024-06-08: This is serving the Dative website under path /dative-website.
+  - 2024-06-09: This is serving the OLD website under path /old-website.
+  - 2024-06-15: All OLD data has been transferred to INT, but DO is still live
+    so this data is stale.
 
-Processes & apps:
+Machine Specs:
 
-- System:          Alma Linux 8.7
-- Dative app:      CoffeeScript SPA
+- CPUs:            4
+- RAM:             8G
+- disk 1 root OS:  16G at /
+- disk 2 data:     160G at /vol1
+- Backups:         weekly full backup
+
+Software installed:
+
+- Linux OS:        AlmaLinux 8.9 (SELinux)
+- Nginx:           1.14
+- Docker:          23
+- Mysql (MariaDB): 10.11
+
+Processes, sites & apps:
+
+- Dative app:      CoffeeScript (JavaScript) SPA
 - OLD service:     Pyramid Python RESTful web service (multiple instances in containers)
-- MySQL server:    MariaDB 10.11
-- Nginx:           Nginx 1.14; Web server
+- Dative website:  Static HTML
+- OLD website:     Static HTML
 
 Processes & apps that still need to be deployed on the INT server:
 
 - Dative app v2:   ClojureScript SPA
-- Dative web site: Static HTML
-- OLD web site:    Static HTML
 - DativeBaseCLJ:   WIP monorepo containing a Clojure/ClojureScript rewrite of Dative and OLD
 - PostgreSQL:      RDBMS
 - RabbitMQ:        Message broker
 
 URLs of Services that are still running on Joel's DigitalOcean server:
 
-- Dative app: https://app.dative.ca
-- Dative app v2: https://v2.dative.ca
+- Dative app:      https://app.dative.ca
+- Dative app v2:   https://v2.dative.ca
 - Dative web site: https://www.dative.ca
-- OLD service: https://app.onlinelinguisticdatabase.org
-- OLD web site: https://www.onlinelinguisticdatabase.org
+- OLD service:     https://app.onlinelinguisticdatabase.org
+- OLD web site:    https://www.onlinelinguisticdatabase.org
 
 
 Architectural Overview of Production DativeBase
@@ -81,13 +102,13 @@ Linguistic Database.
 
 Dative is a SPA, a single-page application. This means that it runs in the
 browser and makes extensive use of JavaScript. As software, Dative is no longer
-feasibly alterable: it is written in the now-arcane CoffeeScript and suffers
-from JavaScript dependency hell breakdown. It is, however, relatively easy to
-deploy Dative: simply serve its static and pre-compiled assets (HTML,
-JavaScript, images, etc.) from a web server (Nginx).
+feasibly alterable: it is written in the now-arcane CoffeeScript language and
+suffers from bit rot and JavaScript dependency hell breakdown. It is, however,
+relatively easy to deploy Dative: simply serve its static and pre-compiled
+assets (HTML, JavaScript, images, etc.) from a web server (Nginx).
 
-The OLD is an HTTP API following REST-ish practices. It exposes resources like
-"forms" and "tags" via a consistent URL pattern and usage of the HTTP methods
+The OLD is an HTTP API following REST-like practices. It exposes resources such
+as "forms" and "tags" via a consistent URL pattern and usage of the HTTP methods
 GET, POST, PUT, and DELETE for read, create, update, and destroy, respectively.
 It is written in Python, in the Pyramid framework. It writes data to MySQL and
 to the file system. It expects that foma (an FST toolkit) and MITLM (a language
@@ -97,7 +118,7 @@ pre-installed.
 
 As the above implies, we need Nginx installed, running and properly configured
 in order to serve Dative and the OLD. We also need a MySQL server instance
-running, DNS configured correctly, SSL certs and Docker. Most of this was
+running, DNS configured correctly, SSL certs, and Docker. Most of this was
 already done for us on the INT server by the INT staff.
 
 
@@ -162,11 +183,11 @@ Creating a new OLD is currently a three-step process:
 
 Create the MySQL database::
 
-  mysql -u admin -p
-  MariaDB [(none)]> CREATE DATABASE <<OLD_NAME>> DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;
+  $ mysql -u admin -p
+  > CREATE DATABASE <<OLD_NAME>> DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;
 
-Initialize the OLD: have the OLD create the empty tables and directory
-structure::
+Initialize the OLD, i.e., get the OLD to create the needed empty tables and
+directory structure for the new OLD::
 
   $ docker exec -it old bash
   $ /venv/bin/initialize_old config.ini <<OLD_NAME>>
@@ -236,6 +257,15 @@ Installation of OLD HTTP API
 This section explains how I installed and configured the OLD HTTP API on the INT
 server.
 
+Check if the OLD is running::
+
+  $ sudo docker ps
+
+If running, the above should indicate two running OLD containers: ``old`` and
+``old2``. To ensure that the OLD service is running, run the deploy script::
+
+  $ ./deployold.sh
+
 The legacy OLD (Online Linguistic Database) is a REST API written in Python,
 using the Pyramid framework and MySQL. It is standardly deployed on Docker
 containers because its OS dependencies are old and difficult to install on an
@@ -256,20 +286,22 @@ Initially, I added user joel to the docker group::
 I tried the above in an attempt to run docker as a non-root user. However, the
 above was insufficient. I then tried to install podman as an alternative to
 Docker (following https://www.howtoforge.com/beginner-guide-to-install-and-use-podman-on-almalinux-9/)
-but that failed. I suspect docker and podman have conflicting dependencies and
-one can only easily install one or the other. I therefore decided to move
-forward with using Docker with sudo.
+but I ran into obstacles there. I suspect docker and podman have conflicting
+dependencies and one can only easily install one or the other. I therefore
+decided to move forward with using Docker with sudo.
 
-Pull the OLD image from dockerhub::
+Pull the OLD image from dockerhub. You probably should use the sugested 4d90
+tage suggested below::
 
   $ sudo docker pull jrwdunham/old-pyramid:<DOCKERTAG>
   $ sudo docker pull jrwdunham/old-pyramid:4d9089186d5f0bcff3e5a57ba0c28980c50718a7
 
-The OLD data live under ``/home/joel/oldsdata/``::
+The OLD data live under ``/vol1/dative/oldsdata/``::
 
-  $ pwd
-  /home/joel
-  $ mkdir oldsdata
+  $ mkdir /vol1/dative/oldsdata
+
+(Note: I had previously configured this to be ``/home/joel/oldsdata/`` but
+switched to the ``/vol1/`` sub-path because that is where the disk space is.)
 
 We are running the OLD in a container and connecting to a MySQL server instance
 that is running on the host. I followed the advice at
@@ -280,11 +312,11 @@ https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-h
 
 The following runs the OLD container on the host network so that we can access
 MySQL running on the host using host:port 127.0.0.1:3306. It also allows us to
-access the OLD instance directories at ``~/oldsdata``::
+access the OLD instance directories at ``/vol1/dative/oldsdata``::
 
   $ sudo docker run \
       -d \
-      -v "/home/joel/oldsdata:/usr/src/old/store" \
+      -v "/vol1/dative/oldsdata:/usr/src/old/store" \
       --network=host \
       --name old \
       --env OLD_DB_PASSWORD="<<REDACTED>>" \
@@ -314,61 +346,16 @@ container::
   ...
   2024-06-08 17:49:15,919 INFO OLD "demo" successfully set up.
 
-This is the Nginx configuration for both Dative and the OLD as of 2024-06-08. See
-``/etc/nginx/sites-available/dative``::
+The INT Nginx configuration for both Dative and the OLD as of 2024-06-15 is
+``/etc/nginx/sites-available/dative.test.ivdnt.org``. (For a local copy of its
+contents, see ``dativebaseclj/docs/etc/nginx/dative.test.ivdnt.org``.) We also
+have a similar Nginx config file ready to go for ``app.dative.ca``; see
+``/etc/nginx/sites-available/app.dative.ca``.
 
-  upstream old {
-    server 127.0.0.1:8000;
-    server 127.0.0.1:8002;
-  }
-  server {
-    server_name app-cipl.dative.ca;
-    root /nginx/dative;
-    index index.html;
-    autoindex on;
-    access_log /var/log/nginx/dative/access.log;
-    error_log /var/log/nginx/dative/error.log;
-    location / {
-      try_files $uri $uri/ =404;
-      # Wide open CORS config for OPTIONS and GET
-      if ($request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Credentials' 'true';
-        add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain charset=UTF-8';
-        add_header 'Content-Length' 0;
-        return 204;
-      }
-      if ($request_method = 'GET') {
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Credentials' 'true';
-        add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-      }
-    }
-    # Proxy requests under path /olds to OLD Pyramid Python server
-    location /olds {
-      proxy_set_header        Host $http_host;
-      proxy_set_header        X-Real-IP $remote_addr;
-      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header        X-Forwarded-Proto $scheme;
-      client_max_body_size    1000m;
-      client_body_buffer_size 128k;
-      proxy_connect_timeout   60s;
-      proxy_send_timeout      90s;
-      proxy_read_timeout      90s;
-      proxy_buffering         off;
-      proxy_buffer_size       128k;
-      proxy_buffers           4 256k;
-      proxy_busy_buffers_size 256k;
-      proxy_temp_file_write_size 256k;
-      proxy_redirect          off;
-      proxy_pass_request_headers      on;
-      proxy_pass              http://old/;
-    }
-  }
+To enable the available Nginx config files::
+
+  sudo ln -s /etc/nginx/sites-available/dative.test.ivdnt.org /etc/nginx/sites-enabled/
+  sudo ln -s /etc/nginx/sites-available/app.dative.ca /etc/nginx/sites-enabled/
 
 The OLD can be deployed idempotently with the following::
 
@@ -396,7 +383,7 @@ View the logs of the OLD instances::
   $ sudo docker logs --tail 500 -f old
   $ sudo docker logs --tail 500 -f old2
 
-Alternatively, to tail all OLD logs::
+Alternatively, to tail all OLD logs (from the joel user's home directory)::
 
   $ sudo make log-old
 
@@ -409,7 +396,7 @@ Installation of Dative SPA
 ================================================================================
 
 The Dative UI is just static HTML and JavaScript. The static content being
-served is located at ``/nginx/dative``.
+served is located at ``/nginx/dative/``.
 
 This was simply copied from ``home/joel/apps/dative/releases/dist/`` after
 cloning the source::
@@ -419,9 +406,10 @@ cloning the source::
   $ git clone https://github.com/dativebase/dative.git
   $ cd dative/releases
   $ tar -xvf release-315b7d9a8e2106612639caf13189eb2de8586278.tar.gz
-  $ cp -r dist /nginx/dative2
+  $ cp -r dist /nginx/dative
 
-The Nginx configuration for Dative is at ``/etc/nginx/sites-available/dative``.
+The Nginx configuration for Dative is at
+``/etc/nginx/sites-available/dative.test.ivdnt.org``.
 
 The global Nginx configuration at ``/etc/nginx/nginx.conf`` runs with user
 ``nginx``. I therefore transferred the ownership of the Dative source and assets
@@ -547,6 +535,31 @@ an INT-controlled nameserver. See ticket
 https://github.com/dativebase/dativebaseclj/issues/17.
 
 
+Dative.ca Domain Configuration
+--------------------------------------------------------------------------------
+
+The following table shows the DNS A-type records currently (2024-06-15)
+configured for dative.ca::
+
+    Type Hostname                      Value
+    A    app-cipl.dative.ca            INT PRIVATE IP
+    A    world-round-up-2024.dative.ca 157.245.232.138 (DO droplet IP)
+    A    newapp.dative.ca              144.126.212.39 (DO droplet IP)
+    A    v2.dative.ca                  144.126.212.39 (DO droplet IP)
+    A    dev.dative.ca                 144.126.212.39 (DO droplet IP)
+    A    app.dative.ca                 144.126.212.39 (DO droplet IP)
+    A    www.dative.ca                 144.126.212.39 (DO droplet IP)
+
+Desired DNS configuration for dative.ca::
+
+    Type Hostname                      Value
+    A    app.dative.ca                 INT PUBLIC IP (Dative app)
+    A    www.dative.ca                 INT PUBLIC IP (Dative website)
+    A    www.old.dative.ca             INT PUBLIC IP (OLD website)
+    A    v2.dative.ca                  INT PUBLIC IP (New DativeBase app)
+    A    dev.dative.ca                 INT PUBLIC IP (Staging/Dev env)
+
+
 Firewall
 ================================================================================
 
@@ -562,3 +575,430 @@ I had to run the following to expose port 80 over TCP::
 
 It was only after running the above that Nginx on the INT server started to
 receive traffic from ``dative.test.ivdnt.org``.
+
+Display the default zone::
+
+  $ sudo firewall-cmd --get-default-zone
+  public
+
+Display the current firewall settings::
+
+  $ sudo firewall-cmd --list-all
+
+
+Mounted Drives
+================================================================================
+
+View mounted drives::
+
+  $ df -aTh
+  Filesystem                 Type        Size  Used Avail Use% Mounted on
+  /dev/mapper/almalinux-root xfs          14G  7.7G  5.8G  58% /
+  /dev/sdb                   ext4        157G   28K  149G   1% /vol1
+
+
+Serving the Dative Website
+================================================================================
+
+The GitHub URL for the source of the Dative website is
+https://github.com/dativebase/dative-website.
+
+Clone it::
+
+  $ pwd
+  /home/joel/apps
+  $ git clone https://github.com/dativebase/dative-website
+  $ sudo cp -r dative-website /nginx/dative-website
+  $ sudo chown -R nginx:nginx /nginx/dative-website
+  $ sudo chmod -R 755 /nginx/dative-website
+  $ sudo chcon -R -t httpd_sys_content_t /nginx/dative-website
+
+I had to fix the Dative website source. I had to make some paths relative in the
+index.html file
+
+Nginx server location block::
+
+  location ~ ^/dative-website.*$ {
+    rewrite ^/dative-website$ /dative-website/ permanent;
+    rewrite ^/dative-website/$ /dative-website/index.html;
+    rewrite ^/dative-website/(.*)$ /$1 break;
+    root /nginx/dative-website;
+    index index.html;
+    try_files $uri $uri/ =404;
+  }
+
+The Dative website is now being served at::
+
+  https://dative.test.ivdnt.org/dative-website/
+
+
+Serving the OLD Website
+================================================================================
+
+The GitHub URL for the source of the OLD website is
+https://github.com/dativebase/old-website.
+
+Clone it::
+
+  $ pwd
+  /home/joel/apps
+  $ git clonoe https://github.com/dativebase/old-website.git
+  $ cp -r old-website /nginx/old-website
+  $ sudo chown -R nginx:nginx /nginx/old-website
+  $ sudo chmod -R 755 /nginx/old-website
+  $ sudo chcon -R -t httpd_sys_content_t /nginx/old-website
+
+Nginx server location block::
+
+  # OLD website is served at /old-website(/)
+  location ~ ^/old-website.*$ {
+    rewrite ^/old-website$ /old-website/ permanent;
+    rewrite ^/old-website/$ /old-website/index.html;
+    rewrite ^/old-website/(.*)$ /$1 break;
+    root /nginx/old-website;
+    index index.html;
+    try_files $uri $uri/ =404;
+  }
+
+The OLD website is now being served at::
+
+  https://dative.test.ivdnt.org/old-website/
+
+
+Attempt to Clone DativeBaseCLJ to INT Server
+================================================================================
+
+Date: 2024-06-09.
+
+The source at https://github.com/dativebase/dativebaseclj is currently private.
+I should make it public and open source soon. See
+https://github.com/dativebase/dativebaseclj/issues/23.
+
+Source::
+
+  git@github.com:dativebase/dativebaseclj.git
+  https://github.com/dativebase/dativebaseclj.git
+
+The result of the above was failure. Because DativeBaseCLJ is a private repo and
+my SSH key is not on INT, I was unable to clone the source. I am marking this
+task as blocked on "Make DativeBase open source and public"
+https://github.com/dativebase/dativebaseclj/issues/23.
+
+
+Plan to Complete the Migration of the OLDs from DO to INT
+================================================================================
+
+The following steps constitute the current plan to complete the migration of
+Dative from Digital Ocean to the INT server.
+
+- DONE. Document the migration status and completion plan in the runbook.
+- DONE. Draft an email to send to users of Dative.
+- DONE. Ensure we have Nginx config ready for dative.ca on INT.
+- DONE. Share the migration completion plan with technical stakeholders for feeback.
+- DONE. Set a date and time for the migration. Suggestion: June 28, 2024.
+- DONE. Get feedback on the email and plan from internal stakeholders.
+- TODO. Confirm that the migration transfers the data correctly.
+- TODO. Ensure we have the commands ready to shut down DO Dative and OLDs.
+- TODO. Send the migration notification email to the Dative users.
+- TODO. Wait to see if any users want to opt out.
+- TODO. Shut down DO Dative & its OLDs.
+- TODO. Run the final data migration from DO to OLD.
+- TODO. With the help of INT staff, configure dative.ca subdomains to resolve to INT
+  server.
+  - app.dative.ca => INT server 132.229.188.226 (Dative app & OLD API)
+  - www.dative.ca => INT server 132.229.188.226 (Dative website)
+  - www.old.dative.ca => INT server 132.229.188.226 (OLD website)
+  - onlinelinguisticdatabase.org is no longer needed.
+- TODO. Confirm that production INT Dative is operating correctly.
+- TODO. Email users to notify that Dative has been restored.
+- TODO. Shut down the Digital Ocean server.
+- TODO. Shut down the onlinelinguisticdatabase.org domain.
+
+
+Migration Notification Email to Dative Users
+--------------------------------------------------------------------------------
+
+Draft of Email to Dative Users (2024-06-16)::
+
+  Dear user of Dative and the Online Linguistic Database (OLD),
+
+  My name is Joel Dunham. I am the original creator of Dative and the OLD, a suite
+  of Internet tools for collaborative linguistic data management. You are
+  receiving this email because you have one or more accounts on Dative and may
+  have used it to store or process your data.
+
+  This letter is to inform you that CIPL, in conjunction with INT, have kindly
+  offered to support the continued deployment of Dative on the web. CIPL is the
+  Comité International Permanent des Linguistes and INT is the Instituut voor de
+  Nederlandse Taal.
+
+  At present, the Dative data (the "OLDs") are being served on a commercial
+  hosting platform, the cost of which has been covered primarily by grants
+  received by professor Alan Bale of Concordia University and, to a lesser extent,
+  by my own corporation, Lambda Bar Software Ltd.
+
+  We are happy to announce, that as of June 28, 2024 both the Dative app and all
+  of the OLDs will be hosted on a server run by INT's information technology
+  department. With the support of INT and CIPL we expect to be able to better
+  respond to issue requests and new OLD creation requests. We also hope to be able
+  to add new, long-awaited features to the Dative/OLD system.
+
+  On the date of the migration (June 28), we anticipate a short period (4-8
+  hours) of downtime, during which Dative, which is served at
+  https://app.dative.ca, and the OLDs, which are served under
+  https://app.onlinelinguisticdatabase.org/, will be unavailable. Once the
+  migration is complete, Dative will again be available at https://app.dative.ca
+  and the OLDs will now be served at sub-paths under https://app.dative.ca/olds/.
+
+  What is required of you? If you do not take issue with your data being
+  transferred to the INT-managed server and if you never use the OLD API (or do
+  not know what that means), then there is nothing you need to do.
+
+  If you do not want your data to be transferred, please respond to this email
+  indicating that fact, well in advance of the migration date of June 28, 2024.
+
+  If you use the OLD API to access your data, e.g., from a Python script, then
+  you will need to replace any usage of https://app.onlinelinguisticdatabase.org/
+  in your script with the equivalent path under https://app.dative.ca/olds/.
+  For example, if you currently use URL
+  https://app.onlinelinguisticdatabase.org/myold, then you would need to switch
+  to using https://app.dative.ca/olds/myold. If you are a non-technical user of
+  Dative, then this paragraph does not apply to you.
+
+  Thank you for taking the time to read this email and for your support of Dative
+  and the OLD. With kind regards,
+
+  Joel
+
+
+How to Migrate the OLD Data from DO to INT
+--------------------------------------------------------------------------------
+
+This section describes how to migrate the OLD data from the Digital Ocean server
+(DO) to the INT server. Note that this is a cumulative process, at least for the
+filesystem data, which is the bulk of it. This means that future migrations take
+far less time than the original one.
+
+Running the following commands will dump the MySQL databases on DO, transfer all
+the data from DO to local and then to INT, and then ingest the dumped MySQL
+databases into the INT RDBMS::
+
+  dodative:$ ./dump-old-dbs.sh
+  local:$ ./sync-do-old-to-local.sh
+  int:mysql> source /home/joel/load-do-mysql-dumps.sql
+
+For more details on the above, see below. See also GitHub ticket
+https://github.com/dativebase/dativebaseclj/issues/22.
+
+Make space for the replicated OLD data on the large mounted disk of the INT
+server::
+
+  $ mkdir olds-data-synced-from-do
+  $ sudo mkdir /vol1/dative
+  $ sudo chown joel:joel /vol1/dative
+  $ cd /vol1/dative
+  $ mkdir olds-data-synced-from-do
+
+Make space for the dumped OLD data on the DO server::
+
+  $ pwd
+  /home/jrwdunham
+  $ mkdir mysql-dumps-for-sync-to-int
+
+Dump the MySQL database of an OLD on the DO server::
+
+  $ mysqldump -u admin -p'<<REDACTED>>' okaold > /home/jrwdunham/mysql-dumps-for-sync-to-int/okaold.sql
+
+Hash on DO::
+
+  $ md5sum /home/jrwdunham/mysql-dumps-for-sync-to-int/okaold.sql
+  45d85d4fe4c0113a6f7b0eb13eacf36e
+
+Try to SSH to the DO machine from the INT machine::
+
+  $ ssh -vvv -i /home/joel/.ssh/id_rsa jrwdunham@144.126.212.39
+
+Despite numerous attempts, I was unable to SSH into the DO server from the INT
+one. I tried the following::
+
+  $ ssh -vvv -i /home/joel/.ssh/id_rsa jrwdunham@144.126.212.39
+  $ sudo chown -R joel:joel .ssh
+  $ ls -alZ /home/joel/.ssh
+  $ restorecon -R -v /home/joel/.ssh
+
+The ufw firewall on the Ubuntu DO machine does not appear to be blocking
+inbound SSH. The firewall-cmd on the Alma Linux INT machine does not appear to
+be blocking outbound (client) SSH either. I was unable to find evidence of SSH
+connection attempts on the DO server, which suggests that the issue is on the
+INT side. I decided to work around this by using my local machine as
+intermediary.
+
+Rsync the DO files to local::
+
+  $ mkdir /Users/joeldunham/Development/do-to-int-migration-2024-06
+  $ rsync -vzz --progress \
+      dodative:/home/jrwdunham/mysql-dumps-for-sync-to-int/okaold.sql \
+      /Users/joeldunham/Development/do-to-int-migration-2024-06/okaold.sql
+
+Hash on local::
+
+  $ openssl md5 /Users/joeldunham/Development/do-to-int-migration-2024-06/okaold.sql
+  45d85d4fe4c0113a6f7b0eb13eacf36e
+
+Rsync the local files to INT::
+
+  $ mkdir /Users/joeldunham/Development/do-to-int-migration-2024-06
+  $ rsync -vzz --progress \
+      /Users/joeldunham/Development/do-to-int-migration-2024-06/okaold.sql \
+      cipl:/vol1/dative/olds-data-synced-from-do/okaold.sql
+
+Hash on INT::
+
+  $ md5sum /vol1/dative/olds-data-synced-from-do/okaold.sql
+  45d85d4fe4c0113a6f7b0eb13eacf36e
+
+Load the database dump into the INT MySQL server::
+
+  $ mysql -u admin -p
+  > CREATE DATABASE okaold DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;
+  > USE okaold;
+  > SET NAMES utf8;
+  > SOURCE /vol1/dative/olds-data-synced-from-do/okaold.sql
+  > select count(id) from form;
+  +-----------+
+  | count(id) |
+  +-----------+
+  |      1796 |
+  +-----------+
+
+At present, there are 125 OLD-specific directories containing 43G (44,707,772
+bytes) of data on DO::
+
+  $ pwd
+  /home/jrwdunham/oldsdata
+  $ ls -l | wc
+  125
+  $ du -h .
+  43G	.
+  $ du .
+  44707772
+
+At present, there is 181G of free space on my external mounted volume Charlsea::
+
+  $ pwd
+  /Volumes/Charlsea
+  $ df -h .
+  Filesystem     Size   Used  Avail Capacity iused      ifree %iused  Mounted on
+  /dev/disk2s3  2.7Ti  2.6Ti  181Gi    94% 4429892 4290537387    0%   /Volumes/Charlsea
+
+Create a directory to hold the DO data on the Charlsea volume::
+
+  $ mkdir /Volumes/Charlsea/do-backups-2024-06
+
+Rsync the OLD filesystem data from DO to local::
+
+  $ rsync -avzz --progress \
+      dodative:/home/jrwdunham/oldsdata/ \
+      /Volumes/Charlsea/do-backups-2024-06/oldsdata
+
+Count the OLDs on DO by their directories::
+
+  $ ls -l /home/jrwdunham/oldsdata/
+
+There are 124 OLD-specific top-level directories on the DO server. See
+``operator.dativebase.migrate-do-to-int-2024``.
+
+Make a place for the OLD file data in INT::
+
+  $ pwd
+  /vol1/dative
+  $ mkdir oldsdata
+
+Rsync the local files to INT::
+
+  $ rsync -avzz --progress \
+      /Volumes/Charlsea/do-backups-2024-06/oldsdata/ \
+      cipl:/vol1/dative/oldsdata
+
+Counting the directories on INT (from aceold to zgaold) indicates that there are
+124 OLDs. See ``operator.dativebase.migrate-do-to-int-2024/filesystem-olds``.
+
+Count the OLD MySQL databases on the DO server::
+
+  $ mysql -u admin -p
+  mysql> SHOW DATABASES;
+
+There are 124 OLDs on DO. The filesystem and MySQL data are consistent. For the
+MySQL-sourced database names, see
+``operator.dativebase.migrate-do-to-int-2024/mysql-olds``.
+
+There is a dump script on the DO server. Running this script should dump all
+data on DO needed in order to perform a manual synchronization of data to
+another system. (Note: this should be used in coordination with a prior MySQL
+shutdown in order to ensure an identical (consistent) replication.) To generate
+this script, see ``operator.dativebase.migrate-do-to-int-2024/dump-do``. To run
+the script::
+
+  $ ./dump-old-dbs.sh
+
+Once the above completes, the MySQL data are written to::
+
+  /home/jrwdunham/mysql-dumps-for-sync-to-int/
+
+The filesystem data require no dump step.
+
+Rsync the DO DB dumps from DO to local::
+
+  $ rsync -avzz --progress \
+      dodative:/home/jrwdunham/mysql-dumps-for-sync-to-int/ \
+      /Users/joeldunham/Development/do-to-int-migration-2024-06
+
+Pull the DO ``servers.json`` file to local::
+
+  $ rsync -vzz --progress \
+      dodative:/home/jrwdunham/apps/dative/releases/dist/servers.json \
+      /Users/joeldunham/Development/do-to-int-migration-2024-06-servers.json
+
+To run the full sync from DO to local, including the DBs and the filesystem
+data::
+
+  $ ./sync-do-old-to-local.sh
+
+Rsync the local files to INT::
+
+  $ rsync -avzz --progress \
+      /Volumes/Charlsea/do-backups-2024-06/oldsdata/ \
+      cipl:/vol1/dative/oldsdata
+
+Rsync the local MySQL dump files to INT::
+
+  $ rsync -avzz --progress \
+      /Users/joeldunham/Development/do-to-int-migration-2024-06/ \
+      cipl:/vol1/dative/olds-data-synced-from-do
+
+To run the full sync from DO to local and then to INT, including the DBs and the
+filesystem data::
+
+  $ ./sync-do-old-to-local-to-int.sh
+
+Summary of replication commands::
+
+  dodative:$ ./dump-old-dbs.sh
+  local:$ ./sync-do-old-to-local.sh
+  int:mysql> source /home/joel/load-do-mysql-dumps.sql
+
+Note that both ``./sync-do-old-to-local.sh`` and
+``./sync-do-old-to-local-to-int.sh`` will prompt for the INT SSH key passphrase.
+
+Note also that the last MySQL source command is a complete refresh, meaning it
+redefines all OLD DBs in INT. This can take a while, ~10 minutes.
+
+The following steps need only be, and have already been, performed once. Of
+course, if we add a new OLD to DO and alter the servers.json file, then these
+will need to be run again. Use the REPL to create an INT-specific
+``servers.json`` file locally, using the DO analog::
+
+  => (println (olds->servers-json-str mysql-olds))
+
+and then copy the output of the above to the clipboard and paste it into
+``/nginx/dative/servers.json`` on the INT machine.
