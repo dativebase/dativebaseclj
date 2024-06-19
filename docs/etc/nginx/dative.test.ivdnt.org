@@ -1,0 +1,77 @@
+upstream old {
+  server 127.0.0.1:8000;
+  server 127.0.0.1:8002;
+}
+
+server {
+  server_name dative.test.ivdnt.org;
+  index index.html;
+  autoindex on;
+  access_log /var/log/nginx/dative/access.log;
+  error_log /var/log/nginx/dative/error.log;
+
+  # OLD website is served at /old-website(/)
+  location ~ ^/old-website.*$ {
+    rewrite ^/old-website$ /old-website/ permanent;
+    rewrite ^/old-website/$ /old-website/index.html;
+    rewrite ^/old-website/(.*)$ /$1 break;
+    root /nginx/old-website;
+    index index.html;
+    try_files $uri $uri/ =404;
+  }
+
+  # Dative website is served at /dative-website(/)
+  location ~ ^/dative-website.*$ {
+    rewrite ^/dative-website$ /dative-website/ permanent;
+    rewrite ^/dative-website/$ /dative-website/index.html;
+    rewrite ^/dative-website/(.*)$ /$1 break;
+    root /nginx/dative-website;
+    index index.html;
+    try_files $uri $uri/ =404;
+  }
+
+  # Dative App is served at the root path:
+  location / {
+    root /nginx/dative;
+    try_files $uri $uri/ =404;
+    # Wide open CORS config for OPTIONS and GET
+    if ($request_method = 'OPTIONS') {
+       add_header 'Access-Control-Allow-Origin' '*';
+       add_header 'Access-Control-Allow-Credentials' 'true';
+       add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS';
+       add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+       add_header 'Access-Control-Max-Age' 1728000;
+       add_header 'Content-Type' 'text/plain charset=UTF-8';
+       add_header 'Content-Length' 0;
+       return 204;
+    }
+    if ($request_method = 'GET') {
+       add_header 'Access-Control-Allow-Origin' '*';
+       add_header 'Access-Control-Allow-Credentials' 'true';
+       add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS';
+       add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+    }
+  }
+
+  # Proxy requests under path /olds to OLD Pyramid Python server
+  location /olds {
+    proxy_set_header        Host $http_host;
+    proxy_set_header        X-Real-IP $remote_addr;
+    proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header        X-Forwarded-Proto $scheme;
+    client_max_body_size    1000m;
+    client_body_buffer_size 128k;
+    proxy_connect_timeout   60s;
+    proxy_send_timeout      90s;
+    proxy_read_timeout      90s;
+    proxy_buffering         off;
+    proxy_buffer_size       128k;
+    proxy_buffers           4 256k;
+    proxy_busy_buffers_size 256k;
+    proxy_temp_file_write_size 256k;
+    proxy_redirect          off;
+    proxy_pass_request_headers      on;
+    proxy_pass              http://old/;
+  }
+
+}
