@@ -9,8 +9,30 @@ be useful for linguists, language revitalizers, teachers, linguaphiles, and
 anybody who needs to manage language-focused data. DativeBase facilitates
 storing, searching, sharing, and analyzing linguistic data.
 
+DativeBase is the successor of the earlier Dative/OLD project. Dative/OLD and
+DativeBase are both open-source software. However, there is only one significant
+public *deployment* of the Dative/OLD, namely the one served at app.dative.ca.
+The plan is for the DativeBase rewrite to ultimately replace the Dative/OLD app
+at app.dative.ca.
 
-TODO: Add something here before jumping straight into authorization!
+Table of Contents:
+
+- `Authorization`_
+- `User Flows`_
+- `Data Model`_
+- `Continuous Integration & Deployment`_
+- `TODOs`_
+- `Principles`_
+- `How Immutable Data Works in DativeBase`_
+- `History of DativeBase`_
+- `Components`_
+- `Proof-of-concept Feature Brief for Read-only Offline Functionality`_
+- `Local Development`_
+- `Local SwaggerUI`_
+- `Docker`_
+- `The Online Linguistic Database (OLD)`_
+- `Usage`_
+- `Database Migrations`_
 
 
 Authorization
@@ -695,3 +717,15 @@ migration application) can be checked into version control::
 
 If the above works, you should see changes in the ``schema.sql`` file that
 reflect your migration.
+
+
+Migrating Legacy Dative/OLD OLDs to DativeBase
+================================================================================
+
+In order to transition from Dative(/OLD) to DativeBase, we need to be able to
+ingest the OLD data into the DativeBase schema.
+
+Keeping it simple to start, imagine we can shut down all external mutation to a
+given OLD. How would we migrate it?
+
+TODO. Return here
