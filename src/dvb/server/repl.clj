@@ -48,7 +48,6 @@
     (openapi.serialize/clojure-openapi->disk spec/api openapi-path)
 
     ;; This will return nil if valid and throw if invalid
-    (sh/lint-openapi openapi-path)
 
     ) ;; if this returns nil without throwing, that means success
 
@@ -82,6 +81,10 @@
                                         :updated-by nil}))
 
     (def users (db.users/get-users db))
+
+    (sort (map :email users))
+
+    (count users)
 
     (def user-2 (db.users/create-user db {:first-name "Tim"
                                           :last-name "Benzyne"

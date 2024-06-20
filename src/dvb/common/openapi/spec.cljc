@@ -54,6 +54,8 @@
     :description "Operations on forms."}
    {:name :OLDs
     :description "Operations on OLDs."}
+   {:name :OLDAccessRequests
+    :description "Operations on OLD access requests."}
    {:name :OLDUsers
     :description "Operations on users with access to a specified OLD."}
    {:name :Plans

@@ -49,7 +49,7 @@
    :OLDAccessRequest old-access-request/old-access-request
    :OLDAccessRequests old-access-request/old-access-requests
    :OLDAccessRequestWrite old-access-request/old-access-request-write
-   :OLDOfUser old/old-of-user
+   ;; :OLDOfUser old/old-of-user ;; not currently used
    :OLDUpdate old/old-update
    :OLDWrite old/old-write
    :PageOfForms form/page-of-forms
@@ -57,7 +57,7 @@
    :PageOfUsers user/page-of-users
    :Plan plan/plan
    :PlanOfUser plan/plan-of-user
-   :Plans plan/plans
+   ;; :Plans plan/plans ;; not currently used
    :PlanWrite plan/plan-write
    :User user/user
    :UserAndAPIKey user-and-api-key
