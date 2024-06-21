@@ -16,6 +16,14 @@ log
 checkouts
 scratch.clj
 dev-config.env
+dev-config-SECRET.edn
 **/.clj-kondo/.cache/
 .lsp
-old/resources/public/swagger-ui/
+resources/public/swagger-ui/
+resources/public/js/
+.spectral.yaml
+README-PRIVATE.rst
+.cpcache/
+.shadow-cljs/
+node_modules/
+deploy/

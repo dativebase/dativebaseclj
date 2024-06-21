@@ -1,0 +1,66 @@
+version: 2.1
+
+jobs:
+
+  test:
+    docker:
+      - image: "clojure:temurin-11-tools-deps-1.11.1.1347"
+        environment:
+          DATABASE_URL: "jdbc:postgresql://localhost:5432/dativebase?user=postgres&password="
+      - image: "postgres:16-alpine"
+        environment:
+          POSTGRES_USER: "postgres"
+          POSTGRES_DB: "dativebase"
+          POSTGRES_HOST_AUTH_METHOD: "trust"
+    steps:
+      - checkout
+      - run:
+          name: "Install curl"
+          command: |
+            apt update
+            apt install -y curl bash wget
+      - run:
+          name: "Install flyway"
+          working_directory: "/flyway"
+          command: |
+            wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/9.9.0/flyway-commandline-9.9.0-linux-x64.tar.gz
+            gzip -d flyway-commandline-9.9.0-linux-x64.tar.gz
+            tar -xf flyway-commandline-9.9.0-linux-x64.tar --strip-components=1
+            rm flyway-commandline-9.9.0-linux-x64.tar
+            chmod -R a+r /flyway
+            chmod a+x /flyway/flyway
+      - restore_cache:
+          keys:
+            - dativebase-{{ checksum "deps.edn" }}
+      - run:
+          name: "Fetch dependencies"
+          command: "clojure -A:deps"
+      - save_cache:
+          key: dativebase-{{ checksum "deps.edn" }}
+          paths:
+            - ~/.m2
+      - run:
+          name: "install dockerize"
+          command: "curl -L https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz --output dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz"
+          environment:
+            DOCKERIZE_VERSION: v0.3.0
+      - run:
+          name: "Wait for DB"
+          command: "dockerize -wait tcp://localhost:5432 -timeout 1m"
+      - run:
+          name: "Run migrations"
+          command: sleep 3 && scripts/run-migrations
+          environment:
+            DATABASE_URL: 'jdbc:postgresql://localhost:5432/dativebase'
+            DATABASE_USER: 'postgres'
+            DATABASE_PASSWORD: ''
+            DATABASE_MIGRATIONS: 'migrator/sql'
+      - run:
+          name: "Run the tests"
+          command: "clojure -M:test -m kaocha.runner"
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
