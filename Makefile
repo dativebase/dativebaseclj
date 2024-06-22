@@ -16,7 +16,7 @@ openapi:  ## Construct the OpenAPI YAML from the OpenAPI EDN source
 	@clj -X:openapi
 
 install-swagger-ui:  ## Clone the swagger-ui source and update it to point to our OpenAPI YAML file under resources/public/
-	@if [ -d "resources/public/swagger-ui" ]; then echo "The swagger-ui source has already been cloned."; else git clone git@github.com:swagger-api/swagger-ui.git resources/public/swagger-ui; fi
+	@if [ -d "resources/public/swagger-ui" ]; then echo "The swagger-ui source has already been cloned."; else git clone https://github.com/swagger-api/swagger-ui.git resources/public/swagger-ui; fi
 	@sed -i'.bak' 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/\/openapi\/api.yaml/g' resources/public/swagger-ui/dist/swagger-initializer.js
 	@echo "The swagger-ui should now be configured for resources/public/openapi/api.yaml."
 
