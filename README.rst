@@ -592,7 +592,7 @@ No matter how the app was started up, you may access the API at
 
 To serve the application with a different configuration file::
 
-  $ clj -X:run :config-path '"/path/to/other/config.edn"'
+  $ clj -X:run :config-path '"/home/joel/apps/dativebaseclj/dev-config-SECRET.edn"'
 
 
 Creating a User and Authenticating to the API
