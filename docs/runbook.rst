@@ -3,7 +3,7 @@
 ================================================================================
 
 Created: 2024-06-05.
-Last updated: 2024-06-15.
+Last updated: 2024-06-21.
 
 This document describes how to maintain the production DativeBase deployment on
 the INT server with IP 132.229.188.226.
@@ -28,6 +28,7 @@ Table of Contents
 - `Configuration of MySQL`_
 - `Installation of OLD HTTP API`_
 - `Installation of Dative SPA`_
+- `Installation of DativeBase`_
 - `IP Address`_
 - `Domain Name Configuration`_
 - `Firewall`_
@@ -70,19 +71,19 @@ Software installed:
 - Nginx:           1.14
 - Docker:          23
 - Mysql (MariaDB): 10.11
+- PostgreSQL:      16.3
 
 Processes, sites & apps:
 
 - Dative app:      CoffeeScript (JavaScript) SPA
 - OLD service:     Pyramid Python RESTful web service (multiple instances in containers)
+- DativeBaseCLJ:   WIP monorepo containing a Clojure/ClojureScript rewrite of Dative and OLD
 - Dative website:  Static HTML
 - OLD website:     Static HTML
 
 Processes & apps that still need to be deployed on the INT server:
 
 - Dative app v2:   ClojureScript SPA
-- DativeBaseCLJ:   WIP monorepo containing a Clojure/ClojureScript rewrite of Dative and OLD
-- PostgreSQL:      RDBMS
 - RabbitMQ:        Message broker
 
 URLs of Services that are still running on Joel's DigitalOcean server:
@@ -467,6 +468,124 @@ It also allowed me to serve Dative at https://dative.test.ivdnt.org.
 
 See this tutorial on chcon in SELinux:
 https://www.thegeekstuff.com/2017/07/chcon-command-examples/.
+
+
+Installation of DativeBase
+================================================================================
+
+Date: 2024-06-21.
+
+Install rlwrap::
+
+  $ dnf install rlwrap
+
+Java::
+
+  $ java -version
+  openjdk version "1.8.0_402"
+  OpenJDK Runtime Environment (build 1.8.0_402-b06)
+  OpenJDK 64-Bit Server VM (build 25.402-b06, mixed mode)
+
+Install Clojure::
+
+  $ curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+  $ chmod +x linux-install.sh
+  $ sudo ./linux-install.sh
+
+Install the Swagger UI resources::
+
+  $ make install-swagger-ui
+
+I followed the instructions at
+https://jumpcloud.com/blog/how-to-install-postgresql-16-rhel-9 in order to
+install and configure PostgreSQL 16.
+
+Update packages::
+
+  $ sudo dnf update -y
+
+Install PostgreSQL::
+
+  $ sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+  $ sudo dnf -qy module disable postgresql
+  $ sudo dnf install postgresql16-server -y
+
+Initialize Postgres::
+
+  $ sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
+
+Start and enable the PostgreSQL service to load at boot::
+
+  $ sudo systemctl enable postgresql-16
+  $ sudo systemctl start postgresql-16
+
+View status of PostgreSQL::
+
+  $ sudo systemctl status postgresql-16
+
+To restart the database server::
+
+  $ sudo systemctl restart postgresql-16
+
+To reload the database server without stopping the service::
+
+  $ sudo systemctl reload postgresql-16
+
+Set a password::
+
+  $ sudo passwd postgres
+
+View the version::
+
+  $ psql -V
+  psql (PostgreSQL) 16.3
+
+Open the PG console::
+
+  $ sudo -u postgres psql
+  postgres=#
+
+Set a password for the postgres user::
+
+  postgres=# \password postgres
+
+Access the PostgreSQL access policy configuration file::
+
+  $ sudo vim /var/lib/pgsql/16/data/pg_hba.conf
+
+and set line::
+
+  local  all  all  peer
+
+to::
+
+  local  all  all  md5
+
+The reload PG::
+
+  $ sudo systemctl reload postgresql-16
+
+Now PG prompts for the postgres password.
+
+Show PG users and DBs::
+
+  postgres=# \du
+                               List of roles
+   Role name |                         Attributes
+  -----------+------------------------------------------------------------
+   postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS
+
+  postgres=# \l
+
+Create a new DB named dative::
+
+  postgres=# create database dativebase;
+
+Run DativeBase::
+
+  $ pwd
+  /home/joel/apps/dativebaseclj
+  $ make run
 
 
 IP Address
