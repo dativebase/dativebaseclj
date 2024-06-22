@@ -35,7 +35,6 @@ Table of Contents
 - `Mounted Drives`_
 - `Serving the Dative Website`_
 - `Serving the OLD Website`_
-- `Attempt to Clone DativeBaseCLJ to INT Server`_
 - `Plan to Complete the Migration of the OLDs from DO to INT`_
 
 
@@ -475,6 +474,12 @@ Installation of DativeBase
 
 Date: 2024-06-21.
 
+Clone the DativeBase source::
+
+  $ pwd
+  /home/joel/apps
+  $ git clone https://github.com/dativebase/dativebaseclj.git
+
 Install rlwrap::
 
   $ dnf install rlwrap
@@ -586,6 +591,10 @@ Run DativeBase::
   $ pwd
   /home/joel/apps/dativebaseclj
   $ make run
+
+To specify a different config path and run DativeBase::
+
+  $ clj -X:run :config-path '"/home/joel/apps/dativebaseclj/dev-config-SECRET.edn"'
 
 
 IP Address
@@ -784,26 +793,6 @@ The OLD website is now being served at::
   https://dative.test.ivdnt.org/old-website/
 
 
-Attempt to Clone DativeBaseCLJ to INT Server
-================================================================================
-
-Date: 2024-06-09.
-
-The source at https://github.com/dativebase/dativebaseclj is currently private.
-I should make it public and open source soon. See
-https://github.com/dativebase/dativebaseclj/issues/23.
-
-Source::
-
-  git@github.com:dativebase/dativebaseclj.git
-  https://github.com/dativebase/dativebaseclj.git
-
-The result of the above was failure. Because DativeBaseCLJ is a private repo and
-my SSH key is not on INT, I was unable to clone the source. I am marking this
-task as blocked on "Make DativeBase open source and public"
-https://github.com/dativebase/dativebaseclj/issues/23.
-
-
 Plan to Complete the Migration of the OLDs from DO to INT
 ================================================================================
 
@@ -816,8 +805,8 @@ Dative from Digital Ocean to the INT server.
 - DONE. Share the migration completion plan with technical stakeholders for feeback.
 - DONE. Set a date and time for the migration. Suggestion: June 28, 2024.
 - DONE. Get feedback on the email and plan from internal stakeholders.
-- TODO. Confirm that the migration transfers the data correctly.
-- TODO. Ensure we have the commands ready to shut down DO Dative and OLDs.
+- DONE. Confirm that the migration transfers the data correctly.
+- DONE. Ensure we have the commands ready to shut down DO Dative and OLDs.
 - TODO. Send the migration notification email to the Dative users.
 - TODO. Wait to see if any users want to opt out.
 - TODO. Shut down DO Dative & its OLDs.
@@ -832,6 +821,62 @@ Dative from Digital Ocean to the INT server.
 - TODO. Email users to notify that Dative has been restored.
 - TODO. Shut down the Digital Ocean server.
 - TODO. Shut down the onlinelinguisticdatabase.org domain.
+
+
+How to Shut Down DO Dative During the Migration
+--------------------------------------------------------------------------------
+
+First, update the Dative Nginx config to serve static HTML indicating the
+temporary downtime::
+
+  $ sudo vim /etc/nginx/sites-available/dative.ca
+
+Both ``location /`` blocks (for app.dative.ca and v2.dative.ca) should look as
+follows::
+
+  # Uncomment the following in order to shut down access to v2.dative:
+  default_type text/html;
+  return 200 "<!DOCTYPE html><h2>Dative is Temporarily Down</h2><p>Check back soon.</p>\n";
+  # try_files $uri $uri/ =404;
+
+Remove the symlink for app.onlinelinguisticdatabase.org::
+
+  $ sudo rm /etc/nginx/sites-enabled/app.onlinelinguisticdatabase.org
+
+To restore the symlinks for app.onlinelinguisticdatabase.org::
+
+  $ sudo ln -s /etc/nginx/sites-available/app.onlinelinguisticdatabase.org /etc/nginx/sites-enabled/
+
+Reload Nginx::
+
+  $ sudo systemctl reload nginx
+
+When the OLD is running, navigating to
+``https://app.onlinelinguisticdatabase.org/blaold/forms`` displays::
+
+  {"error":"Authentication is required to access this resource."}
+
+When access to the OLD is disabled through Nginx, navigating to the above
+displays an SSL warning in the browser.
+
+When the Dative apps have been shut down, the following two URLs:
+
+- https://app.dative.ca
+- https://v2.dative.ca
+
+Should display::
+
+  Dative is Temporarily Down
+  Check back soon.
+
+For good measure, also shut down the OLD API as follows::
+
+  $ docker stop old
+  $ docker stop old2
+
+To restore the OLDs::
+
+  $ ./reloadolds.sh
 
 
 Migration Notification Email to Dative Users
