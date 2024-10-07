@@ -1,0 +1,55 @@
+Dear user of Dative and the Online Linguistic Database (OLD),
+
+My name is Joel Dunham. I am the original creator of Dative and the OLD, a suite of Internet tools for collaborative linguistic data management. You are receiving this email because you are an administrator of one or more accounts on Dative and may have used it to store or process your data.
+
+This letter is to inform you that CIPL, in conjunction with INT, have kindly offered to support the continued deployment of Dative on the web. CIPL is the Comité International Permanent des Linguistes and INT is the Instituut voor de Nederlandse Taal.
+
+At present, the Dative data (the "OLDs") are being served on a commercial hosting platform, the cost of which has been covered primarily by grants received by professor Alan Bale of Concordia University and, to a lesser extent, by my own corporation, Lambda Bar Software Ltd.
+
+We are happy to announce that, as of September 2, 2024 both the Dative app and all of the OLDs will be hosted on a server run by INT's information technology department. With the support of INT and CIPL we expect to be able to better respond to issue requests and more promptly take action on new OLD creation requests.
+
+On the date of the migration (today, September 2, 2024), we anticipate a short period (4-24 hours) of downtime, during which Dative, which is currently served at app.dative.ca, and the OLDs, which are served under app.onlinelinguisticdatabase.org/, will be unavailable. Once the migration is complete, I will email you again to notify you that Dative is again accessible. At that point, Dative will be available at dative.test.ivdnt.org and the OLDs will be served at sub-paths under dative.test.ivdnt.org/olds/.
+
+If you are a non-technical (i.e., non-programmatic) user of Dative, then paragraph does not apply to you. For a concrete example of how the OLD-specific URLs will change, consider this. If your OLD-specific API URL was app.onlinelinguisticdatabase.org/blaold, then its new URL will be dative.test.ivdnt.org/olds/blaold. (Ultimately at some future date, the API URL for this OLD will be app.dative.ca/olds/blaold. I will inform you when that date arrives.) If you use the OLD API to access your data, e.g., from a Python script, then you will need to replace any usage of app.onlinelinguisticdatabase.org/ in your script with the equivalent path under dative.test.ivdnt.org/olds/.
+
+Eventually, we will also restore Dative to its original domain at app.dative.ca. However, due to circumstances beyond my control, this must happen after the migration. I apologize for any inconvenience this may cause. Please contact me if you have outstanding questions regarding the technicalities of what this means.
+
+Aside from expecting the above-mentioned downtime from Dative and switching to using dative.test.ivdnt.org instead of app.dative.ca, nothing is required of you. As this email is only being sent to administrators of OLDs, **I would advise you to inform the contributors and viewers of the OLDs under your administration of the changes I have described here**, as you see fit.
+
+Thank you for taking the time to read this email and for your support of Dative and the OLD. Please read the disclaimer from INT regarding your usage of Dative as it is served on INT's infrastructure. With kind regards,
+
+Joel
+
+
+DISCLAIMER:
+
+Use of this website of the Instituut voor de Nederlandse Taal (hereinafter "INT") is subject to the conditions and restrictions below. Access to and use of this website means that the user agrees to the following:
+
+INT accepts no liability for any loss or damage resulting from accessing and using this website. Also, no guarantee is given for the faultless and uninterrupted functioning of this website.
+
+No guarantee is given by INT, either explicitly or implicitly, as to the adequacy, accuracy or completeness of the information published on or accessed via this website. The INT and the management and staff of the INT accept no liability for the information and/or recommendations published on this website or to which access is provided via this website. Alterations can be made to this information and these recommendations without prior notice being given.
+
+All data depicted on this website, including text, photographs, illustrations, graphic material, (trade) names, logos, product and service trademarks are protected by copyright, trademark law and/or any other (intellectual) property rights. The (intellectual) property rights are in no way transferable to (legal) persons accessing this website. INT does not make any representation or warranty that the use of the website will not constitute or result in infringement of intellectual property rights of third parties.
+
+The content of this website may only be used for non-commercial and/or private purposes.
+
+References or hyperlinks to other websites not owned by the INT are only included for the information of the user of this website. The INT does not give any guarantee nor accepts any liability regarding the content of such websites.
+
+
+
+MIGRATION COMPLETE EMAIL:
+
+
+Hello user of Dative and the Online Linguistic Database (OLD),
+
+This letter is to inform you that Dative is back up and running, now being brought to you by CIPL and INT.
+
+Dative is now available at dative.test.ivdnt.org. Your OLD APIs are now being served at URLs that are sub-paths under dative.test.ivdnt.org/olds/. To view the fill list of OLDs from within Dative, click "Dative" then "Application Settings" in the main menu, then click the "Servers" button.
+
+As promised, I am working on restoring Dative to its original domain at app.dative.ca. We appreciate your patience as we finalize this step of the migration.
+
+Please inform any contributors or viewers of your OLDs that Dative is now available at dative.test.ivdnt.org and that the app.dative.ca URL should be restored in the near future.
+
+I thank you for your patience here. Please let me know if you have questions. Thanks,
+
+Joel
