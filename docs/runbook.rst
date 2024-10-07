@@ -3,7 +3,7 @@
 ================================================================================
 
 Created: 2024-06-05.
-Last updated: 2024-06-21.
+Last updated: 2024-09-02.
 
 This document describes how to maintain the production DativeBase deployment on
 the INT server with IP 132.229.188.226.
@@ -659,8 +659,8 @@ configuration that was previously blocking requests to the ``ivdnt.org``
 subdomain from reaching the INT server.)
 
 Ultimately, we will need the DNS configuration for ``dative.ca`` to be moved to
-an INT-controlled nameserver. See ticket
-https://github.com/dativebase/dativebaseclj/issues/17.
+an INT-controlled nameserver. See BLOCKED ticket
+https://github.com/dativebase/dativebaseclj/issues/28.
 
 
 Dative.ca Domain Configuration
@@ -808,19 +808,19 @@ Dative from Digital Ocean to the INT server.
 - DONE. Confirm that the migration transfers the data correctly.
 - DONE. Ensure we have the commands ready to shut down DO Dative and OLDs.
 - TODO. Send the migration notification email to the Dative users.
-- TODO. Wait to see if any users want to opt out.
 - TODO. Shut down DO Dative & its OLDs.
 - TODO. Run the final data migration from DO to OLD.
-- TODO. With the help of INT staff, configure dative.ca subdomains to resolve to INT
-  server.
-  - app.dative.ca => INT server 132.229.188.226 (Dative app & OLD API)
-  - www.dative.ca => INT server 132.229.188.226 (Dative website)
-  - www.old.dative.ca => INT server 132.229.188.226 (OLD website)
-  - onlinelinguisticdatabase.org is no longer needed.
 - TODO. Confirm that production INT Dative is operating correctly.
 - TODO. Email users to notify that Dative has been restored.
 - TODO. Shut down the Digital Ocean server.
 - TODO. Shut down the onlinelinguisticdatabase.org domain.
+- TODO. BLOCKED. With the help of INT staff, configure dative.ca subdomains to
+  resolve to INT server.
+
+  - app.dative.ca => INT server 132.229.188.226 (Dative app & OLD API)
+  - www.dative.ca => INT server 132.229.188.226 (Dative website)
+  - www.old.dative.ca => INT server 132.229.188.226 (OLD website)
+  - onlinelinguisticdatabase.org is no longer needed.
 
 
 How to Shut Down DO Dative During the Migration
@@ -881,6 +881,193 @@ To restore the OLDs::
 
 Migration Notification Email to Dative Users
 --------------------------------------------------------------------------------
+
+This email should only be sent to OLD administrators.
+
+To get the administrator emails for all OLDs from the DO Dative DBs, see
+``operator.dativebase.migrate-do-to-int-2024``.
+
+Draft of Email to Dative Users (2024-09-01)::
+
+  Dear user of Dative and the Online Linguistic Database (OLD),
+
+  My name is Joel Dunham. I am the original creator of Dative and the OLD, a suite
+  of Internet tools for collaborative linguistic data management. You are
+  receiving this email because you are an administrator of one or more accounts
+  on Dative and may have used it to store or process your data.
+
+  This letter is to inform you that CIPL, in conjunction with INT, have kindly
+  offered to support the continued deployment of Dative on the web. CIPL is the
+  Comité International Permanent des Linguistes and INT is the Instituut voor de
+  Nederlandse Taal.
+
+  At present, the Dative data (the "OLDs") are being served on a commercial
+  hosting platform, the cost of which has been covered primarily by grants
+  received by professor Alan Bale of Concordia University and, to a lesser extent,
+  by my own corporation, Lambda Bar Software Ltd.
+
+  We are happy to announce, that as of September 2, 2024 both the Dative app and
+  all of the OLDs will be hosted on a server run by INT's information technology
+  department. With the support of INT and CIPL we expect to be able to better
+  respond to issue requests and more promptly take action on new OLD creation
+  requests.
+
+  On the date of the migration (today, September 2, 2024), we anticipate a short
+  period (4-24 hours) of downtime, during which Dative, which is currently served
+  at https://app.dative.ca, and the OLDs, which are served under
+  https://app.onlinelinguisticdatabase.org/, will be unavailable. Once the
+  migration is complete, I will email you again to notify you that Dative is
+  again accessible. At that point, Dative will be available at
+  https://dative.test.ivdnt.org
+  and the OLDs will be served at sub-paths under
+  https://dative.test.ivdnt.org/olds/.
+
+  For a concrete example of how the OLD-specific URLs will change, consider
+  this. If your OLD-specific API URL was
+  https://app.onlinelinguisticdatabase.org/blaold, then its new URL will be
+  https://dative.test.ivdnt.org/olds/blaold. (Ultimately at some future date,
+  the API URL for this OLD will be https://app.dative.ca/olds/blaold. I will
+  inform you when that date arrives.) If you use the OLD API to access your
+  data, e.g., from a Python script, then you will need to replace any usage of
+  https://app.onlinelinguisticdatabase.org/ in your script with the equivalent
+  path under https://dative.test.ivdnt.org/olds/. If you are a non-technical
+  user of Dative, then this paragraph does not apply to you.
+
+  Eventually, we will also restore Dative to its original domain at
+  https://app.dative.ca. However, due to circumstances beyond my control, this
+  must happen after the migration. I apologize for any inconvenience this may
+  cause. Please contact me if you have outstanding questions regarding the
+  technicalities of what this means.
+
+  Aside from expecting the above-mentioned downtime from Dative and switching to
+  using https://dative.test.ivdnt.org instead of https://app.dative.ca, nothing
+  is required of you. As this email is only being sent to administrators of
+  OLDs, **I would advise you to inform the contributors and viewers of the OLDs
+  under your administration of the changes I have described here**, as you see fit.
+
+  Thank you for taking the time to read this email and for your support of Dative
+  and the OLD. Please read the disclaimer from INT regarding your usage of
+  Dative as it is served on INT's infrastructure. With kind regards,
+
+  Joel
+
+
+  DISCLAIMER:
+
+  Use of this website of the Instituut voor de Nederlandse Taal (hereinafter
+  "INT") is subject to the conditions and restrictions below. Access to and use
+  of this website means that the user agrees to the following:
+
+  INT accepts no liability for any loss or damage resulting from accessing and
+  using this website. Also, no guarantee is given for the faultless and
+  uninterrupted functioning of this website.
+
+  No guarantee is given by INT, either explicitly or implicitly, as to the
+  adequacy, accuracy or completeness of the information published on or accessed
+  via this website. The INT and the management and staff of the INT accept no
+  liability for the information and/or recommendations published on this website
+  or to which access is provided via this website. Alterations can be made to
+  this information and these recommendations without prior notice being given.
+
+  All data depicted on this website, including text, photographs, illustrations,
+  graphic material, (trade) names, logos, product and service trademarks are
+  protected by copyright, trademark law and/or any other (intellectual) property
+  rights. The (intellectual) property rights are in no way transferable to
+  (legal) persons accessing this website. INT does not make any representation
+  or warranty that the use of the website will not constitute or result in
+  infringement of intellectual property rights of third parties.
+
+  The content of this website may only be used for non-commercial and/or private
+  purposes.
+
+  References or hyperlinks to other websites not owned by the INT are only
+  included for the information of the user of this website. The INT does not
+  give any guarantee nor accepts any liability regarding the content of such
+  websites.
+
+Draft of Email to Dative Users (2024-06-22)::
+
+  Dear user of Dative and the Online Linguistic Database (OLD),
+
+  My name is Joel Dunham. I am the original creator of Dative and the OLD, a suite
+  of Internet tools for collaborative linguistic data management. You are
+  receiving this email because you are an administrator of one or more accounts
+  on Dative and may have used it to store or process your data.
+
+  This letter is to inform you that CIPL, in conjunction with INT, have kindly
+  offered to support the continued deployment of Dative on the web. CIPL is the
+  Comité International Permanent des Linguistes and INT is the Instituut voor de
+  Nederlandse Taal.
+
+  At present, the Dative data (the "OLDs") are being served on a commercial
+  hosting platform, the cost of which has been covered primarily by grants
+  received by professor Alan Bale of Concordia University and, to a lesser extent,
+  by my own corporation, Lambda Bar Software Ltd.
+
+  We are happy to announce, that as of June 28, 2024 both the Dative app and all
+  of the OLDs will be hosted on a server run by INT's information technology
+  department. With the support of INT and CIPL we expect to be able to better
+  respond to issue requests and new OLD creation requests.
+
+  On the date of the migration (June 28), we anticipate a short period (4-8
+  hours) of downtime, during which Dative, which is served at
+  https://app.dative.ca, and the OLDs, which are served under
+  https://app.onlinelinguisticdatabase.org/, will be unavailable. Once the
+  migration is complete, Dative will again be available at https://app.dative.ca
+  and the OLDs will now be served at sub-paths under https://app.dative.ca/olds/.
+
+  What is required of you? If you do not take issue with your data being
+  transferred to the INT-managed server and if you never use the OLD API (or do
+  not know what that means), then there is nothing you need to do.
+
+  If you do not want your data to be transferred, please respond to this email
+  indicating that fact, well in advance of the migration date of June 28, 2024.
+
+  If you use the OLD API to access your data, e.g., from a Python script, then
+  you will need to replace any usage of https://app.onlinelinguisticdatabase.org/
+  in your script with the equivalent path under https://app.dative.ca/olds/.
+  For example, if you currently use URL
+  https://app.onlinelinguisticdatabase.org/myold, then you would need to switch
+  to using https://app.dative.ca/olds/myold. If you are a non-technical user of
+  Dative, then this paragraph does not apply to you.
+
+  Thank you for taking the time to read this email and for your support of Dative
+  and the OLD. With kind regards,
+
+  Joel
+
+Disclaimer Dative INT (2024-06-12). Text::
+
+  Use of this website of the Instituut voor de Nederlandse Taal (hereinafter
+  "INT") is subject to the conditions and restrictions below. Access to and use
+  of this website means that the user agrees to the following:
+
+  INT accepts no liability for any loss or damage resulting from accessing and
+  using this website. Also, no guarantee is given for the faultless and
+  uninterrupted functioning of this website.
+
+  No guarantee is given by INT, either explicitly or implicitly, as to the
+  adequacy, accuracy or completeness of the information published on or accessed
+  via this website. The INT and the management and staff of the INT accept no
+  liability for the information and/or recommendations published on this website
+  or to which access is provided via this website. Alterations can be made to
+  this information and these recommendations without prior notice being given.
+
+  All data depicted on this website, including text, photographs, illustrations,
+  graphic material, (trade) names, logos, product and service trademarks are
+  protected by copyright, trademark law and/or any other (intellectual) property
+  rights. The (intellectual) property rights are in no way transferable to
+  (legal) persons accessing this website. INT does not make any representation
+  or warranty that the use of the website will not constitute or result in
+  infringement of intellectual property rights of third parties.
+
+  The content of this website may only be used for non-commercial and/or private
+  purposes.
+
+  References or hyperlinks to other websites not owned by the INT are only
+  included for the information of the user of this website. The INT does not
+  give any guarantee nor accepts any liability regarding the content of such
+  websites.
 
 Draft of Email to Dative Users (2024-06-16)::
 
@@ -945,11 +1132,18 @@ far less time than the original one.
 
 Running the following commands will dump the MySQL databases on DO, transfer all
 the data from DO to local and then to INT, and then ingest the dumped MySQL
-databases into the INT RDBMS::
+databases into the INT RDBMS. Note: you must first authenticate to the INT VPN
+via OpenVPN and you will be prompted for the SSH passkey.::
 
   dodative:$ ./dump-old-dbs.sh
-  local:$ ./sync-do-old-to-local.sh
+  local:$    ./sync-do-old-to-local-to-int.sh
   int:mysql> source /home/joel/load-do-mysql-dumps.sql
+
+If the above has worked, expect the INT server to have consistent and up-to-date
+filesystem data and MySQL dumps at the following two paths::
+
+  /vol1/dative/oldsdata
+  /vol1/dative/olds-data-synced-from-do
 
 For more details on the above, see below. See also GitHub ticket
 https://github.com/dativebase/dativebaseclj/issues/22.
@@ -1160,9 +1354,69 @@ redefines all OLD DBs in INT. This can take a while, ~10 minutes.
 The following steps need only be, and have already been, performed once. Of
 course, if we add a new OLD to DO and alter the servers.json file, then these
 will need to be run again. Use the REPL to create an INT-specific
-``servers.json`` file locally, using the DO analog::
+``servers.json`` file locally, using the DO analog. See
+``operator.dativebase.migrate-do-to-int-2024``::
 
   => (println (olds->servers-json-str mysql-olds))
 
 and then copy the output of the above to the clipboard and paste it into
 ``/nginx/dative/servers.json`` on the INT machine.
+
+
+Migration from DO to INT --- 2024-09-02
+================================================================================
+
+This section records the migration from DigitalOcean (DO) to INT servers, which
+was performed on September 2, 2024.
+
+The steps that were performed are as follows.
+
+1. I emailed the administrators of the 125 OLDs of the migration.
+2. I shut down Dative/OLD on DO on the public Internet.
+3. I re-ran the migration of the DBs and the files.
+4. I emailed the administrators notifying them that Dative is back up.
+
+Step (1). For the migration initiation email sent to the administrators, see
+/Users/joeldunham/Development/dativebaseclj/docs/email-2024-09-02.rst.
+
+Step (2). I updated the dative.ca Nginx web server config on DO to return HTML
+stating "Dative is Temporarily Down" for both app.dative.ca and v2.dative.ca by
+modifying this file::
+
+  $ sudo vim /etc/nginx/sites-available/dative.ca
+
+I removed the OLD API web server config, reloaded Nginx, and shut down the OLD
+API as follows::
+
+  $ sudo rm /etc/nginx/sites-enabled/app.onlinelinguisticdatabase.org
+  $ sudo systemctl reload nginx
+  $ docker stop old
+  $ docker stop old2
+
+I confirmed that the Dative apps at URLs https://app.dative.ca and
+https://v2.dative.ca display "Dative is Temporarily Down. Check back soon."
+I confirmed that navigating to
+https://app.onlinelinguisticdatabase.org/blaold/forms, returns a 502 response,
+indicating that the OLD API URLs are no longer functioning. TODO: do a dump of
+DO before decommissioning it.
+
+Step (3). I ran the following commands to dump the MySQL databases on DO,
+transfer all the data from DO to local and then to INT, and then ingest the
+dumped MySQL databases into the INT RDBMS.::
+
+  dodative:$ ./dump-old-dbs.sh
+  local:$    ./sync-do-old-to-local-to-int.sh
+  int:mysql> source /home/joel/load-do-mysql-dumps.sql
+
+Notes. For the second command to work, I had to must first authenticate to the
+INT VPN via OpenVPN and I was prompted for the SSH passkey. For the third
+command, I had to authenticate to the VPN, SSH into the INT server, and
+authenticate to the MySQL prompt. To authenticate to MySQL as the admin user in
+INT use the ``MySQL / MariaDB admin user password`` when prompted after::
+
+  $ mysql -u admin -p
+
+Step (4). I emailed the administrators notifying them that Dative is back up.
+For the migration completion email sent to the administrators, see
+/Users/joeldunham/Development/dativebaseclj/docs/email-2024-09-02.rst. The email
+addresses of the administrators are as given above.
