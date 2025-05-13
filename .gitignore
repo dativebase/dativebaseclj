@@ -27,3 +27,5 @@ README-PRIVATE.rst
 .shadow-cljs/
 node_modules/
 deploy/
+logs/dativebase.log
+.clj-kondo/
